@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "list.h": "c",
+        "util_debug.h": "c",
+        "global_define.h": "c",
+        "gmsi.h": "c"
+    }
+}
