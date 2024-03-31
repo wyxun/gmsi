@@ -13,6 +13,7 @@
         "vector": "c",
         "xstring": "c",
         "xutility": "c",
-        "xlocmes": "c"
+        "xlocmes": "c",
+        "pc_clock.h": "c"
     }
 }
