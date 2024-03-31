@@ -75,7 +75,6 @@ static int rti_autorun_end(void *ptObject)
     return 0;
 }
 
-
 int gmsi_components_board_init(void)
 {
     const gmsi_fn_t *fn_ptr;

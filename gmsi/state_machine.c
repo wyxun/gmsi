@@ -1,5 +1,19 @@
 #include "state_machine.h"
 
+bool IntMasterDisable(void)
+{
+    return true;
+}
+
+void IntMasterEnable(void)
+{
+
+}
+
+void Power_idleFunc(void)
+{
+    
+}
 static void StateMachine_FinalState_defaultFunction();
 
 const StateMachine_State StateMachine_FinalState = &StateMachine_FinalState_defaultFunction;

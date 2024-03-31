@@ -1,7 +1,7 @@
 #include "global_define.h"
 #include "utilities/list.h"
 #include "utilities/util_debug.h"
-
+#include "base.h"
 #define GMSI_BASE_LENGTH    20
 static gmsi_base_t g_tBase[GMSI_BASE_LENGTH];
 // 定义根节点
@@ -50,7 +50,7 @@ int gbase_EventSend(gmsi_base_t *ptBaseSrc, uint32_t wId, uint32_t wEvent)
     {
         ptBaseDes = ptListDes->pvOwner;
         // 根据目的id设置事件值
-        ptBaseDes->wEvent = wEvent;
+        ptBaseDes->wEvent |= wEvent;
     }
 
     return 0;
@@ -69,7 +69,7 @@ uint32_t gbase_EventGet(gmsi_base_t *ptBase)
 
 int gbase_MessageSet(gmsi_base_t *ptBaseSrc, uint32_t wId, void *vpMessage)
 {
-    gmsi_base_t *ptBaseDes;
+    gmsi_base_t *ptBaseDes = NULL;
     struct xLIST_ITEM *ptListDes;
     
     // 遍历链表，确定目的id
@@ -110,7 +110,7 @@ gmsi_base_t *gbase_New(void)
 
 void gbase_DegugListBase(void)
 {
-    gmsi_base_t *ptBase;
+    //gmsi_base_t *ptBase;
     struct xLIST_ITEM *ptList;
     // 遍历链表
     for(ptList = listGET_HEAD_ENTRY(&tListClass);        \

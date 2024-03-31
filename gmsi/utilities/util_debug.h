@@ -1,7 +1,8 @@
 #ifndef __UTIL_DEBUG_H__
 #define __UTIL_DEBUG_H__
 #include <stdio.h>
-#include "utilities/trace.h"
+#include <stdbool.h>
+//#include "utilities/trace.h"
 #include "global_define.h"
 //extern void utildebug_LedBreathe(void);
 extern int utildebug_LedBreathe(void *ptVoid);

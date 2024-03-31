@@ -1,5 +1,4 @@
 #include "util_queue.h"
-#include <stdio.h>
 
 /* pfifo¸´Î» */
 qstatus_t queue_init(util_queue_t *q, uint8_t* pchData, uint16_t hwLength)

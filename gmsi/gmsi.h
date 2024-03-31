@@ -2,9 +2,9 @@
 #define __GMSI_H__
 
 // gmsi库所有头文件
-#include "state_machine.h"
-#include "base.h"
-#include "state_machine.h"
+//#include "state_machine.h"
+//#include "base.h"
+//#include "state_machine.h"
 
 typedef int (*gmsi_fn_t)(void);
 #define SECTION(x)                  __attribute__((section(x)))

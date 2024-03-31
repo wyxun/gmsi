@@ -16,9 +16,9 @@
  ****************************************************************************/
 
 /*============================ INCLUDES ======================================*/
-#include "debug/trace.h"
+#include "trace.h"
 #include <string.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 /*============================ MACROS ========================================*/
 #ifndef TRACE_DISPLAY_WIDTH

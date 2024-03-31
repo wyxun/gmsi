@@ -3,6 +3,16 @@
         "list.h": "c",
         "util_debug.h": "c",
         "global_define.h": "c",
-        "gmsi.h": "c"
+        "gmsi.h": "c",
+        "base.h": "c",
+        "string.h": "c",
+        "stdbool.h": "c",
+        "gmsi_uart.h": "c",
+        "util_queue.h": "c",
+        "array": "c",
+        "vector": "c",
+        "xstring": "c",
+        "xutility": "c",
+        "xlocmes": "c"
     }
 }
