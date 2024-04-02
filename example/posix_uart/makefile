@@ -6,11 +6,15 @@ TARGET := demo
 
 CC := clang
 CXX := clang++
-LDFLAGS := -fno-autolink -Wall
+# time.h文件不齐全
+DEFS := -D_XOPEN_SOURCE=700 -DPC_DEBUG
+# -lrt:timer库
+LDFLAGS := -fno-autolink -Wall -lrt
 CFLAGS := -std=c11 -W -Ofast 
-CFLAGS += -I$(GMSI_DIR) \
+CFLAGS += -I$(GMSI_DIR) -I/usr/include \
 -I$(GMSI_UTL_DIR) \
--I$(GMSI_THREEPART_PLOOC)
+-I$(GMSI_THREEPART_PLOOC) 
+
 
 #头文件
 #INCLUDE += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.h))
@@ -18,7 +22,7 @@ CFLAGS += -I$(GMSI_DIR) \
 
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
-SOURCES += main.c pc_uart.c
+SOURCES += main.c pc_uart.c pc_clock.c
 
 OBJECTS := $(SOURCES:.c=.o)
 CFILENDIR := $(notdir  $(SOURCES))
@@ -35,7 +39,7 @@ $(TARGET): $(OBJECTS)
 #$(COBJS) : $(SOURCES)
 #	$(CC) $(CFLAGS) -c $< -o $@
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
 create_build_dir:
 	@mkdir -p $(BUILD_DIR)

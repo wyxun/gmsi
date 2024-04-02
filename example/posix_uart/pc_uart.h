@@ -17,13 +17,13 @@ typedef struct{
     int wOflag;
 }pc_uart_cfg_t;
 typedef struct{
-    gmsi_base_t tBase;
+    gmsi_base_t *ptBase;
     int fd;
 }pc_uart_t;
 
 int pcuart_Init(pc_uart_t *ptThis, pc_uart_cfg_t *ptCfg);
 int pcuart_Read(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength);
 int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
-
+int pcuart_Run(pc_uart_t *ptThis);
 int pcuart_close(pc_uart_t *ptThis);
 #endif

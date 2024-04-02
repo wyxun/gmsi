@@ -8,5 +8,15 @@
 #include <signal.h>
 #include <time.h>
 
-int pcclock_Init(void);
+#include "gmsi.h"
+
+typedef struct{
+    uint8_t chClockbase;
+}pc_clock_cfg_t;
+
+typedef struct{
+    gmsi_base_t *ptBase;
+}pc_clock_t;
+int pcclock_Init(pc_clock_t *ptThis, pc_clock_cfg_t *ptCfg);
+int pcclock_Run(pc_clock_t *ptThis);
 #endif

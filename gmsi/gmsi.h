@@ -2,9 +2,9 @@
 #define __GMSI_H__
 
 // gmsi库所有头文件
-//#include "state_machine.h"
-//#include "base.h"
-//#include "state_machine.h"
+#include "state_machine.h"
+#include "base.h"
+#include "global_define.h"
 
 typedef int (*gmsi_fn_t)(void);
 #define SECTION(x)                  __attribute__((section(x)))
@@ -28,5 +28,6 @@ typedef int (*gmsi_fn_t)(void);
 #define INIT_ENV_EXPORT(fn)             INIT_EXPORT(fn, "5")
 /* appliation initialization (rtgui application etc ...) */
 #define INIT_APP_EXPORT(fn)             INIT_EXPORT(fn, "6")
+
 
 #endif

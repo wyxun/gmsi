@@ -86,3 +86,15 @@ int gmsi_components_board_init(void)
     
     return 0;
 }
+
+void gmsi_errorlog(int wErrorNum)
+{
+    switch(wErrorNum)
+    {
+        case GMSI_SUCCESS:
+        break;
+        
+        default:
+        break;
+    }
+}
