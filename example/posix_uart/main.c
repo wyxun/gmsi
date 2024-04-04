@@ -7,6 +7,7 @@ pc_uart_cfg_t tPcUartCfg = {
     .pchCom = "/dev/ttyS7",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
 };
+
 pc_uart_t tPcUart;
 uint8_t ReceiveData[100];
 
@@ -14,20 +15,26 @@ pc_clock_t tClock;
 pc_clock_cfg_t tClockCfg = {
     .chClockbase = 5,
 };
+
 int main()
 {   
     int16_t hwLength;
+    //printf("pcclock addr is %d\n", (uint32_t)&tClock);
+    pcclock_Init((uint32_t)&tClock, (uint32_t)&tClockCfg);
+    pcuart_Init((uint32_t)&tPcUart, (uint32_t)&tPcUartCfg);
 
-    pcclock_Init(&tClock, &tClockCfg);
-    pcuart_Init(&tPcUart, &tPcUartCfg);
-
+    gbase_DegugListBase();
     while (1)
     {
-        pcuart_Run(&tPcUart);
-        pcclock_Run(&tClock);
+        gmsi_Run();
     }
 
     // Close the serial port device
-    pcuart_close(&tPcUart);
+    //pcuart_close(&tPcUart);
     return 0;
+}
+
+void timer_handler(int signum)
+{
+    gmsi_Clock();
 }

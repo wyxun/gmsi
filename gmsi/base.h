@@ -7,6 +7,15 @@
 
 /*============================ MACROFIED FUNCTIONS ===========================*/                   
 /*============================ TYPES =========================================*/
+
+#if 1
+typedef struct{
+    //void (*Init)(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
+    const int (*Clock)(uint32_t wObjectAddr);
+    const int (*Run)(uint32_t wObjectAddr);
+}gmsi_interface_t;
+#endif
+
 typedef struct{
     /*消息指针 具体类型根据应用确定*/
     uint8_t *pchMessage;
@@ -16,6 +25,8 @@ typedef struct{
 
 typedef struct{
     uint32_t wId;
+    uint32_t wParent;
+    gmsi_interface_t FcnInterface;
 }gmsi_base_cfg_t;
 typedef struct {
     /* id分高低部 高8位为类 低8位为实例编号*/
@@ -25,6 +36,8 @@ typedef struct {
     /* 消息：传递类之间的通信数据 */
     message_t tMessage;
 
+    gmsi_interface_t *pFcnInterface;
+    uint32_t wParent;
     /* 串行所有类的链表节点 */
     struct xLIST_ITEM   tListItem;
 }gmsi_base_t;
@@ -33,13 +46,12 @@ typedef struct {
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
 /*============================ IMPLEMENTATION ================================*/
-extern int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg);
-extern gmsi_base_t *gbase_New(void);
+int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg);
 // 事件
-extern int gbase_EventSend(uint32_t wId, uint32_t wEvent);
-extern uint32_t gbase_EventGet(gmsi_base_t *ptBase);
+int gbase_EventPost(uint32_t wId, uint32_t wEvent);
+uint32_t gbase_EventPend(gmsi_base_t *ptBase);
 // 消息
-extern int gbase_MessageSet(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
-extern struct xLIST* gbase_GetBaseList(void);
+int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
+struct xLIST* gbase_GetBaseList(void);
 #endif
 

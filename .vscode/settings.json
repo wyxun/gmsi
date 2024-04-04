@@ -19,6 +19,8 @@
         "signal.h": "c",
         "stdlib.h": "c",
         "stdio.h": "c",
-        "features.h": "c"
+        "features.h": "c",
+        "pc_uart.h": "c",
+        "example.h": "c"
     }
 }

@@ -17,6 +17,7 @@ typedef struct{
 typedef struct{
     gmsi_base_t *ptBase;
 }pc_clock_t;
-int pcclock_Init(pc_clock_t *ptThis, pc_clock_cfg_t *ptCfg);
-int pcclock_Run(pc_clock_t *ptThis);
+//int pcclock_Init(pc_clock_t *ptThis, pc_clock_cfg_t *ptCfg);
+int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
+int pcclock_Run(uint32_t wObjectAddr);
 #endif

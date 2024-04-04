@@ -1,5 +1,8 @@
 #include <stdint.h>
 #include "gmsi.h"
+#ifdef PC_DEBUG
+#include <assert.h>
+#endif
 //! \name GMSI Interface Type
 //! @{
 //! general purpose interface for normal MCU applicatoin
@@ -40,51 +43,40 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
+void gmsi_Run(void)
+{
+    struct xLIST*  ptListObject = gbase_GetBaseList();
+    struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
+    gmsi_base_t *ptBaseDes;
 
-static int rti_start(void)
-{
-    return 0;
-}
-INIT_EXPORT(rti_start, "0");
+    // 遍历链表
+    while(ptListItemDes != &ptListObject->xListEnd){
+        ptBaseDes = ptListItemDes->pvOwner;
+        assert(NULL != ptBaseDes);
+        ptBaseDes->pFcnInterface->Run(ptBaseDes->wParent);
 
-static int rti_board_start(void)
-{
-    return 0;
-}
-INIT_EXPORT(rti_board_start, "0.end");
-
-static int rti_board_end(void)
-{
-    return 0;
-}
-INIT_EXPORT(rti_board_end, "1.end");
-
-static int rti_init_end(void)
-{
-    return 0;
-}
-INIT_EXPORT(rti_init_end, "6.end");
-
-static int rti_autorun_start(void *ptObject)
-{
-    return 0;
-}
-static int rti_autorun_end(void *ptObject)
-{
-    
-    return 0;
-}
-
-int gmsi_components_board_init(void)
-{
-    const gmsi_fn_t *fn_ptr;
- 
-    for (fn_ptr = &__gmsi_init_rti_board_start; fn_ptr < &__gmsi_init_rti_board_end; fn_ptr++)
-    {
-        (*fn_ptr)();
+        ptListItemDes = ptListItemDes->pxPrevious;
     }
+}
+
+void gmsi_Init(void)
+{
     
-    return 0;
+}
+void gmsi_Clock(void)
+{
+    struct xLIST*  ptListObject = gbase_GetBaseList();
+    struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
+    gmsi_base_t *ptBaseDes;
+
+    // 遍历链表
+    while(ptListItemDes != &ptListObject->xListEnd){
+        ptBaseDes = ptListItemDes->pvOwner;
+        assert(NULL != ptBaseDes);
+        ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
+
+        ptListItemDes = ptListItemDes->pxPrevious;
+    }
 }
 
 void gmsi_errorlog(int wErrorNum)

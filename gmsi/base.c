@@ -5,20 +5,22 @@
 
 #ifdef PC_DEBUG
 #include <stdio.h>
+#include <assert.h>
 #endif
 #define GMSI_BASE_LENGTH    20
 //static gmsi_base_t g_tBase[GMSI_BASE_LENGTH];
 // 定义根节点
-struct xLIST        tListClass;
+struct xLIST        tListObject;
 
 int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
 {
+    int wRet = GMSI_SUCCESS;
     static uint8_t chInitCount = 0;
-    // 初始化类链表根节点
+    // 初始化对象链表根节点
     if(!chInitCount)
-        vListInitialise(&tListClass);
+        vListInitialise(&tListObject);
     chInitCount++;
-    // 初始化类id
+    // 初始化对象id
     ptBase->wId = ptCfg->wId;
 
     /* 事件初始化为0 */
@@ -28,46 +30,52 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     ptBase->tListItem.xItemValue = ptBase->wId;
     ptBase->tListItem.pvOwner = ptBase;
     // 节点插入链表
-    vListInsert(&tListClass, &ptBase->tListItem);
+    vListInsert(&tListObject, &ptBase->tListItem);
+
+    // 对象操作接口
+    if(ptCfg->wParent)
+        ptBase->wParent = ptCfg->wParent;
+    else
+        wRet = GMSI_EAGAIN;
+    ptBase->pFcnInterface = &ptCfg->FcnInterface;
     #ifdef PC_DEBUG
-    printf("init base %d\n", ptBase->wId );
+    //printf("init base %d\n", ptBase->wId);
+    //printf("ptCfg wParent %d\n", ptCfg->wParent);
     #endif
-    return 0;
+    return wRet;
 }
 
 // 事件发送
-int gbase_EventSend(uint32_t wId, uint32_t wEvent)
+int gbase_EventPost(uint32_t wId, uint32_t wEvent)
 {
+    int wRet = GMSI_SUCCESS;
+    uint8_t chErgodicTime = 1;
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;;
     gmsi_base_t *ptBaseDes;
-    struct xLIST_ITEM *ptListDes;
-    
     // 遍历链表，确定目的id
-    for(ptListDes = listGET_HEAD_ENTRY(&tListClass);        \
-        ptListDes != NULL;                                  \
-        ptListDes = listGET_NEXT(ptListDes)
-        )
-    {
-        if(ptListDes->xItemValue == wId)
-        {
-            #ifdef PC_DEBUG
-            //printf("gbase_EventSend to %d", gbase_EventSend);
-            #endif
+    while(ptListItemDes != &tListObject.xListEnd){
+        if(ptListItemDes->xItemValue == wId)
             break;
-        }   
+        // 不匹配继续遍历
+        ptListItemDes = ptListItemDes->pxPrevious;
+        chErgodicTime++;
     }
-    // 找到对应的类实体
-    if(NULL != ptListDes)
+    if(chErgodicTime <= tListObject.uxNumberOfItems)
     {
-        ptBaseDes = ptListDes->pvOwner;
+        // 找到对应的object
+        ptBaseDes = ptListItemDes->pvOwner;
+        assert(NULL != ptBaseDes);
         // 根据目的id设置事件值
         ptBaseDes->wEvent |= wEvent;
     }
-
-    return 0;
+    else
+        wRet = GMSI_ENODEV;
+    
+    return wRet;
 }
 
 // 事件处理
-uint32_t gbase_EventGet(gmsi_base_t *ptBase)
+uint32_t gbase_EventPend(gmsi_base_t *ptBase)
 {
     uint32_t wEvent = ptBase->wEvent;
     if(0 != wEvent)
@@ -77,63 +85,48 @@ uint32_t gbase_EventGet(gmsi_base_t *ptBase)
         return wEvent;
 }
 
-int gbase_MessageSet(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
+int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
 {
     int wRet = 0;
-    struct xLIST_ITEM *ptListDes;
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
+    uint8_t chErgodicTime = 1;
     gmsi_base_t *ptBaseDes;
-    printf("entry gbase_MessageSet");
     // 遍历链表，确定目的id
-    for(ptListDes = listGET_HEAD_ENTRY(&tListClass);        \
-        ptListDes != NULL;                                  \
-        ptListDes = listGET_NEXT(ptListDes)
-        )
-    {
-        if(ptListDes->xItemValue == wId)
-        {
+    while(ptListItemDes != &tListObject.xListEnd){
+        if(ptListItemDes->xItemValue == wId)
             break;
-        }
+        // 不匹配继续遍历
+        chErgodicTime++;
+        ptListItemDes = ptListItemDes->pxPrevious;
     }
-    
-    // 找到对应的类实体
-    if(NULL != ptListDes)
+    if(chErgodicTime <= tListObject.uxNumberOfItems)
     {
-        ptBaseDes = ptListDes->pvOwner;
+        // 找到对应的object
+        ptBaseDes = ptListItemDes->pvOwner;
+        assert(NULL != ptBaseDes);
+        // 操作对应的object
         ptBaseDes->tMessage.pchMessage= pchMessage;
         ptBaseDes->tMessage.hwLength = hwLength;
         ptBaseDes->wEvent |= Gmsi_Event_Transition;
     }
     else
-        wRet = GMSI_EAGAIN;
+        wRet = GMSI_ENODEV;
+
     return wRet;
 }
 
-void* gbase_MessageGet(gmsi_base_t *ptBase)
-{
-    uint16_t hwLength = ptBase->tMessage.hwLength;
-    if(hwLength)
-        return ptBase->tMessage.pchMessage; 
-    else 
-        return NULL;
-}
-
-
 void gbase_DegugListBase(void)
 {
-    //gmsi_base_t *ptBase;
-    struct xLIST_ITEM *ptList;
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
+    printf("List all object:\n");
     // 遍历链表
-    for(ptList = listGET_HEAD_ENTRY(&tListClass);        \
-        ptList != NULL;                                  \
-        ptList = listGET_NEXT(ptList)
-        )
-    {
-        LOG_OUT("\r\n");
-        LOG_OUT(ptList->xItemValue);
+    while(ptListItemDes != &tListObject.xListEnd){
+        printf("    itme id: %d\n", ptListItemDes->xItemValue);
+        ptListItemDes = ptListItemDes->pxPrevious;
     }
 }
 
 struct xLIST* gbase_GetBaseList(void)
 {
-    return &tListClass;
+    return &tListObject;
 }

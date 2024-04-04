@@ -29,5 +29,6 @@ typedef int (*gmsi_fn_t)(void);
 /* appliation initialization (rtgui application etc ...) */
 #define INIT_APP_EXPORT(fn)             INIT_EXPORT(fn, "6")
 
-
+void gmsi_Clock(void);
+void gmsi_Run(void);
 #endif

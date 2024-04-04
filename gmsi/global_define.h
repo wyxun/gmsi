@@ -20,7 +20,7 @@
 #define GMSI_ID_CLASS       100
 #define GMSI_ID_MOCK        101
 
-// ´íÎóÂë
+//
 #define GMSI_SUCCESS        0
 #define GMSI_EPERM          -1
 #define GMSI_ENOENT         -2
@@ -34,6 +34,13 @@
 #define GMSI_ECHILD         -10
 #define GMSI_EAGAIN         -11
 #define GMSI_EACCES         -12
+#define GMSI_EACCES         -13
+#define GMSI_EFAULT         -14
+#define GMSI_ENOTBLK        -15
+#define GMSI_EBUSY          -16
+#define GMSI_EEXIST         -17
+#define GMSI_EXDEV          -18
+#define GMSI_ENODEV         -19
 
 
 // ÊÂ¼þ
@@ -71,4 +78,15 @@ typedef enum {
     Gmsi_Event_Timeout = 1 << 30,
     Gmsi_Event_Transition = (uint32_t)(1 << 31),
 } Gmsi_Event;
+
+#define GET_OBJECT_POINT(OBJECT, ADDR)    (OBJECT *)(ADDR)
+/*
+#define DEFINE_OBJECT(OBJECT)   \
+    do{
+        OBJECT##_cfg_t t##OBJECT##Cfg = {
+            .
+    }
+    }while(0)
+*/
+
 #endif
