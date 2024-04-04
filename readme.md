@@ -223,9 +223,136 @@ void gbase_DegugListBase(void)
 
 
 
-### 使用方法
+## 使用方法
 
 **参考example/template实现**
+
+### 项目制作方法
+
+#### llvm编译器+cubemx生成
+
++ 利用cubemx生成gcc项目
+
++ 修改makefile的编译器
+
+  ```makefile
+  CC = $(llvm_path)\bin\clang.exe
+  AS = $(llvm_path)\bin\clang.exe
+  OBJCOPY = $(llvm_path)\bin\llvm-objcopy
+  SIZE = $(llvm_path)\bin\llvm-size
+  ```
+
++ 修改CFLAG
+
+  ```makefile
+  CFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+  CFLAGS += -std=gnu11 -Wall -Wextra -Ofast
+  CFLAGS += -fno-builtin -ffunction-sections -fdata-sections -fno-strict-aliasing
+  CFLAGS += -fshort-enums -fomit-frame-pointer -c -fdata-sections -ffunction-sections
+  ```
+
++ 指定ld文件
+
+  ```makefile
+  LDSCRIPT = STM32G431.lds
+  ```
+
+#### llvm编译器+vscode编辑
+
++ 在根目录下创建project文件夹
+
+  ```sh
+  mkdir project
+  cd project
+  ```
+
++ 拷贝example/template到project文件下，并将template重命名为工程名
+
+  ```sh
+  cp -r ../example/template .
+  mv template myproject
+  ```
+
++ 修改myproject的makefile文件
+
+  ```makefile
+  #TARGET := demo
+  TARGET := myproject				# 名字自定义
+  
+  # 指定项目源文件（芯片库、第三方文件）
+  # SOURCES += main.c example.c
+  SOURCES += main.c object.c		# 另外补上该项目的对象文件OBJECT.c，泛指所有对象文件
+  
+  # 指定编译器，根据项目平台决定 嵌入式/x86
+  CC = $(llvm_path)\bin\clang.exe
+  ```
+
+#### keil+cubemx
+
++ 利用cubemx生成keil项目
++ 在keil项目上增加gmsi库文件
+
+## MAKEFILE说明
+
++ 指定编译器
+
+```makefile
+// 使用x86下的llvm
+CC := clang
+CXX := clang++
+// 使用嵌入式平台的llvm
+CC = $(llvm_path)\bin\clang.exe
+AS = $(llvm_path)\bin\clang.exe
+OBJCOPY = $(llvm_path)\bin\llvm-objcopy
+SIZE = $(llvm_path)\bin\llvm-size
+```
+
++ 编译flag
+
+```makefile
+# CFLAG:c文件标志
+CFLAGS := -std=c11 -W -Ofast
+# ASFLAG：汇编文件标志，仅在嵌入式平台需要
+ASFLAGS = -target armv7em-none-eabi -mthumb
+# DFLAG：宏标志
+DFLAG ：= -D_XOPEN_SOURCE=700 -DPC_DEBUG
+# LDFLAG:链接标志
+LDFLAGS += -T $(LDSCRIPT)			# 嵌入式需要ld文件，指定链接顺序
+LDFLAGS +=-fno-autolink -Wall -lrt 	# 链接静态库rt
+```
+
++ 源文件路径
+
+```makefile
+# 将选定的目录下所有的c文件添加到SOURCES变量
+SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
+SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
+# 指定添加c文件
+SOURCES += main.c pc_uart.c pc_clock.c
+```
+
++ 编译依赖
+
+```makefile
+# 将文件链接成可执行文件
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+# 将源文件变异成汇编.o文件
+%.o: %.c
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+```
+
++ 标号
+
+```makefile
+# 删除编译垃圾文件
+clean:
+	rm -rf obj/$(COBJS) $(TARGET) $(OBJECTS)
+# 打印makefile文件里的变量值
+printf_value:
+	@echo $(info source files is '$(SOURCES)')
+	@echo $(info CFILENDIR files is '$(CFILENDIR)')
+```
 
 
 
