@@ -1,353 +1,237 @@
-### GMSI框架
+## GMSI框架
 
 **Generic Mcu Software Infrastructure**
 
 ![framework](.assets/framework.jpg)
 
-#### 文件分层介绍
+### 文件分层介绍
 
 ```c
-// gmsi主文件，对接main函数，子模块实例
-gmsi.c/h
-// gmsi通用接口实现
-gmsi_common.c/h
-// gmsi模块测试入口
-gmsi_test.c/h
-// gmsi配置入口，供用户裁剪设置使用
-gmsi_configh.h
-// gmsi子模块实现
-src/
--------->>gmsi_base.c/h
--------->>gmsi_input.c/h
--------->>gmsi_output.c/h
--------->>gmsi_uart.c/h
-// 继承gmsi/src下的模块进行硬件实现
-peripheral/
--------->>hclass.c/h
-// gmsi库无关接口实现和第三方库
-utilities/
--------->>debug/
--------->>perf_counter/
--------->>PLOOC/
+// gmsi库实现文件
+gmsi
+--->>gmsi.c/h
+--->>base.c/h
+--->>global_define.h
+// gmsi组件
+--->>component/
+----------->>gmsi_uart.c/h
+--->>utilities/
+----------->>utilities.h
+----------->>list.c/h
+----------->>util_queue.c/h
+// 第三方库
+ThirdParty/
+--->>PLOOC/
 // gmsi框架图
 image/
 -------->>Base.drawio
 -------->>framework.drawio
-// 编写模板(注释满足Doxygen)
-template/
--------->>gmsi_template.c/h
--------->>class_impl_template.c/h
--------->>class_app_template.c/h
+// 不同平台下例子(注释满足Doxygen)
+example/
+// cortex_m平台下例子
+--->>cortex_m/
+// linux平台下例子
+--->>posix_uart/
+// gmsi通用模板
+--->>template/
 ```
 
-+ **gmsi_lib**抽离硬件实现，制作**硬件中间层**并提供**通信服务**
-  + gmsi_uart:实现出串口收发队列
-  + gmsi_input:实现io读取操作
-    + 内部做滤波相关操作，得到一个硬件输入信号，根据信号对外发送键值**event**
-  + gmsi_output:需要提供硬件io写入操作函数
-    + 接收外部控制信号，进行信号输出（电平/pwm）
+### GMSI理解与应用
 
-+ **peripheral**规范与硬件相关接口，利用GMSI组件对其进行**硬件实例化**
-  + 继承gmsi_lib，利用芯片库函数构造**hardware_class**
-
-+ **class**是根据项目需要实现的功能模块化
-  + 与**peripheral**接收或发送信息
-
-
-#### GMSI理解与应用
-
-##### SECTION语法
+#### object相互通信机制
 
 ```c
-typedef int (*gmsi_runfn_t)(void *ptObject);
+/***************************base.h实现******************************/
+// object身份ID
 typedef struct{
-    void *ptObject;
-    gmsi_runfn_t tfcnGmsiRun;
-}gmsi_classrun_t;
-// 声明外部变量
-extern gmsi_classrun_t CLASSRUN$$Base;
-extern gmsi_classrun_t CLASSRUN$$Limit;
-// 创建gmsi_classrun_t变量指针，获取函数段的首尾地址
-gmsi_classrun_t *ptGmsiAutoRunStart = &CLASSRUN$$Base;
-gmsi_classrun_t *ptGmsiAutoRunEnd = &CLASSRUN$$Limit;
-int gmsi_ClassRun(void)
-{
-    // 遍历Classrun函数段的所有函数并运行
-    for(gmsi_classrun_t *p=ptGmsiAutoRunStart;p<ptGmsiAutoRunEnd;p++)
-    {
-        p->tfcnGmsiRun(p->ptObject);
-    }
-    return 0;
-}
+    uint32_t wId;
+    /* ... */
+}gmsi_base_cfg_t;
+/***************************global_define.h实现**********************/
+// object ID 基类划分
+#define GMSI_ID_UART        1
+#define GMSI_ID_IIC         2
+#define GMSI_ID_SPI         3
+#define GMSI_ID_CAN         4
+#define GMSI_ID_INPUT       5
+#define GMSI_ID_SENSOR      6
+#define GMSI_ID_TIMER       7
+// SOFTWARE
+#define GMSI_ID_CLASS       100
+#define GMSI_ID_MOCK        101
 
-// 只要这个函数tfcnGmsiRun满足int (*gmsi_runfn_t)(void *ptObject),即可添加
-static gmsi_classrun_t GMSI_USED SECTION("CLASSRUN") tGmsiClassRunLedBreahe = {
-    .ptObject = NULL,
-    .tfcnGmsiRun = utildebug_LedBreathe
+/***************************userconfig.h实现**************************/
+// 定义一个具体object ID
+#define OBJECT     (GMSI_ID_MOCK<<8+1)
+#define OBJECT2    (GMSI_ID_MOCK<<8+2)
+
+/***************************object.c实现******************************/
+// object init id
+gmsi_base_cfg_t s_tObjectBaseCfg = {
+    .wId = EXAMPLE,
+    /* ... */
 };
-
+// gmsi base object init
+int object_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
+{
+    wRet = gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
+    {
+        ptBase->wId = ptCfg->wId;
+    }
+}
+// object事件传递实现
+int object_Run(uint32_t wObjectAddr)
+{
+    // wObjectAddr转换成object指针
+    // 等待捕获事件处理
+    wEvent = gbase_EventPend(ptThis->ptBase);
+    if(wEvent)
+        example_EventHandle(ptThis, wEvent);
+}
+int object_Clock(uint32_t wObject)
+{
+    // 定时向其他object发送事件
+    gbase_EventPost(OBJECT2, Gmsi_Event00);
+    {
+        // 遍历链表，找到OBJECT2 id
+        if(ptListItemDes->xItemValue == wId)
+        	ptBaseDes = ptListItemDes->pvOwner;
+        // 对OBJECT2的事件赋值
+        ptBaseDes->wEvent |= wEvent;
+    }
+}
 ```
 
-##### GMSI_ID
+#### object自动运行实现机制
 
 ```c
-/*
-	1、ID分两层结构
-	2、高16bit保留
-	3、高8bit为类
-	4、低8bit为数字chNumber
-*/ 
-uint32_t wId;
-//
-// gmsiconfig.h
-#define GMSI_ID_BASEOFFSET      8
-
-#define GMSI_ID_INPUT           1
-#define GMSI_ID_OUTPUT          2
-#define GMSI_ID_UART            3
-#define GMSI_ID_SPI             4
-#define GMSI_ID_CAN             5
-#define GMSI_ID_IIC             6
-#define GMSI_ID_TIMER           7
-#define GMSI_ID_CLASS           8
-
-// 调用base基类时定义派生的属性
-gmsi_base_cfg_t tGbaseClassCfg = {
-    .wId = GMSI_ID_CLASS << GMSI_ID_BASEOFFSET,
+/***************************object.c实现******************************/
+// gmsi base object init
+gmsi_base_cfg_t s_tExampleBaseCfg = {
+    .wId = EXAMPLE,
+    /* 获取父指针 */
+    .wParent = 0,
+    /* 将gmsi的接口函数地址写入到base_cfg_t */
+    .FcnInterface = {
+        .Clock = object_Clock,
+        .Run = object_Run,
+    },
 };
-// 创建类的配置结构体
-typedef struct {
-	// 类的编号唯一值（高八位为类）
-    uint8_t chNumber;
-}class_cfg_t;
-// 派生类实例化时设定数值
-void class_Init(class_t *ptClass, class_cfg_t *ptCfg)
+
+// object init
+int object_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
-    // new一个base
-    ptClass->ptBase = gbase_New();
-    // 确定ID并写入
-    tGbaseClassCfg.wId +=  ptCfg->chNumber;
-    // 派生类备份Id
-    ptClass->wId = tGbaseClassCfg.wId;
-    // base init
-    gbase_Init(ptClass->ptBase, &tGbaseClassCfg);
+    // 初始化Parent addr
+    s_tObjectBaseCfg.wParent = wObjectAddr;
+    wRet = gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
 }
+
+/***************************gmsi.c实现******************************/
+void gmsi_Run(void)
+{
+    // 遍历链表，执行对应object的Run函数
+	ptBaseDes->pFcnInterface->Run(ptBaseDes->wParent);
+}
+void gmsi_Clock(void)
+{
+	// 遍历链表，执行对应object的Clock函数
+	ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
+}
+
 ```
 
-##### LIST通信实现
-###### LIST机制
+#### LIST通信实现
+##### object查找机制
 ```c
 /* 
 	1、根据目标id号遍历链表，提取对应的base
 	2、把对应的event或message写入对应的base
 */    
-// gmsi_base.c
+/***************************base.c实现******************************/
 	// 设置链表头部
-struct xLIST        tListClass;
+struct xLIST        tListObject;
 
 /*****************遍历链表函数段 start*****************/
-	// 遍历链表，确定目的id
-    for(ptListDes = listGET_HEAD_ENTRY(&tListClass);        \
-        ptListDes != NULL;                                  \
-        ptListDes = listGET_NEXT(ptListDes)
-        )
-    {
-        if(ptListDes->xItemValue == wId)
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
+    uint8_t chErgodicTime = 1;
+    gmsi_base_t *ptBaseDes;
+    // 遍历链表，确定目的id
+    while(ptListItemDes != &tListObject.xListEnd){
+        if(ptListItemDes->xItemValue == wId)
             break;
+        // 不匹配继续遍历
+        chErgodicTime++;
+        ptListItemDes = ptListItemDes->pxPrevious;
     }
-    
-    // 找到对应的类实体
-    if(NULL != ptListDes)
+    if(chErgodicTime <= tListObject.uxNumberOfItems)
     {
-        ptBaseDes = ptListDes->pvOwner;
-		// 对目标base类进行操作
+        // 找到对应的object
+        ptBaseDes = ptListItemDes->pvOwner;
+        assert(NULL != ptBaseDes);
+        // 操作对应的object
+        ptBaseDes->tMessage.pchMessage= pchMessage;
+        ptBaseDes->tMessage.hwLength = hwLength;
+        ptBaseDes->wEvent |= Gmsi_Event_Transition;
     }
 /*****************遍历链表函数段 end*****************/
 ```
 
-###### GMSI通信
+#### GMSI通用
 
-![Base](.assets/Base.jpg)
-
-```c
-typedef struct{
-    /*消息指针 具体类型根据应用确定 最多支持五个数据*/
-    void *vpMessage[5];
-    /* 消息长度 */
-    uint16_t hwLength;
-}message_t;
-typedef struct {
-    uint32_t wId;
-    uint32_t wEvent;
-    message_t *ptMessage;
-    /* 控制的Id */
-    // uint32_t wControlId;
-    /* 串行所有类的链表节点 */
-    struct xLIST_ITEM   tListItem;
-}gmsi_base_t;
-
-// 生产者
-gmsi_uart_data_t tGmsiUartData;
-void class1_Run(class_t *ptClass)
-{
-    // eg:从串口得到一帧数据chArrayData,长度为10
-    tGmsiUartData.pchData = chArrayData;
-    
-    // 方式1
-    message_t tMessage = {
-      	.vppmessage = &tGmsiUartData,
-        .hwLength = 1
-    };
-    // 将数据写入给某个id
-    gbase_MessagePost(ptClass->ptBase, ptClass->wConsumerId, &tMessage);
-}
-// 消费者
-void class2_Run(class_t *ptClass)
-{
-	gmsi_uart_data_t *ptGmsiUartData = (gmsi_uart_data_t *)gbase_MessageGet(ptClass->ptBase);
-    if(NULL != ptGmsiUartData)
-    {
-        // 数据处理
-    }
-}
-```
-
-##### GMSI通用
-
-###### 通用函数
+##### 通用函数
 
 + 异常处理机制
 
 ```c
 // 错误打印
-void gcommon_PrintfError(gmsi_base_t *ptBase, greturn_error_t tGreturnErrorValue)
+void gmsi_errorlog(int wErrorNum)
 {
-    // 输出错误来自那个对象
-    LOU_OUT(ptBase->wId);
-    switch(tGreturnErrorValue)
+    switch(wErrorNum)
     {
-        case GMSI_ERROR_INIT:
-            
-            LOG_OUT("Init Error\r\n");
-            break;
+        case GMSI_SUCCESS:
+        break;
+        
         default:
-            LOG_OUT("Unknow Error\r\n");
-            break;
+        break;
     }
 }
 // 遍历所有对象
-void gcommon_PrintfObject(gmsi_base_t *ptBase)
+void gbase_DegugListBase(void)
 {
-    // UNUSE ptBase
-    struct xLIST_ITEM *ptList;
-    LOG_OUT("start list...\r\n");
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
+    printf("List all object:\n");
     // 遍历链表
-    for(ptList = listGET_HEAD_ENTRY(&tListClass);        \
-        ptList != NULL;                                  \
-        ptList = listGET_NEXT(ptList)
-        )
-    {
-        LOG_OUT(ptList->xItemValue);
-        LOG_OUT("-->");
+    while(ptListItemDes != &tListObject.xListEnd){
+        printf("    itme id: %d\n", ptListItemDes->xItemValue);
+        ptListItemDes = ptListItemDes->pxPrevious;
     }
-    LOG_OUT("\r\n end list...\r\n");
 }
 ```
 
 
 
-###### 返回值
+##### 返回值
 
 ```c
-// GMSI返回值
-#define GMSI_ERROR_INIT		-1
-#define GMSI_ERROR_MALLOC	-2
-
-typedef int32_t greturn_error_t;
-typedef uint32_t greturn_value_t;
-typedef void* greturn_point_t;
+// GMSI返回值，基于LINUX
+#define GMSI_SUCCESS        0
+#define GMSI_EPERM          -1
+#define GMSI_ENOENT         -2
+#define GMSI_ESRCH          -3  
+#define GMSI_EINTR          -4
 ```
 
 
 
-#### 使用方法
+### 使用方法
 
-##### gmsi_xxx模板
-
-+ 制作中间层供**peripheral**实现
+**参考example/template实现**
 
 
 
-##### class模板
+## 编码要求
 
-+ 纯软件
-
-```c
-/*******************class.h start*************************/ 
-// 创建类的配置结构体
-typedef struct {
-	// 类的编号唯一值（高八位为类）
-    uint8_t chNumber;
-    // 生产者id; eg:需要从某个类等待数据或事件
-    uint32_t wProducerId;
-    // 消费者id: eg:需要控制某个类，对其发送数据或事件
-    uint32_t wConsumerId;
-}class_cfg_t;
-// 创建类的行为和动作
-typedef struct {
-    // 包含基类：具有通信和获取外部信号能力
-    gmsi_base_t tBase;
-    // 派生特性
-}class_t;
-/*******************class.h end***************************/ 
-
-/* class.c */
-void class_Init(class_t *ptClass, class_cfg_t *ptCfg)
-{}
-int class_Run(void *pvClass)
-{
-    class_t *ptClass = (class_t *)pvClass;
-    // 状态机运行
-    // 可根据外部信号以及数据进行动作
-}
-void class_Clock(void *pvClass)
-{
-    class_t *ptClass = (class_t *)pvClass;
-    // 内部时钟自运行
-}
-
-/*****************其余特有API_START***********************/
-void class_Aaa(class_t *ptClass);
-void class_Bbb(class_t *ptClass);
-void class_Ccc(class_t *ptClass);
-/*****************其余特有API_END*************************/
-
-/*******************实例调用******************************/ 
-// 创建实例
-class_t tClass;
-class_cfg_t tClassCfg = {
-    .chNumber = 1;
-  	/* 传入配置 */  
-};
-
-// app.c
-// 加载运行函数和时钟函数到对应的函数段SECTION
-static gmsi_classrun_t GMSI_USED SECTION("CLASSRUN") tGmsiClassRun = {
-    .ptObject = tClass,
-    .tfcnGmsiRun = class_Run
-};
-static gmsi_clockrun_t GMSI_USED SECTION("CLOCKRUN") tGmsiClockRuntFlashledClock = {
-    .ptObject = &tClass,
-    .tfcnGmsiRun = class_Clock
-};
-
-// 在主函数初始化调用
-class_Init(&tClass ,&tClassCfg);
-```
-
-
-
-### 编码要求
+### 编码格式
 
 + 使用四个空格替代TAB
 
@@ -443,7 +327,9 @@ class_Init(&tClass ,&tClassCfg);
 
     + 如果和常量进行“==”运算，常量应该放到表达式的左边
 
-### 注释模板Doxygen
+### 注释模板
+
+**支持Doxygen**
 
 + 文件头部
 
