@@ -3,7 +3,7 @@
 
 #include "gmsi.h"
 
-#define EXAMPLE     (GMSI_ID_MOCK<<8+1)
+#define EXAMPLE     ((GMSI_ID_MOCK<<8)+1)
 typedef enum {
     Event_SyncButtonPushed = Gmsi_Event00,
     Event_PacketReceived = Gmsi_Event01,

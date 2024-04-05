@@ -67,14 +67,14 @@ typedef struct{
 
 /***************************object.c实现******************************/
 // object init id
-gmsi_base_cfg_t s_tObjectBaseCfg = {
-    .wId = EXAMPLE,
+gmsi_base_cfg_t tObjectBaseCfg = {
+    .wId = OBJECT,
     /* ... */
 };
 // gmsi base object init
 int object_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
-    wRet = gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
+    wRet = gbase_Init(ptThis->ptBase, &tObjectBaseCfg);
     {
         ptBase->wId = ptCfg->wId;
     }
@@ -88,7 +88,7 @@ int object_Run(uint32_t wObjectAddr)
     if(wEvent)
         example_EventHandle(ptThis, wEvent);
 }
-int object_Clock(uint32_t wObject)
+int object_Clock(uint32_t wObjectAddr)
 {
     // 定时向其他object发送事件
     gbase_EventPost(OBJECT2, Gmsi_Event00);
@@ -167,7 +167,7 @@ struct xLIST        tListObject;
     {
         // 找到对应的object
         ptBaseDes = ptListItemDes->pvOwner;
-        assert(NULL != ptBaseDes);
+        GMSI_ASSERT(NULL != ptBaseDes);
         // 操作对应的object
         ptBaseDes->tMessage.pchMessage= pchMessage;
         ptBaseDes->tMessage.hwLength = hwLength;
@@ -315,7 +315,7 @@ CFLAGS := -std=c11 -W -Ofast
 # ASFLAG：汇编文件标志，仅在嵌入式平台需要
 ASFLAGS = -target armv7em-none-eabi -mthumb
 # DFLAG：宏标志
-DFLAG ：= -D_XOPEN_SOURCE=700 -DPC_DEBUG
+DFLAG ：= -D_XOPEN_SOURCE=700 -DLINUX_POSIX
 # LDFLAG:链接标志
 LDFLAGS += -T $(LDSCRIPT)			# 嵌入式需要ld文件，指定链接顺序
 LDFLAGS +=-fno-autolink -Wall -lrt 	# 链接静态库rt

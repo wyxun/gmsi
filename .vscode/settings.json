@@ -21,6 +21,9 @@
         "stdio.h": "c",
         "features.h": "c",
         "pc_uart.h": "c",
-        "example.h": "c"
+        "example.h": "c",
+        "assert.h": "c",
+        "userconfig.h": "c",
+        "stdint.h": "c"
     }
 }

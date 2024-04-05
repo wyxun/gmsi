@@ -2,15 +2,16 @@ GMSI_DIR := ../../gmsi
 GMSI_UTL_DIR := ../../gmsi/utilities
 GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
 BUILD_DIR := build
-TARGET := demo
+TARGET := template
 
 CC := clang
 CXX := clang++
 # time.h文件不齐全
-DEFS := -D_XOPEN_SOURCE=700 -DPC_DEBUG
+DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX
 # -lrt:timer库
 LDFLAGS := -fno-autolink -Wall -lrt
-CFLAGS := -std=c11 -W -Ofast 
+CFLAGS := -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
+CFLAGS += -Wno-compare-distinct-pointer-types
 CFLAGS += -I$(GMSI_DIR) -I/usr/include \
 -I$(GMSI_UTL_DIR) \
 -I$(GMSI_THREEPART_PLOOC) 

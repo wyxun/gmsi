@@ -1,6 +1,5 @@
 #include "pc_uart.h"
 #include "userconfig.h"
-#include <assert.h>
 
 int pcuart_Run(uint32_t wObjectAddr);
 int pcuart_Clock(uint32_t addr);
@@ -86,7 +85,7 @@ int pcuart_Run(uint32_t wObjectAddr)
     int16_t hwLength = 0;
     uint32_t wEvent;
     pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
-    assert(NULL != ptThis);
+    GMSI_ASSERT(NULL != ptThis);
 
     hwLength = pcuart_Read(ptThis, chReceiveData, 100);
     if(hwLength > 0)
@@ -104,7 +103,7 @@ int pcuart_Run(uint32_t wObjectAddr)
     {
         // 收到消息
     }
-
+    return 0;
 }
 int pcuart_close(pc_uart_t *ptThis)
 {
@@ -122,4 +121,5 @@ int pcuart_Clock(uint32_t wObjectAddr)
         printf("pc_uart clock\n");
         s_count = 0;
     }
+    return 0;
 }

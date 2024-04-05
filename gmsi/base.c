@@ -3,14 +3,14 @@
 #include "utilities/util_debug.h"
 #include "base.h"
 
-#ifdef PC_DEBUG
+#ifdef LINUX_POSIX
 #include <stdio.h>
 #include <assert.h>
 #endif
 #define GMSI_BASE_LENGTH    20
 //static gmsi_base_t g_tBase[GMSI_BASE_LENGTH];
 // 定义根节点
-struct xLIST        tListObject;
+static struct xLIST tListObject;
 
 int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
 {
@@ -38,10 +38,7 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     else
         wRet = GMSI_EAGAIN;
     ptBase->pFcnInterface = &ptCfg->FcnInterface;
-    #ifdef PC_DEBUG
-    //printf("init base %d\n", ptBase->wId);
-    //printf("ptCfg wParent %d\n", ptCfg->wParent);
-    #endif
+
     return wRet;
 }
 
@@ -64,7 +61,7 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent)
     {
         // 找到对应的object
         ptBaseDes = ptListItemDes->pvOwner;
-        assert(NULL != ptBaseDes);
+        GMSI_ASSERT(NULL != ptBaseDes);
         // 根据目的id设置事件值
         ptBaseDes->wEvent |= wEvent;
     }
@@ -82,7 +79,7 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
     {
         ptBase->wEvent = 0;
     }
-        return wEvent;
+    return wEvent;
 }
 
 int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
@@ -103,7 +100,7 @@ int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
     {
         // 找到对应的object
         ptBaseDes = ptListItemDes->pvOwner;
-        assert(NULL != ptBaseDes);
+        GMSI_ASSERT(NULL != ptBaseDes);
         // 操作对应的object
         ptBaseDes->tMessage.pchMessage= pchMessage;
         ptBaseDes->tMessage.hwLength = hwLength;
@@ -126,7 +123,7 @@ void gbase_DegugListBase(void)
     }
 }
 
-struct xLIST* gbase_GetBaseList(void)
+const struct xLIST* gbase_GetBaseList(void)
 {
     return &tListObject;
 }

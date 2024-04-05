@@ -15,7 +15,7 @@ gmsi_base_cfg_t s_tExampleBaseCfg = {
     },
 };
 
-void example_EventHandle(example_t *ptThis, uint32_t wEvent)
+static void example_EventHandle(example_t *ptThis, uint32_t wEvent)
 {
     if(wEvent & Gmsi_Event_Transition)
     {
@@ -36,7 +36,7 @@ int example_Run(uint32_t wObjectAddr)
     uint32_t wEvent;
     // 指针检查
     example_t *ptThis = (example_t *)wObjectAddr;
-    assert(NULL != ptThis);
+    GMSI_ASSERT(NULL != ptThis);
 
     // 事件处理
     wEvent = gbase_EventPend(ptThis->ptBase);
@@ -50,7 +50,7 @@ int example_Run(uint32_t wObjectAddr)
 
 int example_Clock(uint32_t wObjectAddr)
 {
-
+    return 0;
 }
 
 //int example_Init(example_t *ptThis, example_cfg_t *ptCfg)
@@ -58,9 +58,9 @@ int example_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
     int wRet = GMSI_SUCCESS;
     example_t *ptThis = (example_t *)wObjectAddr;
-    example_cfg_t *ptCfg = (example_t *)wObjectCfgAddr;
-    assert(NULL != ptThis);
-    assert(NULL != ptCfg);
+    example_cfg_t *ptCfg = (example_cfg_t *)wObjectCfgAddr;
+    GMSI_ASSERT(NULL != ptThis);
+    GMSI_ASSERT(NULL != ptCfg);
     
     ptThis->ptBase = &s_tExampleBase;
     ptThis->chExampleData = ptCfg->chExampleData;

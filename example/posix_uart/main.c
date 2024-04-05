@@ -24,6 +24,8 @@ int main()
     pcuart_Init((uint32_t)&tPcUart, (uint32_t)&tPcUartCfg);
 
     gbase_DegugListBase();
+    gmsi_Init();
+    GMSI_ASSERT(2 == 1);
     while (1)
     {
         gmsi_Run();

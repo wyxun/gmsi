@@ -7,6 +7,10 @@
 #include "util_queue.h"
 #include "list.h"
 
+#ifdef LINUX_POSIX
+#define GMSI_ASSERT         assert
+#endif
+
 #define GMSI_ID_BASEOFFSET      8
 // HARDWARE
 #define GMSI_ID_UART        1
@@ -33,7 +37,7 @@
 #define GMSI_EBADF          -9
 #define GMSI_ECHILD         -10
 #define GMSI_EAGAIN         -11
-#define GMSI_EACCES         -12
+#define GMSI_ENOMEM         -12
 #define GMSI_EACCES         -13
 #define GMSI_EFAULT         -14
 #define GMSI_ENOTBLK        -15
@@ -41,9 +45,9 @@
 #define GMSI_EEXIST         -17
 #define GMSI_EXDEV          -18
 #define GMSI_ENODEV         -19
+#define GMSI_EMAX           -20
 
-
-// ÊÂ¼þ
+// 
 typedef enum {
     Gmsi_Event00 = 1 << 0,
     Gmsi_Event01 = 1 << 1,

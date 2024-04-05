@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include "gmsi.h"
-#ifdef PC_DEBUG
-#include <assert.h>
-#endif
+
 //! \name GMSI Interface Type
 //! @{
 //! general purpose interface for normal MCU applicatoin
@@ -43,16 +41,17 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
+const char *stringErrorMessage[21];
 void gmsi_Run(void)
 {
-    struct xLIST*  ptListObject = gbase_GetBaseList();
-    struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
+    const struct xLIST*  ptListObject = gbase_GetBaseList();
+    const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
     // 遍历链表
     while(ptListItemDes != &ptListObject->xListEnd){
         ptBaseDes = ptListItemDes->pvOwner;
-        assert(NULL != ptBaseDes);
+        GMSI_ASSERT(NULL != ptBaseDes);
         ptBaseDes->pFcnInterface->Run(ptBaseDes->wParent);
 
         ptListItemDes = ptListItemDes->pxPrevious;
@@ -61,18 +60,19 @@ void gmsi_Run(void)
 
 void gmsi_Init(void)
 {
-    
+    gmsi_LogPrintf("init gmsi ok");
 }
 void gmsi_Clock(void)
 {
-    struct xLIST*  ptListObject = gbase_GetBaseList();
-    struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
+    // 限制只读
+    const struct xLIST*  ptListObject = gbase_GetBaseList();
+    const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
     // 遍历链表
     while(ptListItemDes != &ptListObject->xListEnd){
         ptBaseDes = ptListItemDes->pvOwner;
-        assert(NULL != ptBaseDes);
+        GMSI_ASSERT(NULL != ptBaseDes);
         ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
 
         ptListItemDes = ptListItemDes->pxPrevious;
@@ -81,12 +81,41 @@ void gmsi_Clock(void)
 
 void gmsi_errorlog(int wErrorNum)
 {
-    switch(wErrorNum)
-    {
-        case GMSI_SUCCESS:
-        break;
-        
-        default:
-        break;
-    }
+#ifdef LINUX_POSIX
+    printf("Err_Message:%s \n", stringErrorMessage[abs(wErrorNum)]);
+#endif
 }
+
+
+void gmsi_LogPrintf(const char *pString)
+{
+    char *file = __FILE__;
+    int line = __LINE__;
+#ifdef LINUX_POSIX
+    printf("gmsi_LogPrintf: %s, in file: %s, line :%d\n", pString, file, line);
+#endif
+}
+
+const char *stringErrorMessage[21] = {
+    "Success num:0",
+    "Operation not permitted num:1",
+    "No such file or directory num:2",
+    "No such process num:3",
+    "Interrupted system call num:4",
+    "I/O error num:5",
+    "No such device or address num:6",
+    "Arg list too long num:7",
+    "Exec format error num:8",
+    "Bad file number num:9",
+    "No child processes num:10",
+    "Try again num:11",
+    "Out of memory num:12",
+    "Permission denied num:13",
+    "Bad address num:14",
+    "Block device required num:15",
+    "Device or resource busy num:16",
+    "File exists num:17",
+    "Cross-device link num:18",
+    "No such device num:19",
+    "Not a directory num:20"
+};

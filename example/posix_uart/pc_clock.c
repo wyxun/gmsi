@@ -1,6 +1,5 @@
 #include "pc_clock.h"
 #include "userconfig.h"
-#include <assert.h>
 
 timer_t timerid;
 extern void timer_handler(int signum);
@@ -46,7 +45,7 @@ int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
     tTimerBaseCfg.wParent = wObjectAddr;
 
     if(GMSI_SUCCESS != gbase_Init(ptThis->ptBase, &tTimerBaseCfg))
-        printf("pcclock_Init fail\n");
+        printf("pcclock base Init fail\n");
     return 0;
 }
 
@@ -55,12 +54,13 @@ int pcclock_Run(uint32_t wObjectAddr)
     uint32_t wEvent;
     pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
 
-    assert(NULL != ptThis);
+    GMSI_ASSERT(NULL != ptThis);
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent & Gmsi_Event_Transition)
     {
         printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
     }
+    return 0;
 }
 
 int pcclock_Clock(uint32_t wObjectAddr)
@@ -78,6 +78,7 @@ int pcclock_Clock(uint32_t wObjectAddr)
     else
         timeoutcount--;
     #endif
+    return 0;
 }
 int pcclock_Delete(void)
 {

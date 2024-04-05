@@ -11,8 +11,8 @@
 #if 1
 typedef struct{
     //void (*Init)(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
-    const int (*Clock)(uint32_t wObjectAddr);
-    const int (*Run)(uint32_t wObjectAddr);
+    int (*Clock)(uint32_t wObjectAddr);
+    int (*Run)(uint32_t wObjectAddr);
 }gmsi_interface_t;
 #endif
 
@@ -52,6 +52,6 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t gbase_EventPend(gmsi_base_t *ptBase);
 // ÏûÏ¢
 int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
-struct xLIST* gbase_GetBaseList(void);
+const struct xLIST* gbase_GetBaseList(void);
 #endif
 
