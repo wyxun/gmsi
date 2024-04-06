@@ -1,7 +1,7 @@
 #include "global_define.h"
 #include "utilities/list.h"
 #include "utilities/util_debug.h"
-#include "base.h"
+#include "gbase.h"
 
 #ifdef LINUX_POSIX
 #include <stdio.h>
@@ -38,7 +38,6 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     else
         wRet = GMSI_EAGAIN;
     ptBase->pFcnInterface = &ptCfg->FcnInterface;
-
     return wRet;
 }
 
@@ -115,15 +114,17 @@ int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
 void gbase_DegugListBase(void)
 {
     struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
-    printf("List all object:\n");
+    LOG_OUT("List all object:\n");
     // ±éÀúÁ´±í
     while(ptListItemDes != &tListObject.xListEnd){
-        printf("    itme id: %d\n", ptListItemDes->xItemValue);
+        LOG_OUT("    itme id:");
+        LOG_OUT((uint32_t)ptListItemDes->xItemValue);
+        LOG_OUT("\n");
         ptListItemDes = ptListItemDes->pxPrevious;
     }
 }
 
-const struct xLIST* gbase_GetBaseList(void)
+struct xLIST* gbase_GetBaseList(void)
 {
     return &tListObject;
 }

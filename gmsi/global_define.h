@@ -1,15 +1,10 @@
 #ifndef __GLOBAL_DEFINE_H__
 #define __GLOBAL_DEFINE_H__
 
-#define __NO_USE_LOG__
+//#define __NO_USE_LOG__
 
 #include <stdbool.h>
-#include "util_queue.h"
-#include "list.h"
-
-#ifdef LINUX_POSIX
-#define GMSI_ASSERT         assert
-#endif
+#include <stdint.h>
 
 #define GMSI_ID_BASEOFFSET      8
 // HARDWARE

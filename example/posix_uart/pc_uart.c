@@ -1,5 +1,6 @@
 #include "pc_uart.h"
 #include "userconfig.h"
+#include <stdint.h>
 
 int pcuart_Run(uint32_t wObjectAddr);
 int pcuart_Clock(uint32_t addr);

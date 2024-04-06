@@ -1,7 +1,7 @@
 #ifndef __PC_UART_H__
 #define __PC_UART_H__
 
-#include "base.h"
+#include "gmsi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>

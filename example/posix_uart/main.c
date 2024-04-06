@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <stdint.h>
 #include "pc_clock.h"
 #include "pc_uart.h"
 
@@ -25,14 +25,12 @@ int main()
 
     gbase_DegugListBase();
     gmsi_Init();
-    GMSI_ASSERT(2 == 1);
+    //GMSI_ASSERT(2 == 1);
     while (1)
     {
         gmsi_Run();
     }
 
-    // Close the serial port device
-    //pcuart_close(&tPcUart);
     return 0;
 }
 

@@ -1,5 +1,10 @@
 #include <stdint.h>
 #include "gmsi.h"
+#include "utilities/util_debug.h"
+
+#ifdef LINUX_POSIX
+#include <stdio.h>
+#endif
 
 //! \name GMSI Interface Type
 //! @{
@@ -41,10 +46,13 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
+
 const char *stringErrorMessage[21];
 void gmsi_Run(void)
 {
-    const struct xLIST*  ptListObject = gbase_GetBaseList();
+    // read point only
+    struct xLIST *const ptListObject = gbase_GetBaseList();
+    // read value only
     const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
@@ -56,16 +64,24 @@ void gmsi_Run(void)
 
         ptListItemDes = ptListItemDes->pxPrevious;
     }
+
+    gcoroutine_Run();
 }
 
 void gmsi_Init(void)
 {
-    gmsi_LogPrintf("init gmsi ok");
+    //printf("gmsi version chPurpose:%d, chInterface:%d, chMajor:%d, chMinor:%d\n",\
+                GMSIVersion.chPurpose, GMSIVersion.chInterface, GMSIVersion.chMajor, GMSIVersion.chMinor);
+    LOG_OUT("GMSI VERSION :");
+    LOG_OUT((uint8_t *)&GMSIVersion, 4);
+    // 初始化协程
+    gcoroutine_Init();
 }
 void gmsi_Clock(void)
 {
-    // 限制只读
-    const struct xLIST*  ptListObject = gbase_GetBaseList();
+    // read point only
+    struct xLIST *const ptListObject = gbase_GetBaseList();
+    // read value only
     const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
@@ -119,3 +135,12 @@ const char *stringErrorMessage[21] = {
     "No such device num:19",
     "Not a directory num:20"
 };
+void assert_failed(char *file, uint32_t line)
+{
+    LOG_OUT("assert failed-->");
+    LOG_OUT(file);
+    LOG_OUT(" on line:");
+    LOG_OUT((uint16_t)line);
+    LOG_OUT("\n");
+    while(1);
+}

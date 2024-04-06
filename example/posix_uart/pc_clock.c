@@ -1,5 +1,6 @@
 #include "pc_clock.h"
 #include "userconfig.h"
+#include <stdint.h>
 
 timer_t timerid;
 extern void timer_handler(int signum);
@@ -9,7 +10,7 @@ int pcclock_Clock(uint32_t wObjectAddr);
 gmsi_base_cfg_t tTimerBaseCfg = {
     .wId = PC_CLOCK,
     /* ªÒ»°∏∏÷∏’Î */
-    .wParent = 5,
+    .wParent = 0,
     .FcnInterface = {
         .Clock = pcclock_Clock,
         .Run = pcclock_Run,

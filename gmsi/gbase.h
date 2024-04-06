@@ -2,6 +2,7 @@
 #define __GMSI_BASE_H__
 /*============================ INCLUDES ======================================*/
 #include "global_define.h"
+#include "utilities/list.h"
 /*============================ MACROS ========================================*/
 
 
@@ -52,6 +53,6 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t gbase_EventPend(gmsi_base_t *ptBase);
 // ÏûÏ¢
 int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
-const struct xLIST* gbase_GetBaseList(void);
+struct xLIST* gbase_GetBaseList(void);
 #endif
 

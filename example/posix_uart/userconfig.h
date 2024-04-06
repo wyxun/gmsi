@@ -1,7 +1,7 @@
 #ifndef __USER_CONFIG_H__
 #define __USER_CONFIG_H__
 
-#include "gmsi.h"
+#include "global_define.h"
 
 #define PC_UART     ((GMSI_ID_UART<<8)+1)
 typedef enum {

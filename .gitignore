@@ -1,0 +1,8 @@
+/example/posix_uart/build/*
+/example/posix_uart/.cache/*
+/example/posix_uart/compile_commands.json
+
+#所有编译后得文件
+*.o
+*.elf
+*.bin

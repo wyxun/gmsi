@@ -202,7 +202,7 @@ void gbase_DegugListBase(void)
     printf("List all object:\n");
     // 遍历链表
     while(ptListItemDes != &tListObject.xListEnd){
-        printf("    itme id: %d\n", ptListItemDes->xItemValue);
+        LOGOUT("    itme id: %d\n", ptListItemDes->xItemValue);
         ptListItemDes = ptListItemDes->pxPrevious;
     }
 }
@@ -354,7 +354,14 @@ printf_value:
 	@echo $(info CFILENDIR files is '$(CFILENDIR)')
 ```
 
-
+## VS环境准备
++ clangd
++ 跳转与补全
+```sh
+sudo apt install bear
+// 在makefile目录下执行
+bear make
+```
 
 ## 编码要求
 
