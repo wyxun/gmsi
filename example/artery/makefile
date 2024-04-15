@@ -1,6 +1,6 @@
 # Makefile for STM32G431RBT6 project with LLVM compiler
 BUILD_DIR = build
-CHIP_DIR = ../../arch/cortex_m/at_cm4
+CHIP_DIR = ../../arch/cortex_m/at32f413
 GMSI_DIR := ../../gmsi
 GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
 TARGET := follow
@@ -25,7 +25,7 @@ CFLAGS +=   \
 -I$(GMSI_THREEPART_PLOOC) \
 -I$(GMSI_DIR)
 
-DFLAGS += -DUSE_STDPERIPH_DRIVER -DAT32F413C8T7 -DAT_START_F413_V1 -DCORTEX_M
+DFLAGS += -DUSE_STDPERIPH_DRIVER -DAT32F413C8T7 -DAT_START_F413_V1 -DCORTEX_M -D__NO_USE_LOG__
 
 # Assembler flags
 ASFLAGS = -target armv7em-none-eabi -mthumb
@@ -43,7 +43,7 @@ LDFLAGS += -T $(LDSCRIPT)
 SOURCES =  \
 main.c	\
 at32f413_board.c	\
-$(CHIP_DIR)/system_at32f413.c 
+$(CHIP_DIR)/system_at32f413.c
 
 SOURCES += $(foreach dir, $(CHIP_DIR)/src, $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))

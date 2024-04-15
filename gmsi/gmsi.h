@@ -6,6 +6,7 @@
 #include "gbase.h"
 #include "global_define.h"
 #include "utilities/util_debug.h"
+#include "gcoroutine.h"
 
 #ifdef LINUX_POSIX
 #include <assert.h>

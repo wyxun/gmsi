@@ -65,7 +65,7 @@ void gmsi_Run(void)
         ptListItemDes = ptListItemDes->pxPrevious;
     }
 
-    gcoroutine_Run();
+    //gcoroutine_Run();
 }
 
 void gmsi_Init(void)
@@ -75,7 +75,7 @@ void gmsi_Init(void)
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
     // 初始化协程
-    gcoroutine_Init();
+    //gcoroutine_Init();
 }
 void gmsi_Clock(void)
 {
