@@ -16,6 +16,10 @@ pc_clock_cfg_t tClockCfg = {
     .chClockbase = 5,
 };
 
+//gstorage_t tGstorage;
+//gstorage_cfg_t tGstorageCfg = {
+//}
+
 int main()
 {   
     int16_t hwLength;

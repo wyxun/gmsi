@@ -15,6 +15,8 @@
 #define GMSI_ID_INPUT       5
 #define GMSI_ID_SENSOR      6
 #define GMSI_ID_TIMER       7
+#define GMSI_ID_IO          8
+#define GMSI_ID_STORAGE     9
 // SOFTWARE
 #define GMSI_ID_CLASS       100
 #define GMSI_ID_MOCK        101
@@ -77,6 +79,14 @@ typedef enum {
     Gmsi_Event_Timeout = 1 << 30,
     Gmsi_Event_Transition = (uint32_t)(1 << 31),
 } Gmsi_Event;
+
+// GMSI MODEL
+#define GMSI_STORAGE        ((GMSI_ID_STORAGE<<8)+1)
+typedef enum{
+    Event_Storage = Gmsi_Event00,
+    Event_GetData = Gmsi_Event01,
+}GMSI_STORAGE_Event;
+#define GMSI_INPUT          ((GMSI_ID_IO<<8)+1)
 
 #define GET_OBJECT_POINT(OBJECT, ADDR)    (OBJECT *)(ADDR)
 /*

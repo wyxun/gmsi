@@ -17,7 +17,7 @@ gmsi_base_cfg_t tTimerBaseCfg = {
     },
 };
 gmsi_base_t tBase;
-//int pcclock_Init(pc_clock_t *ptThis, pc_clock_cfg_t *ptCfg)
+
 int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
     struct sigaction sa;

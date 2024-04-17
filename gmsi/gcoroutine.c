@@ -1,6 +1,7 @@
 #include "gcoroutine.h"
 #include "global_define.h"
 #include "utilities/list.h"
+#include "utilities/util_debug.h"
 
 #ifdef LINUX_POSIX
 #include <stdio.h>
@@ -42,7 +43,7 @@ int gcoroutine_Run(void)
     // ±éÀúÁ´±í
     while(ptListItemDes != &tListCoroutine.xListEnd){
         ptHandle = (gcoroutine_handle_t *)ptListItemDes->pvOwner;
-        //GMSI_ASSERT(NULL != ptHandle);
+        GMSI_ASSERT(NULL != ptHandle);
         tFsm = ptHandle->pfcn(ptHandle->pvParam);
 
         ptListItemDes = ptListItemDes->pxPrevious;

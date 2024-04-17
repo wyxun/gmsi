@@ -119,7 +119,10 @@ int pcuart_Clock(uint32_t wObjectAddr)
     s_count++;
     if(s_count > 5000)
     {
-        printf("pc_uart clock\n");
+        //printf("pc_uart clock\n");
+        GLOG_PRINTF("pc_uart clock");
+        GERR_PRINTF(30);
+        GVAL_PRINTF(s_count);
         s_count = 0;
     }
     return 0;

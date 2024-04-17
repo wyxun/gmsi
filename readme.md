@@ -199,7 +199,7 @@ void gmsi_errorlog(int wErrorNum)
 void gbase_DegugListBase(void)
 {
     struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
-    printf("List all object:\n");
+    LOGOUT("List all object:\n");
     // ±éÀúÁ´±í
     while(ptListItemDes != &tListObject.xListEnd){
         LOGOUT("    itme id: %d\n", ptListItemDes->xItemValue);

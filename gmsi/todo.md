@@ -2,7 +2,9 @@
 + 输出信息log完善       ok- gmsi_errorlog & gmsi_LogPrintf  
 + 状态机&协程库实现
 + message链表实现
-+ 标准化时钟接口 方便调用gmsi_Clock
++ 标准化时钟接口 方便调用gmsi_Clock -ok
++ key输入程序：ginput.c ginput.h
++ 系统存储程序： gstorage.c gstorage.h
 
 + object安全访问
 
