@@ -124,6 +124,7 @@ int pcuart_Clock(uint32_t wObjectAddr)
         GERR_PRINTF(30);
         GVAL_PRINTF(s_count);
         s_count = 0;
+        gbase_EventPost(GMSI_STORAGE, Event_GetData);
     }
     return 0;
 }

@@ -24,12 +24,12 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
     if(wEvent & Event_Storage)
     {
         GLOG_PRINTF("get Event_Storage");
-        ptThis->fcnWrite(ptThis->phwStorageStartAddr, ptThis->hwStorageLength);
+        ptThis->ptData->fcnWrite(ptThis->ptData->phwStorageStartAddr, ptThis->ptData->hwStorageLength);
     }
     if(wEvent & Event_GetData)
     {
         GLOG_PRINTF("get Event_GetData");
-        ptThis->fcnRead(ptThis->phwStorageStartAddr, ptThis->hwStorageLength);
+        ptThis->ptData->fcnRead(ptThis->ptData->phwStorageStartAddr, ptThis->ptData->hwStorageLength);
     }
 }
 
@@ -71,14 +71,7 @@ int gstorage_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
     GMSI_ASSERT(NULL != ptThis);
     GMSI_ASSERT(NULL != ptCfg);
 
-    ptThis->phwStorageStartAddr = ptCfg->phwStorageStartAddr;
-    ptThis->hwStorageLength = ptCfg->hwStorageLength;
-
-    GMSI_ASSERT(NULL != ptCfg->fcnRead);
-    ptThis->fcnRead = ptCfg->fcnRead;
-
-    GMSI_ASSERT(NULL != ptCfg->fcnWrite);
-    ptThis->fcnWrite = ptCfg->fcnWrite;
+    ptThis->ptData = ptCfg->ptData;
 
     ptThis->ptBase = &s_tStorageBase;
 
@@ -91,7 +84,6 @@ int gstorage_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
         s_tStorageBaseCfg.wParent = wObjectAddr;
         wRet = gbase_Init(ptThis->ptBase, &s_tStorageBaseCfg);
     }
-    GLOG_PRINTF("gstorage init ok");
 
     return wRet;
 }

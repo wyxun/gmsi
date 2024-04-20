@@ -9,7 +9,12 @@
 #include "glog.h"
 #include "gstorage.h"
 
-void gmsi_Init(void);
+typedef struct {
+    gstorage_data_t *ptData;
+}gmsi_t;
+
+void gmsi_Init(gmsi_t *ptGmsi);
+
 void gmsi_Clock(void);
 void gmsi_Run(void);
 

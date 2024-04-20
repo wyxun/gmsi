@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "gmsi.h"
-#include "utilities/util_debug.h"
+#include "gstorage.h"
 
 #ifdef LINUX_POSIX
 #include <stdio.h>
@@ -46,12 +46,36 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
-void gmsi_Init(void)
+gstorage_cfg_t tGstorageCfg = {
+    .ptData = NULL,
+    .hwStorageTimeOut = 60000,
+};
+gstorage_t tGstorage;
+
+void gmsi_Init(gmsi_t *ptGmsi)
 {
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
-    // 初始化协程
+
+    // 数据管理
+    if(NULL != ptGmsi->ptData)
+    {
+        LOG_OUT("can init storage\n");
+        GMSI_ASSERT(NULL != ptGmsi->ptData);
+        GVAL_PRINTF((uint32_t)ptGmsi->ptData);
+        tGstorageCfg.ptData = ptGmsi->ptData;
+        gstorage_Init((uint32_t)&tGstorage, (uint32_t)&tGstorageCfg);
+    }
+    else 
+    {
+        LOG_OUT("can not init storage\n");
+    }
+    
+    // 协程管理
     //gcoroutine_Init();
+
+    // 调试链表打印
+    gbase_DegugListBase();
 }
 
 void gmsi_Run(void)
