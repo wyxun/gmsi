@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <unistd.h>
 #include "pc_clock.h"
 #include "pc_uart.h"
 #include "utilities/util_debug.h"
@@ -49,6 +50,20 @@ int main()
     GVAL_PRINTF((uint32_t)g_hwSystemDataArrary);
     gmsi_Init(&tGmsi);
 
+#if 0
+    printf("befor fork\n");
+    int id = fork();
+    printf("after fork\n");
+    if(id == 0)
+    {
+        printf("is child, %d,  parent is %d\n", getpid(), getppid());
+        GVAL_PRINTF((uint32_t)pthread_self());
+    }
+    else {
+        printf("is parent, %d,  pparent is %d\n", getpid(), getppid());
+        GVAL_PRINTF((uint32_t)pthread_self());
+    }
+    #endif
     //GMSI_ASSERT(2 == 1);
     while (1)
     {

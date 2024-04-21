@@ -1,6 +1,7 @@
 #include "pc_clock.h"
 #include "userconfig.h"
 #include <stdint.h>
+#include "gcoroutine.h"
 
 timer_t timerid;
 extern void timer_handler(int signum);
@@ -18,6 +19,32 @@ gmsi_base_cfg_t tTimerBaseCfg = {
 };
 gmsi_base_t tBase;
 
+
+fsm_rt_t pcclock_gcoroutine(void *pvParam)
+{
+    static uint8_t s_eState = 0;
+    fsm_rt_t tFsm = fsm_rt_on_going;
+    pc_clock_t *ptThis = (pc_clock_t *)pvParam;
+    switch(s_eState)
+    {
+        case 0:
+            //printf("entry");
+            GLOG_PRINTF("ENTRY Gcoroutine");
+            s_eState++;
+        break;
+        case 1:
+            GLOG_PRINTF("finish gcoroutine");
+            fsm_cpl();
+        default:
+        break;
+    }
+    return tFsm;
+    
+}
+gcoroutine_handle_t tGcoroutineHandle = {
+    .bIsRun = false,
+    .pfcn = NULL,
+};
 int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
     struct sigaction sa;
@@ -60,6 +87,7 @@ int pcclock_Run(uint32_t wObjectAddr)
     if(wEvent & Gmsi_Event_Transition)
     {
         printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
+        //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
     }
     return 0;
 }
@@ -75,6 +103,8 @@ int pcclock_Clock(uint32_t wObjectAddr)
         timeoutcount = 999;
         // 发送给串口一个事件
         gbase_EventPost(PC_UART, Gmsi_Event00);
+
+        gcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_gcoroutine);
     }
     else
         timeoutcount--;

@@ -19,7 +19,8 @@ typedef struct{
 typedef struct{
     gmsi_base_t *ptBase;
     int fd;
-
+    uint8_t chBufferData[100];
+    uint16_t hwBufferLength;
     gmsi_interface_t impl;
 }pc_uart_t;
 

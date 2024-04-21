@@ -1,9 +1,13 @@
 #include "pc_uart.h"
 #include "userconfig.h"
 #include <stdint.h>
+#include <string.h>
+#include <unistd.h>
 
 int pcuart_Run(uint32_t wObjectAddr);
+int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
 int pcuart_Clock(uint32_t addr);
+
 gmsi_base_cfg_t tUartBaseCfg = {
     .wId = PC_UART,
     .wParent = 0,
@@ -16,7 +20,35 @@ gmsi_base_cfg_t tUartBaseCfg = {
 static gmsi_base_t tBase;
 
 uint8_t chReceiveData[100];
-//int pcuart_Init(pc_uart_t *ptThis, pc_uart_cfg_t *ptCfg)
+
+fsm_rt_t pcuart_gcoroutine(void *pvParam)
+{
+    static uint8_t s_eState = 0;
+    fsm_rt_t tFsm = fsm_rt_on_going;
+    pc_uart_t *ptThis = (pc_uart_t *)pvParam;
+    switch(s_eState)
+    {
+        case 0:
+            //printf("entry");
+            GLOG_PRINTF("get uart data");
+            //GVAL_PRINTF(ptThis->chBufferData);
+            pcuart_Write(ptThis, ptThis->chBufferData, ptThis->hwBufferLength);
+            s_eState++;
+        break;
+        case 1:
+            GLOG_PRINTF("finish get uart data handle");
+            fsm_cpl();
+        default:
+        break;
+    }
+    return tFsm;
+    
+}
+gcoroutine_handle_t tGcoroutineUartHandle = {
+    .bIsRun = false,
+    .pfcn = NULL,
+};
+
 int pcuart_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 {
     pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
@@ -66,6 +98,10 @@ int pcuart_Read(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
     {
         //printf("Read success, bytes read: %ld, data received: %.*s\n", bytesRead, (int)bytesRead, pchData);
         //write(ptThis->fd, pchData, bytesRead);
+        memcpy((void *)&ptThis->chBufferData[0], (void *)pchData, bytesRead);
+        ptThis->hwBufferLength = bytesRead;
+
+        gcoroutine_Insert(&tGcoroutineUartHandle, (void *)ptThis, pcuart_gcoroutine);
     }
     else if (bytesRead < 0 && errno != EAGAIN)
     {
