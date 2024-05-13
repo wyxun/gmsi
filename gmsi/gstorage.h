@@ -21,7 +21,7 @@ typedef struct{
 }gstorage_cfg_t;
 
 typedef struct{
-    /*第一个成员固定是base*/
+    /*锟斤拷一锟斤拷锟斤拷员锟教讹拷锟斤拷base*/
     gmsi_base_t *ptBase;
 
     gstorage_data_t *ptData;
@@ -30,6 +30,6 @@ typedef struct{
     uint8_t chStorageFlag;
 }gstorage_t;
 
-int gstorage_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
+int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 
 #endif

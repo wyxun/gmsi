@@ -5,12 +5,12 @@
 
 timer_t timerid;
 extern void timer_handler(int signum);
-int pcclock_Run(uint32_t wObjectAddr);
-int pcclock_Clock(uint32_t wObjectAddr);
+int pcclock_Run(uintptr_t wObjectAddr);
+int pcclock_Clock(uintptr_t wObjectAddr);
 
 gmsi_base_cfg_t tTimerBaseCfg = {
     .wId = PC_CLOCK,
-    /* »ñÈ¡¸¸Ö¸Õë */
+    /* ï¿½ï¿½È¡ï¿½ï¿½Ö¸ï¿½ï¿½ */
     .wParent = 0,
     .FcnInterface = {
         .Clock = pcclock_Clock,
@@ -45,29 +45,29 @@ gcoroutine_handle_t tGcoroutineHandle = {
     .bIsRun = false,
     .pfcn = NULL,
 };
-int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
+int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     struct sigaction sa;
     struct itimerspec its;
     pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
     pc_clock_cfg_t* ptCfg = (pc_clock_cfg_t *)wObjectCfgAddr;
 
-    // ÉèÖÃSIGALRMÐÅºÅµÄ´¦Àíº¯Êý
+    // ï¿½ï¿½ï¿½ï¿½SIGALRMï¿½ÅºÅµÄ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     sa.sa_handler = timer_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGALRM, &sa, NULL);
 
-    // ´´½¨¶¨Ê±Æ÷
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
     timer_create(CLOCK_REALTIME, NULL, &timerid);
 
-    // ÉèÖÃ¶¨Ê±Æ÷µÄ³õÊ¼ÖµºÍ¼ä¸ô
+    // ï¿½ï¿½ï¿½Ã¶ï¿½Ê±ï¿½ï¿½ï¿½Ä³ï¿½Ê¼Öµï¿½Í¼ï¿½ï¿½
     its.it_value.tv_sec = INTERVAL_MS / 1000;
     its.it_value.tv_nsec = (INTERVAL_MS % 1000) * 1000000;
     its.it_interval.tv_sec = its.it_value.tv_sec;
     its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
-    // Æô¶¯¶¨Ê±Æ÷
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
     timer_settime(timerid, 0, &its, NULL);
     ptThis->ptBase = &tBase;
     tTimerBaseCfg.wParent = wObjectAddr;
@@ -77,7 +77,7 @@ int pcclock_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
     return 0;
 }
 
-int pcclock_Run(uint32_t wObjectAddr)
+int pcclock_Run(uintptr_t wObjectAddr)
 {
     uint32_t wEvent;
     pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
@@ -92,16 +92,16 @@ int pcclock_Run(uint32_t wObjectAddr)
     return 0;
 }
 
-int pcclock_Clock(uint32_t wObjectAddr)
+int pcclock_Clock(uintptr_t wObjectAddr)
 {
     static sig_atomic_t timeoutcount = 0;
     #if 1
     if(!timeoutcount)
     {
-        // ¶¨Ê±Æ÷´¥·¢Ê±Ö´ÐÐµÄ²Ù×÷
+        // ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Ö´ï¿½ÐµÄ²ï¿½ï¿½ï¿½
         //printf("Timer expired\n");
         timeoutcount = 999;
-        // ·¢ËÍ¸ø´®¿ÚÒ»¸öÊÂ¼þ
+        // ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Â¼ï¿½
         gbase_EventPost(PC_UART, Gmsi_Event00);
 
         gcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_gcoroutine);

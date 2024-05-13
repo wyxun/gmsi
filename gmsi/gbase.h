@@ -12,15 +12,15 @@
 #if 1
 typedef struct{
     //void (*Init)(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
-    int (*Clock)(uint32_t wObjectAddr);
-    int (*Run)(uint32_t wObjectAddr);
+    int (*Clock)(uintptr_t wObjectAddr);
+    int (*Run)(uintptr_t wObjectAddr);
 }gmsi_interface_t;
 #endif
 
 typedef struct{
-    /*ÏûÏ¢Ö¸Õë ¾ßÌåÀàÐÍ¸ù¾ÝÓ¦ÓÃÈ·¶¨*/
+    /*ï¿½ï¿½Ï¢Ö¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½È·ï¿½ï¿½*/
     uint8_t *pchMessage;
-    /* ÏûÏ¢³¤¶È */
+    /* ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ */
     uint16_t hwLength;
 }message_t;
 
@@ -30,16 +30,16 @@ typedef struct{
     gmsi_interface_t FcnInterface;
 }gmsi_base_cfg_t;
 typedef struct {
-    /* id·Ö¸ßµÍ²¿ ¸ß8Î»ÎªÀà µÍ8Î»ÎªÊµÀý±àºÅ*/
+    /* idï¿½Ö¸ßµÍ²ï¿½ ï¿½ï¿½8Î»Îªï¿½ï¿½ ï¿½ï¿½8Î»ÎªÊµï¿½ï¿½ï¿½ï¿½ï¿½*/
     uint32_t wId;
-    /* ÊÂ¼þ£ºÓÐÉú²úÕßºÍÏû·ÑÕß */
+    /* ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
     uint32_t wEvent;
-    /* ÏûÏ¢£º´«µÝÀàÖ®¼äµÄÍ¨ÐÅÊý¾Ý */
+    /* ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
     message_t tMessage;
 
     gmsi_interface_t *pFcnInterface;
     uint32_t wParent;
-    /* ´®ÐÐËùÓÐÀàµÄÁ´±í½Úµã */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ */
     struct xLIST_ITEM   tListItem;
 }gmsi_base_t;
 
@@ -48,10 +48,10 @@ typedef struct {
 /*============================ PROTOTYPES ====================================*/
 /*============================ IMPLEMENTATION ================================*/
 int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg);
-// ÊÂ¼þ
+// ï¿½Â¼ï¿½
 int gbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t gbase_EventPend(gmsi_base_t *ptBase);
-// ÏûÏ¢
+// ï¿½ï¿½Ï¢
 int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
 struct xLIST* gbase_GetBaseList(void);
 #endif

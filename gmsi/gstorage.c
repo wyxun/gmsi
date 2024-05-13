@@ -5,13 +5,13 @@
 #include "gstorage.h"
 #include "utilities/util_debug.h"
 
-int gstorage_Run(uint32_t wObjectAddr);
-int gstorage_Clock(uint32_t wObjectAddr);
+int gstorage_Run(uintptr_t wObjectAddr);
+int gstorage_Clock(uintptr_t wObjectAddr);
 
 static gmsi_base_t s_tStorageBase;
 gmsi_base_cfg_t s_tStorageBaseCfg = {
     .wId = GMSI_STORAGE,
-    /* »ñÈ¡¸¸Ö¸Õë */
+    /* ï¿½ï¿½È¡ï¿½ï¿½Ö¸ï¿½ï¿½ */
     .wParent = 0,
     .FcnInterface = {
         .Clock = gstorage_Clock,
@@ -33,39 +33,39 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
     }
 }
 
-int gstorage_Run(uint32_t wObjectAddr)
+int gstorage_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
-    // Ö¸Õë¼ì²é
+    // Ö¸ï¿½ï¿½ï¿½ï¿½
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
-    // ÊÂ¼þ´¦Àí
+    // ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent)
         gstorage_EventHandle(ptThis, wEvent);
     
-    // Âß¼­³ÌÐò»ò×´Ì¬»ú³ÌÐò
+    // ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     return wRet;
 }
 
-int gstorage_Clock(uint32_t wObjectAddr)
+int gstorage_Clock(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
 
-    // Ö¸Õë¼ì²é
+    // Ö¸ï¿½ï¿½ï¿½ï¿½
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
     return wRet;
 }
 
-int gstorage_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
+int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     int wRet = GMSI_SUCCESS;
-    // »ñÈ¡Ö¸Õë
+    // ï¿½ï¿½È¡Ö¸ï¿½ï¿½
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     gstorage_cfg_t *ptCfg = (gstorage_cfg_t *)wObjectCfgAddr;
     GMSI_ASSERT(NULL != ptThis);
@@ -75,12 +75,12 @@ int gstorage_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
 
     ptThis->ptBase = &s_tStorageBase;
 
-    // ×ÊÔ´²»¿ÉÓÃ
+    // ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     if(NULL == ptThis->ptBase)
         wRet = GMSI_EAGAIN;
     else
     {
-        // Éè¶¨¸¸Ö¸Õë
+        // ï¿½è¶¨ï¿½ï¿½Ö¸ï¿½ï¿½
         s_tStorageBaseCfg.wParent = wObjectAddr;
         wRet = gbase_Init(ptThis->ptBase, &s_tStorageBaseCfg);
     }
