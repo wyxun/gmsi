@@ -57,17 +57,14 @@ void gmsi_Init(gmsi_t *ptGmsi)
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
 
-    // 数据管理
     if(NULL != ptGmsi->ptData)
     {
         GVAL_PRINTF((uint32_t)ptGmsi->ptData);
         tGstorageCfg.ptData = ptGmsi->ptData;
         gstorage_Init((uint32_t)&tGstorage, (uint32_t)&tGstorageCfg);
     }
-    // 协程管理
     gcoroutine_Init();
 
-    // 调试链表打印
     gbase_DegugListBase();
 }
 
@@ -79,7 +76,6 @@ void gmsi_Run(void)
     const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
-    // 遍历链表
     while(ptListItemDes != &ptListObject->xListEnd){
         ptBaseDes = ptListItemDes->pvOwner;
         GMSI_ASSERT(NULL != ptBaseDes);
@@ -99,7 +95,6 @@ void gmsi_Clock(void)
     const struct xLIST_ITEM *ptListItemDes = ptListObject->xListEnd.pxPrevious;
     gmsi_base_t *ptBaseDes;
 
-    // 遍历链表
     while(ptListItemDes != &ptListObject->xListEnd){
         ptBaseDes = ptListItemDes->pvOwner;
         GMSI_ASSERT(NULL != ptBaseDes);

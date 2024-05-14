@@ -18,19 +18,17 @@ pc_clock_cfg_t tClockCfg = {
     .chClockbase = 5,
 };
 
-//gstorage_t tGstorage;
-//gstorage_cfg_t tGstorageCfg = {
-//}
 void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
 {
-
+    // Write flash save sys_data programme
 }
 void StorageRead(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
 {
-    
+    // Write flash read sys_data programme
 }
-uint16_t g_hwSystemDataArrary[16];
 
+// Structures for sys_data access
+uint16_t g_hwSystemDataArrary[16];
 gstorage_data_t tSysData = {
     .phwStorageStartAddr = g_hwSystemDataArrary,
     .hwStorageLength = 16,
@@ -44,27 +42,14 @@ gmsi_t tGmsi = {&tSysData};
 int main()
 {   
     int16_t hwLength;
-    //printf("pcclock addr is %d\n", (uint32_t)&tClock);
-    pcclock_Init((uint32_t)&tClock, (uint32_t)&tClockCfg);
-    pcuart_Init((uint32_t)&tPcUart, (uint32_t)&tPcUartCfg);
+    // Initialise the pcclock object
+    pcclock_Init((uintptr_t)&tClock, (uintptr_t)&tClockCfg);
+    // Initialise the pcuart object
+    pcuart_Init((uintptr_t)&tPcUart, (uintptr_t)&tPcUartCfg);
+    
     GVAL_PRINTF((uint32_t)g_hwSystemDataArrary);
     gmsi_Init(&tGmsi);
 
-#if 0
-    printf("befor fork\n");
-    int id = fork();
-    printf("after fork\n");
-    if(id == 0)
-    {
-        printf("is child, %d,  parent is %d\n", getpid(), getppid());
-        GVAL_PRINTF((uint32_t)pthread_self());
-    }
-    else {
-        printf("is parent, %d,  pparent is %d\n", getpid(), getppid());
-        GVAL_PRINTF((uint32_t)pthread_self());
-    }
-    #endif
-    //GMSI_ASSERT(2 == 1);
     while (1)
     {
         gmsi_Run();

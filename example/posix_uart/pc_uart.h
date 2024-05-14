@@ -24,6 +24,6 @@ typedef struct{
     gmsi_interface_t impl;
 }pc_uart_t;
 
-int pcuart_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr);
+int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 
 #endif

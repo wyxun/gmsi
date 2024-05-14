@@ -14,23 +14,12 @@ example_cfg_t tEexampleCfg = {
 };
 example_t tExample;
 
-
-// initializer element is not a compile-time constant
-/*
-__attribute__((section("gmsi_init_table")))
-init_object_t tInitTable[] = {
-    {(uint32_t)&tExample,(uint32_t)&tEexampleCfg,example_Init},
-};
-    int table_size = sizeof(tInitTable) / sizeof(init_object_t);
-    for(uint8_t i=0;i<table_size;i++)
-    {
-        tInitTable[i].pFcn(tInitTable[i].wObjectAddr, tInitTable[i].wObjectCfgAddr);
-    }
-*/
 int main()
 {   
-    // Ó²¼þ³õÊ¼»¯
-    example_Init((uint32_t)&tExample, (uint32_t)&tEexampleCfg);
+    // example hardware init
+
+    // example object init
+    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
     
     while (1)
     {

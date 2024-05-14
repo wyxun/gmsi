@@ -11,7 +11,6 @@ static struct xLIST tListCoroutine;
 
 void gcoroutine_Init(void)
 {
-    // 初始化链表头
     vListInitialise(&tListCoroutine);
 }
 
@@ -20,7 +19,6 @@ int gcoroutine_Insert(gcoroutine_handle_t *ptHandle, void *pvParam, fcnCoroutine
     int wRet = GMSI_SUCCESS;
     if(false == ptHandle->bIsRun)
     {
-        // 插入链表
         ptHandle->tListItem.pvOwner = ptHandle;
         ptHandle->pvParam = pvParam;
         ptHandle->pfcn = pfcn;
@@ -49,7 +47,6 @@ int gcoroutine_Run(void)
     fsm_rt_t tFsm;
     const struct xLIST_ITEM *ptListItemDes = tListCoroutine.xListEnd.pxPrevious;
     
-    // 遍历链表
     while(ptListItemDes != &tListCoroutine.xListEnd){
         ptHandle = (gcoroutine_handle_t *)ptListItemDes->pvOwner;
         GMSI_ASSERT(NULL != ptHandle->pfcn);

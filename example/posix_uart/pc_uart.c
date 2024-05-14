@@ -4,9 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 
-int pcuart_Run(uint32_t wObjectAddr);
+int pcuart_Run(uintptr_t wObjectAddr);
 int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
-int pcuart_Clock(uint32_t addr);
+int pcuart_Clock(uintptr_t addr);
 
 gmsi_base_cfg_t tUartBaseCfg = {
     .wId = PC_UART,
@@ -49,7 +49,7 @@ gcoroutine_handle_t tGcoroutineUartHandle = {
     .pfcn = NULL,
 };
 
-int pcuart_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
+int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
     pc_uart_cfg_t *ptCfg = (pc_uart_cfg_t *)wObjectCfgAddr;
@@ -96,8 +96,6 @@ int pcuart_Read(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
     ssize_t bytesRead = read(ptThis->fd, pchData, hwMaxLength);
     if (bytesRead > 0)
     {
-        //printf("Read success, bytes read: %ld, data received: %.*s\n", bytesRead, (int)bytesRead, pchData);
-        //write(ptThis->fd, pchData, bytesRead);
         memcpy((void *)&ptThis->chBufferData[0], (void *)pchData, bytesRead);
         ptThis->hwBufferLength = bytesRead;
 
@@ -117,7 +115,7 @@ int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength)
     return wRet;
 }
 
-int pcuart_Run(uint32_t wObjectAddr)
+int pcuart_Run(uintptr_t wObjectAddr)
 {
     int16_t hwLength = 0;
     uint32_t wEvent;
@@ -133,12 +131,12 @@ int pcuart_Run(uint32_t wObjectAddr)
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent & Gmsi_Event00)
     {
-        // ÊÕµ½ÊÂ¼þGmsi_Event00
+        // ï¿½Õµï¿½ï¿½Â¼ï¿½Gmsi_Event00
         printf("get clock event00\n");
     }
     if(wEvent & Gmsi_Event_Transition)
     {
-        // ÊÕµ½ÏûÏ¢
+        // ï¿½Õµï¿½ï¿½ï¿½Ï¢
     }
     return 0;
 }
@@ -147,7 +145,7 @@ int pcuart_close(pc_uart_t *ptThis)
     return close(ptThis->fd);
 }
 
-int pcuart_Clock(uint32_t wObjectAddr)
+int pcuart_Clock(uintptr_t wObjectAddr)
 {
     static uint32_t s_count = 0;
     pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
