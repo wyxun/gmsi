@@ -6,9 +6,9 @@ TARGET := demo
 
 CC := clang
 CXX := clang++
-# time.h文件不齐全
+
 DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX
-# -lrt:timer库
+# -lrt:timer
 LDFLAGS := -fno-autolink -Wall -lrt
 CFLAGS := -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
 CFLAGS += -Wno-compare-distinct-pointer-types
@@ -23,7 +23,6 @@ SOURCES += main.c pc_uart.c pc_clock.c
 OBJECTS := $(SOURCES:.c=.o)
 CFILENDIR := $(notdir  $(SOURCES))
 
-# *.o文件
 COBJS := $(patsubst %, $(BUILD_DIR)/%, $(CFILENDIR:.c=.o))
 
 all: $(TARGET)

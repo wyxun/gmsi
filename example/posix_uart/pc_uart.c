@@ -131,12 +131,11 @@ int pcuart_Run(uintptr_t wObjectAddr)
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent & Gmsi_Event00)
     {
-        // �յ��¼�Gmsi_Event00
         printf("get clock event00\n");
     }
     if(wEvent & Gmsi_Event_Transition)
     {
-        // �յ���Ϣ
+
     }
     return 0;
 }
@@ -153,7 +152,6 @@ int pcuart_Clock(uintptr_t wObjectAddr)
     s_count++;
     if(s_count > 5000)
     {
-        //printf("pc_uart clock\n");
         GLOG_PRINTF("pc_uart clock");
         GERR_PRINTF(30);
         GVAL_PRINTF(s_count);
