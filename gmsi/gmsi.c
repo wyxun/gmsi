@@ -59,7 +59,6 @@ void gmsi_Init(gmsi_t *ptGmsi)
 
     if(NULL != ptGmsi->ptData)
     {
-        GVAL_PRINTF((uint32_t)ptGmsi->ptData);
         tGstorageCfg.ptData = ptGmsi->ptData;
         gstorage_Init((uint32_t)&tGstorage, (uint32_t)&tGstorageCfg);
     }
