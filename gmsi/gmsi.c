@@ -60,7 +60,7 @@ void gmsi_Init(gmsi_t *ptGmsi)
     if(NULL != ptGmsi->ptData)
     {
         tGstorageCfg.ptData = ptGmsi->ptData;
-        gstorage_Init((uint32_t)&tGstorage, (uint32_t)&tGstorageCfg);
+        gstorage_Init((uintptr_t)&tGstorage, (uintptr_t)&tGstorageCfg);
     }
     gcoroutine_Init();
 

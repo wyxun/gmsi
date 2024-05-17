@@ -26,7 +26,7 @@ typedef struct{
 
 typedef struct{
     uint32_t wId;
-    uint32_t wParent;
+    uintptr_t wParent;
     gmsi_interface_t FcnInterface;
 }gmsi_base_cfg_t;
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
     message_t tMessage;
 
     gmsi_interface_t *pFcnInterface;
-    uint32_t wParent;
+    uintptr_t wParent;
 
     struct xLIST_ITEM   tListItem;
 }gmsi_base_t;

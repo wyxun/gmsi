@@ -11,7 +11,6 @@ int gstorage_Clock(uintptr_t wObjectAddr);
 static gmsi_base_t s_tStorageBase;
 gmsi_base_cfg_t s_tStorageBaseCfg = {
     .wId = GMSI_STORAGE,
-    /* ��ȡ��ָ�� */
     .wParent = 0,
     .FcnInterface = {
         .Clock = gstorage_Clock,
@@ -37,16 +36,13 @@ int gstorage_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
-    // ָ����
+
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
-    // �¼�����
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent)
         gstorage_EventHandle(ptThis, wEvent);
-    
-    // �߼������״̬������
 
     return wRet;
 }
@@ -55,7 +51,6 @@ int gstorage_Clock(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
 
-    // ָ����
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
@@ -65,7 +60,7 @@ int gstorage_Clock(uintptr_t wObjectAddr)
 int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     int wRet = GMSI_SUCCESS;
-    // ��ȡָ��
+
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
     gstorage_cfg_t *ptCfg = (gstorage_cfg_t *)wObjectCfgAddr;
     GMSI_ASSERT(NULL != ptThis);
@@ -75,12 +70,10 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
     ptThis->ptBase = &s_tStorageBase;
 
-    // ��Դ������
     if(NULL == ptThis->ptBase)
         wRet = GMSI_EAGAIN;
     else
     {
-        // �趨��ָ��
         s_tStorageBaseCfg.wParent = wObjectAddr;
         wRet = gbase_Init(ptThis->ptBase, &s_tStorageBaseCfg);
     }
