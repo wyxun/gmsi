@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "socket.h": "c",
+        "cstdlib": "c",
+        "userconfig.h": "c",
+        "upper.h": "c"
     }
 }

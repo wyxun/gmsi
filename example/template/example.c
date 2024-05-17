@@ -63,10 +63,14 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     GMSI_ASSERT(NULL != ptThis);
     GMSI_ASSERT(NULL != ptCfg);
     
-    /* cfg data to object --start*/ 
+    /* cfg members to object --start * / 
 
-    /* cfg data to object --end*/ 
+    /* cfg members to object --end */ 
 
+    /* hardware init --start */
+
+    /* hardware init --end */
+    
     // regist object in gmsi list
     ptThis->ptBase = &s_tExampleBase;
     if(NULL == ptThis->ptBase)

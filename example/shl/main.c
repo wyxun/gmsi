@@ -27,7 +27,7 @@ gstorage_data_t tSysData = {
 gmsi_t tGmsi = {&tSysData};
 
 lower_cfg_t tLowerCfg = {
-    .pchCom = "/dev/ttyS7",
+    .pchCom = "/dev/ttyS1",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
 };
 lower_t tLower;
@@ -77,7 +77,7 @@ void timer_handler(int signum)
     static uint16_t timeout = 0;
     if(!timeout)
     {
-        timeout = 1000;
+        timeout = 4999;
         //GLOG_PRINTF("timeout");
         gbase_EventPost(LOWER, Event_PacketReceived);
     }
