@@ -7,6 +7,7 @@
 #include "lower.h"
 #include "upper.h"
 #include "userconfig.h"
+#include "ghttp.h"
 
 #define INTERVAL_MS 1
 
@@ -27,7 +28,7 @@ gstorage_data_t tSysData = {
 gmsi_t tGmsi = {&tSysData};
 
 lower_cfg_t tLowerCfg = {
-    .pchCom = "/dev/ttyS1",
+    .pchCom = "/dev/tty33",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
 };
 lower_t tLower;
@@ -65,9 +66,11 @@ int main(int argc, char **argv)
 
     gmsi_Init(&tGmsi);
     GLOG_PRINTF("OK");
+
     while(1)
     {
         gmsi_Run();
+        
     }
     return 0;
 }

@@ -3,6 +3,8 @@
 
 #define PORT    5001
 
+#define SOCKET_PATH "/tmp/ipc_socket"
+
 int upper_Clock(uintptr_t wObjectAddr);
 int upper_Run(uintptr_t wObjectAddr);
 
@@ -35,25 +37,24 @@ int upper_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
- 
+    socklen_t tClientLen;
     upper_t *ptThis = (upper_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
+    tClientLen = sizeof(ptThis->tClinetAddr);
     // accept connect
-    if(ptThis->wSocket == accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tSocketAddr, (socklen_t *)&ptThis->wAddrLength) < 0)
+    ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
+    if(ptThis->wClinetFd > 0)
     {
-        GVAL_PRINTF(ptThis->wServerFd);
-        GLOG_PRINTF("accept fail");
+        memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
+        if(read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer) -1))
+        {
+            printf("Received message from client: %s\n", ptThis->chBuffer);
+            gbase_EventPost(GMSI_STORAGE, Event_Storage);
+        }
+        close(ptThis->wClinetFd);
     }
 
-    // clear buffer
-    memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
-    // get ipc data
-    read(ptThis->wSocket, ptThis->chBuffer, 1024);
-    if(ptThis->chBuffer[0] != 0)
-        printf("Received message: %s\n", ptThis->chBuffer);
-
-    close(ptThis->wSocket);
     // event handler
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent)
@@ -77,7 +78,7 @@ int upper_Clock(uintptr_t wObjectAddr)
         ptThis->hwTestCount--;
     else if(!ptThis->hwTestCount)
     {
-        ptThis->hwTestCount = 1000;
+        ptThis->hwTestCount = 4999;
     }
     // clock in 1ms
     return 0;
@@ -90,6 +91,7 @@ int upper_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     // pointer conversion
     upper_t *ptThis = (upper_t *)wObjectAddr;
     upper_cfg_t *ptCfg = (upper_cfg_t *)wObjectCfgAddr;
+    char buf[30];
     // check pointer
     GMSI_ASSERT(NULL != ptThis);
     GMSI_ASSERT(NULL != ptCfg);
@@ -111,30 +113,30 @@ int upper_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     /* hardware init --start */
     ptThis->wAddrLength = sizeof(ptThis->chBuffer);
     // creat socketfd
-    if ((ptThis->wServerFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    ptThis->wServerFd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (ptThis->wServerFd < 0) {
         GVAL_PRINTF(ptThis->wServerFd);
         GLOG_PRINTF("socket failed");
     }
-    // setting socketfd
-    #if 0
-    if (setsockopt(ptThis->wServerFd, SOL_SOCKET, SO_REUSEADDR, &wOpt, sizeof(wOpt))) {
-        GVAL_PRINTF(ptThis->wServerFd);
-        GLOG_PRINTF("setsockopt fail");
-    }
-    #endif
-    // setting address
-    ptThis->tSocketAddr.sin_family = AF_INET;
-    ptThis->tSocketAddr.sin_addr.s_addr = INADDR_ANY;
-    ptThis->tSocketAddr.sin_port = htons(PORT);
-    memset(&(ptThis->tSocketAddr.sin_zero), 0, sizeof(ptThis->tSocketAddr.sin_zero));
-    // band fd
-    if (bind(ptThis->wServerFd, (struct sockaddr *)&ptThis->tSocketAddr, sizeof(ptThis->tSocketAddr))<0) {
+    // band socket
+    memset(&ptThis->tServerAddr, 0, sizeof(ptThis->tServerAddr));
+    ptThis->tServerAddr.sun_family = AF_UNIX;
+    strncpy(ptThis->tServerAddr.sun_path, SOCKET_PATH, sizeof(ptThis->tServerAddr.sun_path) - 1);
+    // makesure path ok
+    unlink(SOCKET_PATH);    
+    if(bind(ptThis->wServerFd, (struct sockaddr *)&ptThis->tServerAddr, sizeof(ptThis->tServerAddr)) < 0)
+    {
         GLOG_PRINTF("bind failed");
+        exit(1);
     }
+
     // listen
-    if (listen(ptThis->wServerFd, 5) < 0) {
-        GLOG_PRINTF("listen fail");
+    if(listen(ptThis->wServerFd, 5) < 0)
+    {
+        GLOG_PRINTF("listen failed");
+        exit(1);
     }
+    printf("Server is running and waiting for connections...\n");
     /* hardware init --end */
 
     /* end of add object in gmsi_lib*/ 

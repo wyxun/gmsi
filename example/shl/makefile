@@ -18,7 +18,7 @@ CFLAGS += -I$(GMSI_DIR) -I/usr/include \
 
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
-SOURCES += main.c lower.c upper.c
+SOURCES += main.c lower.c upper.c ghttp.c
 
 OBJECTS := $(SOURCES:.c=.o)
 CFILENDIR := $(notdir  $(SOURCES))

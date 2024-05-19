@@ -4,6 +4,8 @@
         "socket.h": "c",
         "cstdlib": "c",
         "userconfig.h": "c",
-        "upper.h": "c"
+        "upper.h": "c",
+        "types.h": "c",
+        "un.h": "c"
     }
 }

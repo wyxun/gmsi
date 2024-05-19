@@ -55,6 +55,7 @@ int lower_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     ptThis->fd = open(ptCfg->pchCom, ptCfg->wOflag);
     if (ptThis->fd == -1)
     {
+        GLOG_PRINTF("lower fd open fail");
         wRet = GMSI_EAGAIN;
     }
     // Configure the serial port parameters
