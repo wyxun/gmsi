@@ -97,6 +97,46 @@ cd gmsi
     }
     ```
 
+    + 快速调用方法
+
+        + copy example.c  example.h到项目目录
+
+        ```sh
+        cp ../template/example.c .
+        cp ../template/example.h .
+        ```
+
+        + 全局替换example名字，注意**大小写匹配**
+
+        ```c
+        example  --> object
+        Example  --> Objeect
+        EXAMPLE  --> OBJECT_ID
+        ```
+
+        + 将object.c添加到makefile文件
+
+        ```makefile
+        SOURCES += object.c
+        ```
+
+        + 在main.c文件初始化object
+
+        ```c
+        example_cfg_t tEexampleCfg = {
+            //.chExampleData = 0,
+        };
+        example_t tExample;
+        
+        int main(void)
+        {
+            example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
+            while(1);
+        }
+        ```
+
+        
+
 + 编写**main**主程序
 
 ```c
