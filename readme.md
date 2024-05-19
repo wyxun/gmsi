@@ -404,33 +404,36 @@ bear make
 
       + 使用改良的匈牙利命名法；用前缀表示变量类型；
 
-      | 类型     | 前缀 | 注释         |
-      | -------- | ---- | ------------ |
-      | uint8_t  | ch   | byte         |
-      | int8_t   | c    |              |
-      | uint16_t | hw   | half-word    |
-      | int16_t  | i    |              |
-      | uint32_t | w    | word         |
-      | int32_t  | n    |              |
-      | uint64_t | dw   | double-word  |
-      | int64_t  | l    |              |
-      | float    | f    |              |
-      | double   | df   | double-float |
-      | bool     | b    | boolean      |
-      | 函数指针 | fcn  |              |
-
+      | 类型                | 前缀 | 注释                  |
+      | ------------------- | ---- | --------------------- |
+      | uint8_t             | ch   | byte（无符号）        |
+      | int8_t              | c    | byte（有符号）        |
+      | uint16_t            | hw   | half-word（无符号）   |
+      | int16_t             | i    | half-word（有符号）   |
+      | uint32_t            | w    | word（无符号）        |
+      | int32_t             | n    | word（有符号）        |
+      | uint64_t            | dw   | double-word（无符号） |
+      | int64_t             | l    | double-word（有符号） |
+      | float               | f    |                       |
+      | double              | df   | double-float          |
+      | bool                | b    | boolean               |
+      | 函数指针            | fcn  |                       |
+      | typedef struct xx_t | tXxx | 自定义结构体          |
+      | typedef enum xx_e   | eXxx | 自定义枚举变量        |
+      |                     |      |                       |
+      
       + 指针的前缀是“p”，指向指针的指针是“pp”，以此类推，一般用不到“pp”以上的。如果是函数指针，则用fcn
-
+      
       + 所有自定义的变量类型前缀都是“t”
-
+      
       + 对于特殊修饰的变量再加入不同的前缀
-
+      
         + static型变量追加“s_”
-
+      
         + 全局变量追加“g_”
-
+      
         + const修饰的变量追加“c_”，当const和static同时出现使用“c_”
-
+      
           ```c
           bool g_bFlag = false;			//!< 全局变量
           static uint16_t s_hwValue;		//!< 静态变量
@@ -444,26 +447,24 @@ bear make
           …
           }
           ```
-
+      
       + 宏（Macro）与枚举（enum）
-
+      
         + 由短语构成且一律**大写**
         + 单词与单词之间用下划线隔开
         + 有返回值的宏，请使用括号包裹起来（常数/常量除外）
         + 没有返回值的宏，请使用 do {} while(0) 包裹起来
-
+      
       + 函数（Function）
-
+      
         + 由短语构成且原则上一律**小写**
         + 模块名与描述单词之间用下划线隔开，其中描述单词首字母大写
-
+  
   + 其他
-
+  
     + 如果和常量进行“==”运算，常量应该放到表达式的左边
 
 ### 注释模板
-
-**支持Doxygen**
 
 + 文件头部
 
@@ -489,14 +490,7 @@ bear make
  * @details	    This is the detail description. 
  * @param[in]	inArgName input argument description.
  * @param[out]	outArgName output argument description. 
- * @retval		0		成功
- * @retval		ERROR	错误 
- * @par 标识符
- * 		保留
- * @par 其它
- * 		无
- * @par 修改日志
- * 		XXX于2023-10-03创建
+ * @retval
  */
 greturn_error_t gmsi_xxxInit(gmsi_xxx_t *ptxxx, gmsi_xxx_cfg_t *ptCfg);
 ```
