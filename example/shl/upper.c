@@ -49,10 +49,16 @@ int upper_Run(uintptr_t wObjectAddr)
     // clear buffer
     memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
     // get ipc data
-    read(ptThis->wSocket, ptThis->chBuffer, 1024);
+    uint16_t hwLength = read(ptThis->wSocket, ptThis->chBuffer, 1024);
     if(ptThis->chBuffer[0] != 0)
+    {
         printf("Received message: %s\n", ptThis->chBuffer);
-
+        //write(ptThis->wSocket, ptThis->chBuffer, hwLength);
+    }
+    else
+    {
+        
+    }
     close(ptThis->wSocket);
     // event handler
     wEvent = gbase_EventPend(ptThis->ptBase);
