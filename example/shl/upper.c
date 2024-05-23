@@ -1,5 +1,9 @@
 #include "upper.h"
 #include "userconfig.h"
+#include <errno.h>
+#include <sysexits.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #define PORT    5001
 
@@ -38,23 +42,66 @@ int upper_Run(uintptr_t wObjectAddr)
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
     socklen_t tClientLen;
+    int16_t hwLength = 0;
     upper_t *ptThis = (upper_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
-    tClientLen = sizeof(ptThis->tClinetAddr);
-    // accept connect
-    ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
 
-    if(ptThis->wClinetFd > 0)
+    static uint8_t s_chStatus = 0;
+
+    switch(s_chStatus)
     {
-        memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
-        uint16_t hwLength = read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer));
-        if(hwLength)
-        {
+        case 0:
+            tClientLen = sizeof(ptThis->tClinetAddr);
+            // accept connect
+            ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
+
+            if(ptThis->wClinetFd < 0)
+            {
+                if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                    // 没有新的连接请求，继续等待
+                    return wRet;
+                }else if(errno == EINTR){
+                    return wRet;
+                } else {
+                    GLOG_PRINTF("Error accepting connection");
+                    exit(1);
+                }
+            }
+            else {
+                s_chStatus++;
+                GLOG_PRINTF("Client connected");
+            }
+        break;
+        case 1:
+            // 读取客户端发送的消息
+            memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
+            //ssize_t num_bytes = read(client_sockfd, buffer, sizeof(buffer) - 1);
+            hwLength = read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer));
+            if (hwLength < 0) {
+                if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                    // 没有数据可读，继续等待
+                    return wRet;
+                } else if(errno == EINTR){
+                    return wRet;
+                }else {
+                    perror("Error reading from socket");
+                    exit(1);
+                }
+            } else if (hwLength == 0) {
+                printf("Client disconnected\n");
+                s_chStatus = 0;
+                break;
+            }
             printf("Received message from client: %s\n", ptThis->chBuffer);
-            gbase_EventPost(GMSI_STORAGE, Event_Storage);
-            write(ptThis->wClinetFd, ptThis->chBuffer, hwLength);
-        }
-    }  
+
+            // 发送响应给客户端
+            if (write(ptThis->wClinetFd, ptThis->chBuffer, hwLength+1) < 0) {
+                perror("Error writing to socket");
+                exit(1);
+            }
+        break;
+    }
+ 
     // event handler
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent)
@@ -117,6 +164,17 @@ int upper_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     if (ptThis->wServerFd < 0) {
         GVAL_PRINTF(ptThis->wServerFd);
         GLOG_PRINTF("socket failed");
+    }
+
+    // set socket nonblock
+    int flags = fcntl(ptThis->wServerFd, F_GETFL);
+    if (flags < 0) {
+        perror("Error getting socket flags");
+        exit(1);
+    }
+    if (fcntl(ptThis->wServerFd, F_SETFL, flags | SOCK_NONBLOCK) < 0) {
+        perror("Error setting socket flags");
+        exit(1);
     }
     // band socket
     memset(&ptThis->tServerAddr, 0, sizeof(ptThis->tServerAddr));
