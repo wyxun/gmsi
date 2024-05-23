@@ -21,7 +21,6 @@ typedef struct{
 }gstorage_cfg_t;
 
 typedef struct{
-    /*��һ����Ա�̶���base*/
     gmsi_base_t *ptBase;
 
     gstorage_data_t *ptData;

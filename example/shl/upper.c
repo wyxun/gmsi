@@ -40,21 +40,21 @@ int upper_Run(uintptr_t wObjectAddr)
     socklen_t tClientLen;
     upper_t *ptThis = (upper_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
-
     tClientLen = sizeof(ptThis->tClinetAddr);
     // accept connect
     ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
+
     if(ptThis->wClinetFd > 0)
     {
         memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
-        if(read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer) -1))
+        uint16_t hwLength = read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer));
+        if(hwLength)
         {
             printf("Received message from client: %s\n", ptThis->chBuffer);
             gbase_EventPost(GMSI_STORAGE, Event_Storage);
+            write(ptThis->wClinetFd, ptThis->chBuffer, hwLength);
         }
-        close(ptThis->wClinetFd);
-    }
-
+    }  
     // event handler
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent)
