@@ -2,7 +2,7 @@ GMSI_DIR := ../../gmsi
 GMSI_UTL_DIR := ../../gmsi/utilities
 GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
 BUILD_DIR := build
-TARGET := demo
+TARGET := $(BUILD_DIR)/demo
 
 CC := clang
 CXX := clang++
@@ -20,22 +20,25 @@ SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
 SOURCES += main.c pc_uart.c pc_clock.c
 
-OBJECTS := $(SOURCES:.c=.o)
-CFILENDIR := $(notdir  $(SOURCES))
+OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SOURCES)))
 
-COBJS := $(patsubst %, $(BUILD_DIR)/%, $(CFILENDIR:.c=.o))
+all: $(BUILD_DIR) $(TARGET)
 
-all: $(TARGET)
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+$(BUILD_DIR)/%.o: $(GMSI_DIR)/%.c
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+$(BUILD_DIR)/%.o: $(GMSI_UTL_DIR)/%.c
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
-
 clean:
-	rm -rf obj/$(COBJS) $(TARGET) $(OBJECTS)
+	rm -rf $(BUILD_DIR)
 
 printf_value:
 	@echo $(info HFILE files is '$(HFILE)')

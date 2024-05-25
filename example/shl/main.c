@@ -88,6 +88,7 @@ void timer_handler(int signum)
         timeout--;
     }
     gmsi_Clock();
+    
 }
 
 void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
