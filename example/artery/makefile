@@ -3,6 +3,7 @@ COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
 BUILD_DIR = build
 CHIP_DIR = at32f413
 GMSI_DIR := ../../gmsi
+GMSI_UTL_DIR := ../../gmsi/utilities
 GMSI_THREEPART_PLOOC = ../../thirdParty/plooc
 TARGET := follow
 
@@ -22,7 +23,7 @@ CFLAGS +=   \
 -I$(CHIP_DIR)	\
 -I$(CHIP_DIR)/inc \
 -I$(CHIP_DIR)/core_support	\
--I$(GMSI_DIR)/utilities	\
+-I$(GMSI_UTL_DIR)	\
 -I$(GMSI_THREEPART_PLOOC) \
 -I$(GMSI_DIR)
 
@@ -44,11 +45,11 @@ main.c	\
 at32f413_board.c	\
 $(CHIP_DIR)/system_at32f413.c
 
-SOURCES += $(foreach dir, $(CHIP_DIR)/src, $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
+SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
 
 ASSEMBLY = $(CHIP_DIR)/startup_at32f413.s
-
+#OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SOURCES)))
 OBJECTS := $(addprefix $(BUILD_DIR)/, $(SOURCES:.c=.o) $(ASSEMBLY:.s=.o))
 # Output file name
 OUTPUT = $(BUILD_DIR)/$(TARGET).elf 
@@ -61,7 +62,14 @@ all: create_build_dir $(OUTPUT) $(HEX_OUTPUT) $(BIN_OUTPUT)
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
-
+$(BUILD_DIR)/%.o: $(GMSI_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+$(BUILD_DIR)/%.o: $(CHIP_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+$(BUILD_DIR)/%.o: $(GMSI_UTL_DIR)/%.c
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 $(BUILD_DIR)/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(DFLAGS) -c $< -o $@
@@ -76,7 +84,7 @@ $(BIN_OUTPUT): $(OUTPUT)
 	$(OBJCOPY) -O binary $< $@
 
 create_build_dir:
-	@mkdir -p $(BUILD_DIR) $(BUILD_DIR)/$(CHIP_DIR)/src $(BUILD_DIR)/$(GMSI_DIR)
+	@mkdir -p $(BUILD_DIR)
 
 size: $(OUTPUT)
 	$(SIZE) $(OUTPUT)
