@@ -1,16 +1,17 @@
 # Makefile for STM32G431RBT6 project with LLVM compiler
+COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
 BUILD_DIR = build
-CHIP_DIR = ../../arch/cortex_m/at32f413
+CHIP_DIR = at32f413
 GMSI_DIR := ../../gmsi
-GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
+GMSI_THREEPART_PLOOC = ../../thirdParty/plooc
 TARGET := follow
-# Compiler
-CC = D:\GNUEmbeddedToolchain\LLVMEmbeddedToolchainForArm\bin\clang.exe
-AS = D:\GNUEmbeddedToolchain\LLVMEmbeddedToolchainForArm\bin\clang.exe  # 汇编器
-OBJCOPY = D:\GNUEmbeddedToolchain\LLVMEmbeddedToolchainForArm\bin\llvm-objcopy
-SIZE = D:\GNUEmbeddedToolchain\LLVMEmbeddedToolchainForArm\bin\llvm-size
 
-# 启用LTO选项
+# Compiler
+CC = $(COMPILER_PATH)\clang.exe
+AS = $(COMPILER_PATH)\clang.exe 
+OBJCOPY = $(COMPILER_PATH)\llvm-objcopy
+SIZE = $(COMPILER_PATH)\llvm-size
+
 LTO_FLAGS = -flto
 # Compiler flags
 CFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -27,10 +28,8 @@ CFLAGS +=   \
 
 DFLAGS += -DUSE_STDPERIPH_DRIVER -DAT32F413C8T7 -DAT_START_F413_V1 -DCORTEX_M -D__NO_USE_LOG__
 
-# Assembler flags
 ASFLAGS = -target armv7em-none-eabi -mthumb
 
-# Linker script 添加芯片的链接脚本路径
 LDSCRIPT = AT32F413x8_FLASH.ld  
 
 # Linker flags
@@ -47,43 +46,43 @@ $(CHIP_DIR)/system_at32f413.c
 
 SOURCES += $(foreach dir, $(CHIP_DIR)/src, $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
-# 添加项目的源文件
-ASSEMBLY =   \
-$(CHIP_DIR)/startup_at32f413.s
-# 添加汇编文件路径
 
-# Object files
-#OBJECTS = $(SOURCES:.c=.o) $(ASSEMBLY:.s=.o)  # 将汇编文件的.o文件添加到OBJECTS变量中
-#OBJECTS := $(addprefix $(BUILD_DIR)/, $(SOURCES:.c=.o) $(SOURCES:.s=.o))
-OBJECTS := $(SOURCES:.c=.o) $(ASSEMBLY:.s=.o) 
+ASSEMBLY = $(CHIP_DIR)/startup_at32f413.s
+
+OBJECTS := $(addprefix $(BUILD_DIR)/, $(SOURCES:.c=.o) $(ASSEMBLY:.s=.o))
 # Output file name
-OUTPUT = $(TARGET).elf  # 定义输出文件名
-HEX_OUTPUT = $(TARGET).hex
-# Build rule
-all: $(OUTPUT) $(HEX_OUTPUT) $(BUILD_DIR)
+OUTPUT = $(BUILD_DIR)/$(TARGET).elf 
+HEX_OUTPUT = $(BUILD_DIR)/$(TARGET).hex
+BIN_OUTPUT = $(BUILD_DIR)/$(TARGET).bin
 
-#$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-%.o: %.c
+# Build rule
+all: create_build_dir $(OUTPUT) $(HEX_OUTPUT) $(BIN_OUTPUT)
+
+$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
-#$(BUILD_DIR)/%.o: %.s | $(BUILD_DIR)
-%.o: %.s
+$(BUILD_DIR)/%.o: %.s
+	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(DFLAGS) -c $< -o $@
-	
-$(OUTPUT): $(OBJECTS) | $(BUILD_DIR)
-	$(CC) $(LDFLAGS) $(LTO_FLAGS) $(OBJECTS) -o $@
 
-$(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
+$(OUTPUT): $(OBJECTS)
+	$(CC) $(LDFLAGS) $(LTO_FLAGS) $(OBJECTS) -o $@
 
 $(HEX_OUTPUT): $(OUTPUT)
 	$(OBJCOPY) -O ihex $< $@
+
+$(BIN_OUTPUT): $(OUTPUT)	
+	$(OBJCOPY) -O binary $< $@
+
+create_build_dir:
+	@mkdir -p $(BUILD_DIR) $(BUILD_DIR)/$(CHIP_DIR)/src $(BUILD_DIR)/$(GMSI_DIR)
 
 size: $(OUTPUT)
 	$(SIZE) $(OUTPUT)
 
 clean:
-	rm -f $(OBJECTS) $(OUTPUT) $(BIN_OUTPUT) $(HEX_OUTPUT)
+	rm -rf $(BUILD_DIR) $(BUILD_DIR)/$(CHIP_DIR)/src $(BUILD_DIR)/$(GMSI_DIR)
 
 printf_value:
 	@echo $(info show obj '$(OBJECTS)')

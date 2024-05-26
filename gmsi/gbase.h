@@ -37,5 +37,6 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t gbase_EventPend(gmsi_base_t *ptBase);
 int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength);
 struct xLIST* gbase_GetBaseList(void);
+void gbase_DegugListBase(void);
 
 #endif // __GMSI_BASE_H__
