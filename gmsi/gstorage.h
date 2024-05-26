@@ -1,11 +1,14 @@
 #ifndef __GSTORAGE_H__
 #define __GSTORAGE_H__
 
+// Include necessary libraries
 #include <stdint.h>
 #include "gbase.h"
 
+// Define types
 typedef void (*fcnStorage)(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength);
 
+// Define structures
 typedef struct{
     uint16_t *phwStorageStartAddr;
     uint16_t hwStorageLength;
@@ -29,6 +32,7 @@ typedef struct{
     uint8_t chStorageFlag;
 }gstorage_t;
 
+// Function prototypes
 int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 
-#endif
+#endif      // __GSTORAGE_H__

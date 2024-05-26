@@ -41,7 +41,7 @@ fsm_rt_t pcclock_gcoroutine(void *pvParam)
     
 }
 gcoroutine_handle_t tGcoroutineHandle = {
-    .bIsRun = false,
+    .bIsRunning = false,
     .pfcn = NULL,
 };
 int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)

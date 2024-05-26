@@ -10,7 +10,7 @@ typedef struct
 }init_object_t;
 
 example_cfg_t tEexampleCfg = {
-    .chExampleData = 0,
+    //.chExampleData = 0,
 };
 example_t tExample;
 

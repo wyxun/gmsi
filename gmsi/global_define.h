@@ -1,11 +1,11 @@
 #ifndef __GLOBAL_DEFINE_H__
 #define __GLOBAL_DEFINE_H__
 
-//#define __NO_USE_LOG__
-
+// Include necessary libraries
 #include <stdbool.h>
 #include <stdint.h>
 
+// Define types
 #define GMSI_ID_BASEOFFSET      8
 // HARDWARE
 #define GMSI_ID_UART        1
@@ -21,7 +21,7 @@
 #define GMSI_ID_CLASS       100
 #define GMSI_ID_MOCK        101
 
-//
+// Define error codes
 #define GMSI_SUCCESS        0
 #define GMSI_EPERM          -1
 #define GMSI_ENOENT         -2
@@ -30,7 +30,7 @@
 #define GMSI_EIO            -5
 #define GMSI_ENXIO          -6
 #define GMSI_E2BIG          -7
-#define GMSI_ENOEXEC        -8
+#define GMSI_EINVAL         -8
 #define GMSI_EBADF          -9
 #define GMSI_ECHILD         -10
 #define GMSI_EAGAIN         -11
@@ -42,9 +42,10 @@
 #define GMSI_EEXIST         -17
 #define GMSI_EXDEV          -18
 #define GMSI_ENODEV         -19
-#define GMSI_EMAX           -20
+#define GMSI_EFAIL          -20
+#define GMSI_EMAX           -21
 
-// 
+// Define events
 typedef enum {
     Gmsi_Event00 = 1 << 0,
     Gmsi_Event01 = 1 << 1,
@@ -80,7 +81,7 @@ typedef enum {
     Gmsi_Event_Transition = (uint32_t)(1 << 31),
 } Gmsi_Event;
 
-// GMSI MODEL
+// Define GMSI IDs
 #define GMSI_STORAGE        ((GMSI_ID_STORAGE<<8)+1)
 typedef enum{
     Event_Storage = Gmsi_Event00,

@@ -45,7 +45,7 @@ fsm_rt_t pcuart_gcoroutine(void *pvParam)
     
 }
 gcoroutine_handle_t tGcoroutineUartHandle = {
-    .bIsRun = false,
+    .bIsRunning = false,
     .pfcn = NULL,
 };
 

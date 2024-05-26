@@ -63,7 +63,7 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     GMSI_ASSERT(NULL != ptThis);
     GMSI_ASSERT(NULL != ptCfg);
     
-    /* cfg members to object --start * / 
+    /* cfg members to object --start */ 
 
     /* cfg members to object --end */ 
 
