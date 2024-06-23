@@ -81,7 +81,7 @@ int pcclock_Run(uintptr_t wObjectAddr)
     wEvent = gbase_EventPend(ptThis->ptBase);
     if(wEvent & Gmsi_Event_Transition)
     {
-        printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
+        //printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
         //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
     }
     return 0;

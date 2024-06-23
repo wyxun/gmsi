@@ -48,6 +48,8 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     ptBase->tListItem.xItemValue = ptBase->wId;
     ptBase->tListItem.pvOwner = ptBase;
 
+    // Initialise message list
+    vListInitialise(&ptBase->tListMessage);
     // Insert item into list
     vListInsert(&tListObject, &ptBase->tListItem);
 
@@ -153,10 +155,10 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
  * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
  * GMSI_ENODEV if no base object with the given ID is found.
  */
-int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
+int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 {
     // Check for valid input
-    if (wId == 0 || pchMessage == NULL || hwLength == 0) {
+    if (wId == 0 || ptMsgItem == NULL) {
         return GMSI_EINVAL;
     }
 
@@ -166,7 +168,9 @@ int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
     gmsi_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1; ptListItemDes != &tListObject.xListEnd; ptListItemDes = ptListItemDes->pxPrevious, chErgodicTime++) {
+    for (uint8_t chErgodicTime = 1;                                         \
+            ptListItemDes != &tListObject.xListEnd;                         \
+            ptListItemDes = ptListItemDes->pxPrevious, chErgodicTime++) {
         if(ptListItemDes->xItemValue == wId)
             break;
     }
@@ -177,9 +181,58 @@ int gbase_MessagePost(uint32_t wId, uint8_t *pchMessage, uint16_t hwLength)
         ptBaseDes = ptListItemDes->pvOwner;
         GMSI_ASSERT(NULL != ptBaseDes);
 
-        ptBaseDes->tMessage.pchMessage= pchMessage;
-        ptBaseDes->tMessage.hwLength = hwLength;
+        vListInsert(&ptBaseDes->tListMessage, &ptMsgItem->tListItem);
+
         ptBaseDes->wEvent |= Gmsi_Event_Transition;
+    }
+    else
+    {
+        // If the item was not found, return an error
+        wRet = GMSI_ENODEV;
+    }
+    
+    return wRet;
+}
+
+/**
+ * Function: gbase_MessagePend
+ * ----------------------------
+ * This function retrieves and clears a message from a base object. It copies the message and length 
+ * from the base object to the message structure passed as an argument. If the message is not empty, 
+ * it removes the message from the base object's list and returns GMSI_SUCCESS. If the message is empty, 
+ * it returns GMSI_ENODEV.
+ *
+ * Parameters: 
+ * ptBase: A pointer to the gmsi_base_t structure to retrieve the message from.
+ * ptMsg: A pointer to the message structure to copy the message to.
+ *
+ * Returns: 
+ * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
+ * GMSI_ENODEV if the message is empty or ptBase is NULL.
+ */
+int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
+{
+    // Check for null pointer
+    if (ptBase == NULL) {
+        return GMSI_EINVAL;
+    }
+
+    int wRet = GMSI_SUCCESS;
+    struct xLIST_ITEM *ptListItemDes = ptBase->tListMessage.xListEnd.pxPrevious;
+    message_t *ptMsgDes;
+
+    // Find the list item with the given ID
+    if(ptListItemDes != &ptBase->tListMessage.xListEnd)
+    {
+        ptMsgDes = (message_t *)ptListItemDes->pvOwner;
+        GMSI_ASSERT(NULL != ptMsgDes);
+
+        // copy message and length
+        ptMsg->hwLength = ptMsgDes->hwLength;
+        memcpy(ptMsg->pchMessage, ptMsgDes->pchMessage, ptMsgDes->hwLength);
+
+        // remove message from list
+        uxListRemove(ptListItemDes);
     }
     else
     {
