@@ -22,6 +22,8 @@ gcoroutine_handle_t tGcoroutineExampleHandle = {
     .pfcn = NULL,
 };
 
+GMSI_MSG_ITEM_DECLARE(EXAMPLE, ExampleBuffer, 20);
+
 /**
  * Function: example_gcoroutine
  * ----------------------------
@@ -108,6 +110,11 @@ static void example_EventHandle(example_t *ptThis, uint32_t wEvent)
     if(wEvent & Event_PacketReceived)
     {
         // Handle the event Event_PacketReceived
+        uint8_t *pchBuffer = GMSI_MSG_ITEM_GET_BUFFER(ExampleBuffer);
+        pchBuffer[0] = 0x01;
+        pchBuffer[1] = 0x02;
+        GMSI_MSG_ITEM_GET_LENGTH(ExampleBuffer) = 2;
+        gbase_MessagePost(TEMPLATE, GMSI_MSG_ITEM_GET_HANDLE(ExampleBuffer));
     }
 }
 
@@ -130,7 +137,7 @@ int example_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
- 
+    GMSI_MSG_DECLARE(ExampleBufferGet, 20);
     // Get the example object from the given address
     example_t *ptThis = (example_t *)wObjectAddr;
 
@@ -142,10 +149,16 @@ int example_Run(uintptr_t wObjectAddr)
 
     // Get the events for the example object
     wEvent = gbase_EventPend(ptThis->ptBase);
-
     // If there are any events, handle them
     if(wEvent)
         example_EventHandle(ptThis, wEvent);
+    
+    // Check if there are any messages
+    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(ExampleBufferGet)) > 0)
+    {
+        // Handle the message
+        GLOG_PRINTF("get example message");
+    }
     
     // Logic or state machine programs
 
@@ -168,10 +181,34 @@ int example_Clock(uintptr_t wObjectAddr)
 {
     // Get the example object from the given address
     example_t *ptThis = (example_t *)wObjectAddr;
-
+    uint16_t hwExampleTestCount = 2000;        // 2000ms send a message
+    uint16_t hwExampleTestCount2 = 5000;       // 5000ms send a Event_PacketReceived event
     int wRet = GMSI_SUCCESS;
     
     // Perform operations on ptThis
+    if(!hwExampleTestCount)
+    {
+        uint8_t *pchBuffer = GMSI_MSG_ITEM_GET_BUFFER(ExampleBuffer);
+        pchBuffer[0] = 0x01;
+        pchBuffer[1] = 0x02;
+        GMSI_MSG_ITEM_GET_LENGTH(ExampleBuffer) = 2;
+        gbase_MessagePost(TEMPLATE, GMSI_MSG_ITEM_GET_HANDLE(ExampleBuffer));
+        hwExampleTestCount = 2000;
+    }
+    else
+    {
+        hwExampleTestCount--;
+    }
+
+    if(!hwExampleTestCount2)
+    {
+        gbase_EventPost(EXAMPLE, Event_PacketReceived);
+        hwExampleTestCount2 = 5000;
+    }
+    else
+    {
+        hwExampleTestCount2--;
+    }
 
     return wRet;
 }
@@ -204,6 +241,7 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     }
 
     /* Copy the configuration members to the object */
+    GMSI_MSG_ITEM_INITIALISE_LIST(ExampleBuffer);
 
     /* Initialize the hardware */
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "example.h"
+#include "template.h"
 
 typedef int (*InitObject)(uint32_t, uint32_t);
 typedef struct
@@ -13,6 +14,11 @@ example_cfg_t tEexampleCfg = {
     //.chExampleData = 0,
 };
 example_t tExample;
+
+template_cfg_t tTemplateCfg = {
+    //.chTemplateData = 0,
+};
+template_t tTemplate;
 
 void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
 {
@@ -40,9 +46,11 @@ int main()
     // example hardware init
 
     // example object init
-    gmsi_Init(&tGmsi);
-    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
     
+    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
+    template_Init((uintptr_t)&tTemplate, (uintptr_t)&tTemplateCfg);
+    
+    gmsi_Init(&tGmsi);
     while (1)
     {
         gmsi_Run();

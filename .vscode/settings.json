@@ -6,6 +6,7 @@
         "userconfig.h": "c",
         "upper.h": "c",
         "types.h": "c",
-        "un.h": "c"
+        "un.h": "c",
+        "template.h": "c"
     }
 }

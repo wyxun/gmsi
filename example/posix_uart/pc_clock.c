@@ -18,6 +18,7 @@ gmsi_base_cfg_t tTimerBaseCfg = {
 };
 gmsi_base_t tBase;
 
+GMSI_MSG_ITEM_DECLARE(PC_CLOCK, Clockbuffer, 30);
 
 fsm_rt_t pcclock_gcoroutine(void *pvParam)
 {
@@ -78,7 +79,8 @@ message_t tMessage = {
     .hwLength = 0,
     .hwMaxSize = 30,
 };
-GMSI_MSG_DECLARE(clockbuffer, 30);
+GMSI_MSG_DECLARE(TestBuffer, 30);
+
 int pcclock_Run(uintptr_t wObjectAddr)
 {
     uint32_t wEvent;
@@ -91,10 +93,12 @@ int pcclock_Run(uintptr_t wObjectAddr)
         //printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
         //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
     }
+    
+    // GMSI_MSG_UPDATE(TestBuffer, GMSI_MSG_ITEM_GET_BUFFER(Clockbuffer), 10);
 
-    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(clockbuffer)) > 0)
+    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TestBuffer)) > 0)
     {
-        printf("get message, length is %d\n", GMSI_MSG_GET_LENGTH(clockbuffer));
+        printf("get message, length is %d\n", GMSI_MSG_GET_LENGTH(TestBuffer));
         //GLOG_PRINTF(tMessage.pchMessage);
     }
     return 0;

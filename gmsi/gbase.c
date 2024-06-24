@@ -143,17 +143,16 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
  * Function: gbase_MessagePost
  * ----------------------------
  * This function posts a message to a base object with a specific ID. It traverses a list of base objects, 
- * finds the one with the given ID, and updates its message and length. It also sets a transition event. 
- * If no base object with the given ID is found, it returns an error code.
+ * finds the one with the given ID, and updates its message and length. If no base object with the given ID 
+ * is found, it returns an error code.
  *
  * Parameters: 
- * @param wId: The ID of the base object to post the message to.
- * @param pchMessage: The message to post.
- * @param hwLength: The length of the message.
+ * wId: The ID of the base object to post the message to.
+ * ptMsgItem: A pointer to the message_item_t structure containing the message and its length.
  *
- * @returns: 
+ * Returns: 
  * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
- * GMSI_ENODEV if no base object with the given ID is found.
+ * GMSI_EINVAL if the ptMsgItem pointer is NULL, or GMSI_ENODEV if no base object with the given ID is found.
  */
 int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 {
@@ -180,9 +179,12 @@ int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
     {
         ptBaseDes = ptListItemDes->pvOwner;
         GMSI_ASSERT(NULL != ptBaseDes);
-
-        vListInsert(&ptBaseDes->tListMessage, &ptMsgItem->tListItem);
-
+        // if message length is not zero, insert message into list
+        if(ptMsgItem->hwLength > 0)
+        {
+            vListInsert(&ptBaseDes->tListMessage, &ptMsgItem->tListItem);
+        }
+        
         ptBaseDes->wEvent |= Gmsi_Event_Transition;
     }
     else
@@ -195,19 +197,18 @@ int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 }
 
 /**
- * Retrieves and removes the last message from the message list in the given gmsi_base_t structure.
+ * Function: gbase_MessagePend
+ * ----------------------------
+ * This function retrieves and removes a message from a gmsi_base_t structure. It copies the message and its 
+ * length to the message_t structure pointed to by ptMsg. If the message is successfully retrieved, the function 
+ * returns the length of the message; otherwise, it returns an error code.
  *
- * This function searches for the last message in the message list of the provided gmsi_base_t structure.
- * If a message is found, it copies the message and its length to the provided message_t structure,
- * removes the message from the list, and returns the length of the message. If no message is found,
- * or if the provided base structure pointer is NULL, it returns an error code.
+ * Parameters: 
+ * ptBase: A pointer to the gmsi_base_t structure to retrieve the message from.
+ * ptMsg: A pointer to the message_t structure to copy the message and its length to.
  *
- * @param ptBase Pointer to the gmsi_base_t structure containing the message list.
- * @param ptMsg Pointer to the message_t structure where the message and its length will be copied.
- * @return On success, returns the length of the message. On failure, returns an error code.
- *         Possible error codes are:
- *         - GMSI_EINVAL if the ptBase pointer is NULL.
- *         - GMSI_ENODEV if no message is found in the list.
+ * Returns: 
+ * The length of the message, or an error code if the message was not successfully retrieved.
  */
 int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
 {
@@ -244,10 +245,9 @@ int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
 }
 
 /**
- * Function: gbase_DebugListBase
+ * Function: gbase_DegugListBase
  * ----------------------------
- * This function prints the IDs of all objects in a list. It traverses the list, and for each item, 
- * it prints the item's ID.
+ * This function prints the IDs of all objects in the global list object.
  *
  * Parameters: 
  * None

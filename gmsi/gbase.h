@@ -51,7 +51,7 @@ void gbase_DegugListBase(void);
 // msg item macros
 #define GMSI_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
         uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
-        static message_item_t t##NAME##item = {                             \
+        message_item_t t##NAME##item = {                                    \
             .tListItem.xItemValue = OBJECT,                                 \
             .pchMessage = ch##NAME##_Buffer,                                \
             .hwLength = 0,                                                  \
@@ -70,10 +70,15 @@ void gbase_DegugListBase(void);
 
 #define GMSI_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                         \
     do{                                                                     \
-        if((t##NAME##item).hwMaxSize < LENGTH)                              \
-            return GMSI_EINVAL;                                             \
-        memcpy((t##NAME##item).pchMessage, MESSAGE, LENGTH);                \
-        (t##NAME##item).hwLength = LENGTH;                                  \
+        if((t##NAME##item).hwMaxSize >= LENGTH)                             \
+        {                                                                   \
+            memcpy((t##NAME##item).pchMessage, MESSAGE, LENGTH);            \
+            (t##NAME##item).hwLength = LENGTH;                              \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            (t##NAME##item).hwLength = 0;                                   \
+        }                                                                   \
     }while(0)
 
 #define GMSI_MSG_ITEM_GET_BUFFER(NAME) (t##NAME##item).pchMessage
@@ -82,23 +87,28 @@ void gbase_DegugListBase(void);
 // msg macros
 #define GMSI_MSG_DECLARE(NAME,SIZE)                                         \
         uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
-        static message_t t##NAME##MsgBuffer = {                             \
+        message_t t##NAME##Msg = {                                          \
             .pchMessage = ch##NAME##_Buffer,                                \
             .hwLength = 0,                                                  \
             .hwMaxSize = SIZE                                               \
         };                                                                  \
 
-#define GMSI_MSG_GET_HANDLE(NAME) &(t##NAME##MsgBuffer)   
+#define GMSI_MSG_GET_HANDLE(NAME) &(t##NAME##Msg)   
 
 #define GMSI_MSG_UPDATE(NAME, MESSAGE, LENGTH)                              \
     do{                                                                     \
-        if((t##NAME##MsgBuffer).hwMaxSize < LENGTH)                         \
-            return GMSI_EINVAL;                                             \
-        memcpy((t##NAME##MsgBuffer).pchMessage, MESSAGE, LENGTH);           \
-        (t##NAME##MsgBuffer).hwLength = LENGTH;                             \
+        if((t##NAME##Msg).hwMaxSize >= LENGTH)                              \
+        {                                                                   \
+            memcpy((t##NAME##Msg).pchMessage, MESSAGE, LENGTH);             \
+            (t##NAME##Msg).hwLength = LENGTH;                               \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            (t##NAME##Msg).hwLength = 0;                                    \
+        }                                                                   \
     }while(0)
 
-#define GMSI_MSG_GET_BUFFER(NAME) (t##NAME##MsgBuffer).pchMessage
-#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##MsgBuffer).hwLength        
+#define GMSI_MSG_GET_BUFFER(NAME) (t##NAME##Msg).pchMessage
+#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##Msg).hwLength        
 
 #endif // __GMSI_BASE_H__

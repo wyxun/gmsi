@@ -157,8 +157,6 @@ int pcuart_Clock(uintptr_t wObjectAddr)
     if(s_count > 5000)
     {
         GLOG_PRINTF("pc_uart clock");
-        GERR_PRINTF(30);
-        GVAL_PRINTF(s_count);
         s_count = 0;
         gbase_EventPost(GMSI_STORAGE, Event_GetData);
         GMSI_MSG_ITEM_UPDATE(Uartreceive, chTestBuffer, 3);

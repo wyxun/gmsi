@@ -18,7 +18,7 @@ CFLAGS += -I$(GMSI_DIR) -I/usr/include \
 
 SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
 SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
-SOURCES += main.c example.c
+SOURCES += main.c example.c template.c
 
 OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(SOURCES)))
 
