@@ -40,9 +40,8 @@ int main()
     // example hardware init
 
     // example object init
-    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
-    
     gmsi_Init(&tGmsi);
+    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
     
     while (1)
     {

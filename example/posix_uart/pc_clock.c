@@ -72,6 +72,13 @@ int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     return 0;
 }
 
+uint8_t chClockBuffer[30];
+message_t tMessage = {
+    .pchMessage = chClockBuffer,
+    .hwLength = 0,
+    .hwMaxSize = 30,
+};
+GMSI_MSG_DECLARE(clockbuffer, 30);
 int pcclock_Run(uintptr_t wObjectAddr)
 {
     uint32_t wEvent;
@@ -83,6 +90,12 @@ int pcclock_Run(uintptr_t wObjectAddr)
     {
         //printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
         //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
+    }
+
+    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(clockbuffer)) > 0)
+    {
+        printf("get message, length is %d\n", GMSI_MSG_GET_LENGTH(clockbuffer));
+        //GLOG_PRINTF(tMessage.pchMessage);
     }
     return 0;
 }

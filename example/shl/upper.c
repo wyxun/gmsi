@@ -22,6 +22,84 @@ gmsi_base_cfg_t s_tUpperBaseCfg = {
     },
 };
 
+gcoroutine_handle_t tGcoroutineUpperConnectClientHandle = {
+    .bIsRunning = false,
+    .pfcn = NULL,
+};
+
+void upper_MsgDataHandle(upper_t *ptThis)
+{
+    // Send data downwards based on the instruction
+    gbase_EventPost(ptThis->ptBase, Event_PacketReceived);
+    gbase_MessagePost(ptThis->ptBase, ptThis->chBuffer, ptThis->wAddrLength);
+}
+
+fsm_rt_t upper_GcoroutineConnectClient(void *pvParam)
+{
+    static uint8_t s_eState = 0;
+    fsm_rt_t tFsm = fsm_rt_on_going;
+    upper_t *ptThis = (upper_t *)pvParam;
+    socklen_t tClientLen;
+    int16_t hwLength = 0;
+    // Check if ptThis is not NULL
+    if (ptThis == NULL) {
+        GLOG_PRINTF("Error: ptThis is NULL.\n");
+        return fsm_rt_err;
+    }
+
+    switch(s_eState)
+    {
+        case 0:
+            tClientLen = sizeof(ptThis->tClinetAddr);
+            ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
+
+            if(ptThis->wClinetFd < 0)
+            {
+                if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                    //GLOG_PRINTF("Error EINTR");
+                }else if(errno == EINTR){
+                    GLOG_PRINTF("Error EINTR");
+                } else {
+                    GLOG_PRINTF("Error accepting connection");
+                }
+                fsm_on_going(); 
+            }
+            else {
+                s_eState++;
+                GLOG_PRINTF("Client connected");
+            }
+            break;
+        case 1:
+            memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
+            //ssize_t num_bytes = read(client_sockfd, buffer, sizeof(buffer) - 1);
+            hwLength = read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer));
+            if (hwLength < 0) {
+                if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                    GLOG_PRINTF("Error EINTR");
+                } else if(errno == EINTR){
+                }else {
+                    perror("Error reading from socket");
+                }
+                fsm_on_going(); 
+            } else if (hwLength == 0) {
+                printf("Client disconnected\n");
+                s_eState = 0;
+                break;
+            }
+            upper_MsgDataHandle(ptThis);
+            printf("Received message from client: %s\n", ptThis->chBuffer);
+            // Echo the message back to the client
+            if (write(ptThis->wClinetFd, ptThis->chBuffer, hwLength) < 0) {
+                GLOG_PRINTF("Error writing to socket");
+            }
+            break;
+        default:
+            fsm_cpl();
+        break;
+    }
+    fsm_on_going(); 
+}
+
 static void upper_EventHandle(upper_t *ptThis, uint32_t wEvent)
 {
     if(wEvent & Event_SyncMissed)
@@ -45,62 +123,6 @@ int upper_Run(uintptr_t wObjectAddr)
     int16_t hwLength = 0;
     upper_t *ptThis = (upper_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
-
-    static uint8_t s_chStatus = 0;
-
-    switch(s_chStatus)
-    {
-        case 0:
-            tClientLen = sizeof(ptThis->tClinetAddr);
-            // accept connect
-            ptThis->wClinetFd = accept(ptThis->wServerFd, (struct sockaddr *)&ptThis->tClinetAddr, &tClientLen);
-
-            if(ptThis->wClinetFd < 0)
-            {
-                if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                    // 没有新的连接请求，继续等待
-                    return wRet;
-                }else if(errno == EINTR){
-                    return wRet;
-                } else {
-                    GLOG_PRINTF("Error accepting connection");
-                    exit(1);
-                }
-            }
-            else {
-                s_chStatus++;
-                GLOG_PRINTF("Client connected");
-            }
-        break;
-        case 1:
-            // 读取客户端发送的消息
-            memset(ptThis->chBuffer, 0, sizeof(ptThis->chBuffer));
-            //ssize_t num_bytes = read(client_sockfd, buffer, sizeof(buffer) - 1);
-            hwLength = read(ptThis->wClinetFd, ptThis->chBuffer, sizeof(ptThis->chBuffer));
-            if (hwLength < 0) {
-                if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                    // 没有数据可读，继续等待
-                    return wRet;
-                } else if(errno == EINTR){
-                    return wRet;
-                }else {
-                    perror("Error reading from socket");
-                    exit(1);
-                }
-            } else if (hwLength == 0) {
-                printf("Client disconnected\n");
-                s_chStatus = 0;
-                break;
-            }
-            printf("Received message from client: %s\n", ptThis->chBuffer);
-
-            // 发送响应给客户端
-            if (write(ptThis->wClinetFd, ptThis->chBuffer, hwLength+1) < 0) {
-                perror("Error writing to socket");
-                exit(1);
-            }
-        break;
-    }
  
     // event handler
     wEvent = gbase_EventPend(ptThis->ptBase);
@@ -196,7 +218,13 @@ int upper_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     }
     printf("Server is running and waiting for connections...\n");
     /* hardware init --end */
-
+    ptThis->hwTestCount = 4999;
+    // start coroutine
+    if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineUpperConnectClientHandle, \
+                        (void *)ptThis, upper_GcoroutineConnectClient))
+    {
+        //GLOG_PRINTF("Error: gcoroutine_Insert failed.");
+    }
     /* end of add object in gmsi_lib*/ 
     return wRet;
 }

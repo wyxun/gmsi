@@ -14,11 +14,13 @@ typedef struct {
 typedef struct {
     uint8_t *pchMessage;
     uint16_t hwLength;
+    uint16_t hwMaxSize;
 }message_t;
 
 typedef struct {
     uint8_t *pchMessage;
     uint16_t hwLength;
+    uint16_t hwMaxSize;
     struct xLIST_ITEM tListItem;
 } message_item_t;
 
@@ -31,7 +33,6 @@ typedef struct {
 typedef struct {
     uint32_t wId;
     uint32_t wEvent;
-    //message_t tMessage;
     struct xLIST tListMessage;
     gmsi_interface_t *pFcnInterface;
     uintptr_t wParent;
@@ -47,12 +48,14 @@ int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg);
 struct xLIST* gbase_GetBaseList(void);
 void gbase_DegugListBase(void);
 
-#define GMSI_MSG_ITEM_DECLARE(NAME,SIZE)                                    \
+// msg item macros
+#define GMSI_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
         uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
         static message_item_t t##NAME##item = {                             \
-            .tListItem = {0},                                               \
+            .tListItem.xItemValue = OBJECT,                                 \
             .pchMessage = ch##NAME##_Buffer,                                \
-            .hwLength = SIZE                                                \
+            .hwLength = 0,                                                  \
+            .hwMaxSize = SIZE                                               \
         };                                                                  \
 
 #define GMSI_MSG_ITEM_INITIALISE_LIST(NAME)                                 \
@@ -63,15 +66,39 @@ void gbase_DegugListBase(void);
         (t##NAME##item).tListItem.pvOwner = &(t##NAME##item);               \
     }while(0)
 
-#define GMSI_MSG_GET_HANDLE(NAME) &(t##NAME##item)   
+#define GMSI_MSG_ITEM_GET_HANDLE(NAME) &(t##NAME##item)   
 
-#define GMSI_MSG_UPDATE(NAME, MESSAGE, LENGTH)                              \
+#define GMSI_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                         \
     do{                                                                     \
+        if((t##NAME##item).hwMaxSize < LENGTH)                              \
+            return GMSI_EINVAL;                                             \
         memcpy((t##NAME##item).pchMessage, MESSAGE, LENGTH);                \
         (t##NAME##item).hwLength = LENGTH;                                  \
     }while(0)
 
-#define GMSI_MSG_GET_BUFFER(NAME) (t##NAME##item).pchMessage
-#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##item).hwLength        
+#define GMSI_MSG_ITEM_GET_BUFFER(NAME) (t##NAME##item).pchMessage
+#define GMSI_MSG_ITEM_GET_LENGTH(NAME) (t##NAME##item).hwLength        
+
+// msg macros
+#define GMSI_MSG_DECLARE(NAME,SIZE)                                         \
+        uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
+        static message_t t##NAME##MsgBuffer = {                             \
+            .pchMessage = ch##NAME##_Buffer,                                \
+            .hwLength = 0,                                                  \
+            .hwMaxSize = SIZE                                               \
+        };                                                                  \
+
+#define GMSI_MSG_GET_HANDLE(NAME) &(t##NAME##MsgBuffer)   
+
+#define GMSI_MSG_UPDATE(NAME, MESSAGE, LENGTH)                              \
+    do{                                                                     \
+        if((t##NAME##MsgBuffer).hwMaxSize < LENGTH)                         \
+            return GMSI_EINVAL;                                             \
+        memcpy((t##NAME##MsgBuffer).pchMessage, MESSAGE, LENGTH);           \
+        (t##NAME##MsgBuffer).hwLength = LENGTH;                             \
+    }while(0)
+
+#define GMSI_MSG_GET_BUFFER(NAME) (t##NAME##MsgBuffer).pchMessage
+#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##MsgBuffer).hwLength        
 
 #endif // __GMSI_BASE_H__

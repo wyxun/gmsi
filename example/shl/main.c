@@ -61,11 +61,10 @@ int main(int argc, char **argv)
 {
     systemclock_Init();
 
-    lower_Init((uintptr_t)&tLower, (uintptr_t)&tLowerCfg);
-    upper_Init((uintptr_t)&tUpper, (uintptr_t)&tUpperCfg);
-
     gmsi_Init(&tGmsi);
     GLOG_PRINTF("OK");
+    lower_Init((uintptr_t)&tLower, (uintptr_t)&tLowerCfg);
+    upper_Init((uintptr_t)&tUpper, (uintptr_t)&tUpperCfg);
 
     while(1)
     {

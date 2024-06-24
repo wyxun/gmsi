@@ -147,11 +147,11 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
  * If no base object with the given ID is found, it returns an error code.
  *
  * Parameters: 
- * wId: The ID of the base object to post the message to.
- * pchMessage: The message to post.
- * hwLength: The length of the message.
+ * @param wId: The ID of the base object to post the message to.
+ * @param pchMessage: The message to post.
+ * @param hwLength: The length of the message.
  *
- * Returns: 
+ * @returns: 
  * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
  * GMSI_ENODEV if no base object with the given ID is found.
  */
@@ -195,20 +195,19 @@ int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 }
 
 /**
- * Function: gbase_MessagePend
- * ----------------------------
- * This function retrieves and clears a message from a base object. It copies the message and length 
- * from the base object to the message structure passed as an argument. If the message is not empty, 
- * it removes the message from the base object's list and returns GMSI_SUCCESS. If the message is empty, 
- * it returns GMSI_ENODEV.
+ * Retrieves and removes the last message from the message list in the given gmsi_base_t structure.
  *
- * Parameters: 
- * ptBase: A pointer to the gmsi_base_t structure to retrieve the message from.
- * ptMsg: A pointer to the message structure to copy the message to.
+ * This function searches for the last message in the message list of the provided gmsi_base_t structure.
+ * If a message is found, it copies the message and its length to the provided message_t structure,
+ * removes the message from the list, and returns the length of the message. If no message is found,
+ * or if the provided base structure pointer is NULL, it returns an error code.
  *
- * Returns: 
- * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
- * GMSI_ENODEV if the message is empty or ptBase is NULL.
+ * @param ptBase Pointer to the gmsi_base_t structure containing the message list.
+ * @param ptMsg Pointer to the message_t structure where the message and its length will be copied.
+ * @return On success, returns the length of the message. On failure, returns an error code.
+ *         Possible error codes are:
+ *         - GMSI_EINVAL if the ptBase pointer is NULL.
+ *         - GMSI_ENODEV if no message is found in the list.
  */
 int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
 {
@@ -233,13 +232,14 @@ int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
 
         // remove message from list
         uxListRemove(ptListItemDes);
+
+        wRet = ptMsg->hwLength;
     }
     else
     {
         // If the item was not found, return an error
         wRet = GMSI_ENODEV;
     }
-    
     return wRet;
 }
 

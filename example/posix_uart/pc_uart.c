@@ -19,7 +19,7 @@ gmsi_base_cfg_t tUartBaseCfg = {
 
 static gmsi_base_t tBase;
 
-GMSI_MSG_ITEM_DECLARE(Uartreceive, 100);
+GMSI_MSG_ITEM_DECLARE(PC_UART, Uartreceive, 100);
 
 uint8_t chReceiveData[100];
 
@@ -127,8 +127,8 @@ int pcuart_Run(uintptr_t wObjectAddr)
     hwLength = pcuart_Read(ptThis, chReceiveData, 100);
     if(hwLength > 0)
     {
-        GMSI_MSG_UPDATE(Uartreceive, ptThis->chBufferData, hwLength);
-        gbase_MessagePost(PC_CLOCK, GMSI_MSG_GET_HANDLE(Uartreceive));
+        GMSI_MSG_ITEM_UPDATE(Uartreceive, ptThis->chBufferData, hwLength);
+        gbase_MessagePost(PC_CLOCK, GMSI_MSG_ITEM_GET_HANDLE(Uartreceive));
     }
 
     wEvent = gbase_EventPend(ptThis->ptBase);
@@ -147,6 +147,7 @@ int pcuart_close(pc_uart_t *ptThis)
     return close(ptThis->fd);
 }
 
+uint8_t chTestBuffer[3] = {1,2,3};
 int pcuart_Clock(uintptr_t wObjectAddr)
 {
     static uint32_t s_count = 0;
@@ -160,6 +161,8 @@ int pcuart_Clock(uintptr_t wObjectAddr)
         GVAL_PRINTF(s_count);
         s_count = 0;
         gbase_EventPost(GMSI_STORAGE, Event_GetData);
+        GMSI_MSG_ITEM_UPDATE(Uartreceive, chTestBuffer, 3);
+        gbase_MessagePost(PC_CLOCK, GMSI_MSG_ITEM_GET_HANDLE(Uartreceive));
     }
     return 0;
 }
