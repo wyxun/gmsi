@@ -9,11 +9,11 @@ static gmsi_base_t s_tTemplateBase;
 
 // Define and initialize a global template base configuration of type gmsi_base_cfg_t
 gmsi_base_cfg_t s_tTemplateBaseCfg = {
-    .wId = TEMPLATE,                 // Set the ID to TEMPLATE
-    .wParent = 0,                   // Set the parent to 0
+    .wId = TEMPLATE,                        // Set the ID to TEMPLATE
+    .wParent = 0,                           // Set the parent to 0
     .FcnInterface = {
-        .Clock = template_Clock,     // Set the Clock function to template_Clock
-        .Run = template_Run,         // Set the Run function to template_Run
+        .Clock = template_Clock,            // Set the Clock function to template_Clock
+        .Run = template_Run,                // Set the Run function to template_Run
     },
 };
 
