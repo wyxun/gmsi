@@ -78,11 +78,102 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
 #### rev_send data
 
+```c
+// 发送消息
+int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
+{
+    // 根据id遍历object链表
+    
+    // 找到对应id的object后，将ptMsgItem挂在目标object上；
+    /* 注意：该ptMsgItem所有权在post方源object，目标object只有读权限*/
+    
+    // 同时置位公共事件Gmsi_Event_Transition；这个是保留设计，当前不对该事件处理
+}
+// 接收消息
+if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TemplateBufferGet)) > 0)
+{
+    uint16_t hwLength = GMSI_MSG_ITEM_GET_LENGTH(TemplateBufferGet);
+    uint8_t *pchData = GMSI_MSG_ITEM_GET_BUFFER(TemplateBufferGet);
+    // 处理数据
+}
+```
+
+
+
 ### event
+
+![img](gbase.assets/event-17200177187851.png)
 
 #### post
 
+```c
+int gbase_EventPost(uint32_t wId, uint32_t wEvent)
+{
+    // 根据id遍历对象链表
+    
+    // 找到对象节点
+    
+    // 将事件值写入到改对象节点的wEvent变量
+}
+```
+
 #### pend
+
+```C
+uint32_t gbase_EventPend(gmsi_base_t *ptBase)
+{
+    // 读取自身的wEvent是否有值
+    
+    // 获取事件后清空wEvent
+}
+
+// 对事件值做响应处理
+wEvent = gbase_EventPend(ptThis->ptBase);
+if(wEvent & Event_SyncButtonPushed)
+{}
+if(wEvent & Event_SyncMissed)
+{}
+```
+
+### coroutine
+
+![coroutine](gbase.assets/coroutine.png)
+
+#### create
+
+```c
+gcoroutine_handle_t tGcoroutineTemplateHandle = {
+    // 记录运行状态，当其运行时不可再次挂入协程链表
+    .bIsRunning = false,
+    .pfcn = NULL,
+};
+```
+
+#### run
+
+```c
+// 将协程函数挂载到协程链表运行
+if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle, \
+                                     (void *)ptThis, template_gcoroutine))
+{
+    GLOG_PRINTF("Error: gcoroutine_Insert failed.");
+}
+
+```
+
+#### delete
+
+```c
+int gcoroutine_Run(void)
+{
+    // ...
+    if(fsm_rt_cpl == tFsm)
+    {
+        // 当其运行结束时删除节点
+        gcoroutine_Delete(ptHandle);
+    }
+}
+```
 
 
 
