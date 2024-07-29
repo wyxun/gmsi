@@ -1,14 +1,14 @@
 # Makefile for STM32G431RBT6 project with LLVM compiler
 BUILD_DIR = build
-COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
+COMPILER_PATH = /home/xun/LLVMEmbeddedToolchainForArm-16.0.0-Linux-AArch64/bin
 GMSI_DIR := ../../gmsi
 GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
 
 # Compiler
-CC = $(COMPILER_PATH)\clang.exe
-AS = $(COMPILER_PATH)\clang.exe 
-OBJCOPY = $(COMPILER_PATH)\llvm-objcopy
-SIZE = $(COMPILER_PATH)\llvm-size
+CC = $(COMPILER_PATH)/clang
+AS = $(COMPILER_PATH)/clang 
+OBJCOPY = $(COMPILER_PATH)/llvm-objcopy
+SIZE = $(COMPILER_PATH)/llvm-size
 
 LTO_FLAGS = -flto
 # Compiler flags

@@ -2,6 +2,7 @@
 #include "utilities/list.h"
 #include "utilities/util_debug.h"
 #include "gbase.h"
+#include <string.h>
 
 #ifdef LINUX_POSIX
 #include <stdio.h>
@@ -178,6 +179,7 @@ int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
     if(chErgodicTime <= tListObject.uxNumberOfItems)
     {
         ptBaseDes = ptListItemDes->pvOwner;
+        ptMsgItem->tListItem.pvOwner = ptMsgItem;
         GMSI_ASSERT(NULL != ptBaseDes);
         // if message length is not zero, insert message into list
         if(ptMsgItem->hwLength > 0)
