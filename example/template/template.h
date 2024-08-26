@@ -13,6 +13,9 @@ typedef struct{
 typedef struct{
     gmsi_base_t *ptBase;
 
+    int wFd;
+    void (*write)(int wFd, uint8_t *pchBuffer, uint16_t hwLength);
+    int (*read)(int wFd, uint8_t *pchBuffer);
 }template_t;
 
 // Function prototypes

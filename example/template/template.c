@@ -1,6 +1,11 @@
 #include "template.h"
 #include "userconfig.h"
 
+#ifdef TEMPLATE_ITEM_MESSAGE
+GMSI_MSG_ITEM_DECLARE(TEMPLATE, g_tTemplatePost, sizeof(template_msg_t));
+
+#endif
+
 int template_Clock(uintptr_t wObjectAddr);
 int template_Run(uintptr_t wObjectAddr);
 
@@ -21,8 +26,6 @@ gcoroutine_handle_t tGcoroutineTemplateHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
-
-GMSI_MSG_ITEM_DECLARE(TEMPLATE, TemplateBuffer, 20);
 
 uint8_t chTemplateBufferTest[20] = {11, 22, 33, 44, 55, 66, 77, 88, 99, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14};
 /**
@@ -112,10 +115,6 @@ static void template_EventHandle(template_t *ptThis, uint32_t wEvent)
     if(wEvent & Event_PacketReceived)
     {
         // Handle the event Event_PacketReceived
-        GMSI_MSG_UPDATE(TemplateTestBuffer, chTemplateBufferTest, 20);
-        GMSI_MSG_ITEM_UPDATE(TemplateBuffer, GMSI_MSG_GET_BUFFER(TemplateTestBuffer),   \
-                                                GMSI_MSG_GET_LENGTH(TemplateTestBuffer));
-        gbase_MessagePost(EXAMPLE, GMSI_MSG_ITEM_GET_HANDLE(TemplateBuffer));
     }
 }
 
@@ -138,7 +137,9 @@ int template_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
-    GMSI_MSG_DECLARE(TemplateBufferGet, 20);
+    #ifdef TEMPLATE_ITEM_MESSAGE
+    GMSI_MSG_DECLARE(tTemplatePend, PEND_BUFFER_SIZE);
+    #endif
     // Get the template object from the given address
     template_t *ptThis = (template_t *)wObjectAddr;
 
@@ -148,18 +149,27 @@ int template_Run(uintptr_t wObjectAddr)
         return GMSI_EFAIL;
     }
 
+    template_msg_t *ptMsg = (template_msg_t *)GMSI_MSG_ITEM_GET_BUFFER(g_tTemplatePost);
+    ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);
+    if(ptMsg->hwLength)
+    {
+        ptMsg->chStatus = 0;
+
+        gbase_MessagePost(EXAMPLE, GMSI_MSG_ITEM_GET_HANDLE(g_tTemplatePost));
+    }
     // Get the events for the template object
     wEvent = gbase_EventPend(ptThis->ptBase);
-
     // If there are any events, handle them
     if(wEvent)
         template_EventHandle(ptThis, wEvent);
-    
-    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TemplateBufferGet)) > 0)
+
+    #ifdef TEMPLATE_ITEM_MESSAGE
+    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(tTemplatePend)) > 0)
     {
         // Handle the message
         GLOG_PRINTF("get example message");
     }
+    #endif
     // Logic or state machine programs
 
     return wRet;
@@ -216,9 +226,10 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return GMSI_EFAIL;
     }
 
+#ifdef TEMPLATE_ITEM_MESSAGE
     /* Copy the configuration members to the object */
-    GMSI_MSG_ITEM_INITIALISE_LIST(TemplateBuffer);
-
+    GMSI_MSG_ITEM_INITIALISE_LIST(g_tTemplatePost);
+#endif
     /* Initialize the hardware */
 
     // Register the object in the GMSI list
