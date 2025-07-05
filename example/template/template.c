@@ -3,7 +3,7 @@
 
 #ifdef TEMPLATE_ITEM_MESSAGE
 GMSI_MSG_ITEM_DECLARE(TEMPLATE, g_tTemplatePost, sizeof(template_msg_t));
-
+#define PEND_BUFFER_SIZE    100
 #endif
 
 int template_Clock(uintptr_t wObjectAddr);
@@ -150,11 +150,11 @@ int template_Run(uintptr_t wObjectAddr)
     }
 
     template_msg_t *ptMsg = (template_msg_t *)GMSI_MSG_ITEM_GET_BUFFER(g_tTemplatePost);
-    ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);
+    //ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);
     if(ptMsg->hwLength)
     {
         ptMsg->chStatus = 0;
-
+        gbase_MessagePostToRing(EXAMPLE, (uint8_t *)ptMsg, ptMsg->hwLength);
         gbase_MessagePost(EXAMPLE, GMSI_MSG_ITEM_GET_HANDLE(g_tTemplatePost));
     }
     // Get the events for the template object
@@ -238,6 +238,13 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return GMSI_EAGAIN;
     } else {
         s_tTemplateBaseCfg.wParent = wObjectAddr;
+        if(ptCfg->pchRingBuffer != NULL && ptCfg->hwRingSize != 0) {
+            // Initialize the ring buffer in the example object
+            ptThis->ptBase->tRingBuffer.buffer = ptCfg->pchRingBuffer;
+            ptThis->ptBase->tRingBuffer.hwBufferSize = ptCfg->hwRingSize;
+            ptThis->ptBase->tRingBuffer.hwWriteIndex = 0;
+            ptThis->ptBase->tRingBuffer.hwReadIndex = 0;
+        }
         return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
     }
 }

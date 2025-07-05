@@ -7,6 +7,12 @@
         "upper.h": "c",
         "types.h": "c",
         "un.h": "c",
-        "template.h": "c"
+        "template.h": "c",
+        "glog.h": "c",
+        "global_define.h": "c",
+        "util_debug.h": "c",
+        "gstorage.h": "c",
+        "gmsi.h": "c",
+        "gbase.h": "c"
     }
 }

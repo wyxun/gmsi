@@ -10,13 +10,18 @@ typedef struct
     InitObject pFcn;
 }init_object_t;
 
-example_cfg_t tEexampleCfg = {
+#define EXAMPLE_RING_BUFFER_SIZE 256
+uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
+example_cfg_t tExampleCfg = {
     //.chExampleData = 0,
+    .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
+    .pchRingBuffer = gchExampleBuffer,
 };
 example_t tExample;
 
 template_cfg_t tTemplateCfg = {
-    //.chTemplateData = 0,
+    .hwRingSize = 0,
+    .pchRingBuffer = NULL,
 };
 template_t tTemplate;
 
@@ -46,8 +51,8 @@ int main()
     // example hardware init
 
     // example object init
-    
-    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
+
+    example_Init((uintptr_t)&tExample, (uintptr_t)&tExampleCfg);
     template_Init((uintptr_t)&tTemplate, (uintptr_t)&tTemplateCfg);
     
     gmsi_Init(&tGmsi);

@@ -12,6 +12,17 @@ DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX
 LDFLAGS := -fno-autolink -Wall -lrt
 CFLAGS := -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
 CFLAGS += -Wno-compare-distinct-pointer-types
+
+# 支持 debug 模式
+DEBUG ?= 0
+
+ifeq ($(DEBUG),1)
+CFLAGS := -std=c11 -W -g -O0 -DDEBUG -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
+CFLAGS += -Wno-compare-distinct-pointer-types
+LDFLAGS := -fno-autolink -Wall -lrt
+TARGET := $(BUILD_DIR)/example_debug
+endif
+
 CFLAGS += -I$(GMSI_DIR) -I/usr/include \
 -I$(GMSI_UTL_DIR) \
 -I$(GMSI_THREEPART_PLOOC)

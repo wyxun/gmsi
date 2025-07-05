@@ -6,7 +6,7 @@
 #define EXAMPLE     ((GMSI_ID_MOCK<<8)+1)
 #define TEMPLATE    ((GMSI_ID_MOCK<<8)+2)
 
-// #define TEMPLATE_ITEM_MESSAGE
+#define TEMPLATE_ITEM_MESSAGE
 #ifdef TEMPLATE_ITEM_MESSAGE
 typedef struct{
     uint8_t chStatus;

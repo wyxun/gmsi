@@ -6,7 +6,8 @@
 
 // The configuration structure for the example object.
 typedef struct{
-
+    uint8_t *pchRingBuffer;
+    uint16_t hwRingSize;
 }example_cfg_t;
 
 // The structure for the example object.

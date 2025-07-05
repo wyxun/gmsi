@@ -22,8 +22,6 @@ gcoroutine_handle_t tGcoroutineExampleHandle = {
     .pfcn = NULL,
 };
 
-GMSI_MSG_ITEM_DECLARE(EXAMPLE, ExampleBuffer, 20);
-
 /**
  * Function: example_gcoroutine
  * ----------------------------
@@ -105,17 +103,6 @@ static void example_EventHandle(example_t *ptThis, uint32_t wEvent)
             GLOG_PRINTF("Error: gcoroutine_Insert failed.");
         }
     }
-
-    // Check if the event Event_PacketReceived is set
-    if(wEvent & Event_PacketReceived)
-    {
-        // Handle the event Event_PacketReceived
-        uint8_t *pchBuffer = GMSI_MSG_ITEM_GET_BUFFER(ExampleBuffer);
-        pchBuffer[0] = 0x01;
-        pchBuffer[1] = 0x02;
-        GMSI_MSG_ITEM_GET_LENGTH(ExampleBuffer) = 2;
-        gbase_MessagePost(TEMPLATE, GMSI_MSG_ITEM_GET_HANDLE(ExampleBuffer));
-    }
 }
 
 /**
@@ -137,10 +124,9 @@ int example_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
-    GMSI_MSG_DECLARE(ExampleBufferGet, 20);
     // Get the example object from the given address
     example_t *ptThis = (example_t *)wObjectAddr;
-
+    uint8_t chRingBufferMsg[16];
     // Check if ptThis is not NULL
     if (ptThis == NULL) {
         GLOG_PRINTF("ptThis is NULL.");
@@ -153,13 +139,16 @@ int example_Run(uintptr_t wObjectAddr)
     if(wEvent)
         example_EventHandle(ptThis, wEvent);
     
-    // Check if there are any messages
-    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(ExampleBufferGet)) > 0)
-    {
-        // Handle the message
-        GLOG_PRINTF("get example message");
-    }
     
+    // If the ring buffer is enabled, check for messages in the ring buffer
+    uint16_t hwLength = gbase_MessagePendFromRing(ptThis->ptBase, chRingBufferMsg, sizeof(chRingBufferMsg));
+    if(hwLength > 0)
+    {
+        // Process the messages received from the ring buffer
+        GLOG_PRINTF("get chRingBufferMsg");
+        GVAL_PRINTF(hwLength);
+    }
+
     // Logic or state machine programs
 
     return wRet;
@@ -184,21 +173,6 @@ int example_Clock(uintptr_t wObjectAddr)
     uint16_t hwExampleTestCount = 2000;        // 2000ms send a message
     uint16_t hwExampleTestCount2 = 5000;       // 5000ms send a Event_PacketReceived event
     int wRet = GMSI_SUCCESS;
-    
-    // Perform operations on ptThis
-    if(!hwExampleTestCount)
-    {
-        uint8_t *pchBuffer = GMSI_MSG_ITEM_GET_BUFFER(ExampleBuffer);
-        pchBuffer[0] = 0x01;
-        pchBuffer[1] = 0x02;
-        GMSI_MSG_ITEM_GET_LENGTH(ExampleBuffer) = 2;
-        gbase_MessagePost(TEMPLATE, GMSI_MSG_ITEM_GET_HANDLE(ExampleBuffer));
-        hwExampleTestCount = 2000;
-    }
-    else
-    {
-        hwExampleTestCount--;
-    }
 
     if(!hwExampleTestCount2)
     {
@@ -240,9 +214,6 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return GMSI_EFAIL;
     }
 
-    /* Copy the configuration members to the object */
-    GMSI_MSG_ITEM_INITIALISE_LIST(ExampleBuffer);
-
     /* Initialize the hardware */
 
     // Register the object in the GMSI list
@@ -251,6 +222,13 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return GMSI_EAGAIN;
     } else {
         s_tExampleBaseCfg.wParent = wObjectAddr;
+        if(ptCfg->pchRingBuffer != NULL && ptCfg->hwRingSize != 0) {
+            // Initialize the ring buffer in the example object
+            ptThis->ptBase->tRingBuffer.buffer = ptCfg->pchRingBuffer;
+            ptThis->ptBase->tRingBuffer.hwBufferSize = ptCfg->hwRingSize;
+            ptThis->ptBase->tRingBuffer.hwWriteIndex = 0;
+            ptThis->ptBase->tRingBuffer.hwReadIndex = 0;
+        }
         return gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
-    }
+    }   
 }

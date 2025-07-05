@@ -6,7 +6,8 @@
 
 // The configuration structure for the template object.
 typedef struct{
-
+    uint8_t *pchRingBuffer;
+    uint16_t hwRingSize;
 }template_cfg_t;
 
 // The structure for the template object.

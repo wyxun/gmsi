@@ -22,7 +22,7 @@ const char *stringErrorMessage[] = {
     "File exists num(17)",
     "Cross-device link num(18)",
     "No such device num(19)",
-    "EFail num(20)"
+    "EFail num(20)",
     "Not a directory num(21)"
 };
 

@@ -11,6 +11,13 @@ typedef struct {
     int (*Run)(uintptr_t wObjectAddr);
 } gmsi_interface_t;
 
+typedef struct{
+    uint8_t *buffer;
+    uint16_t hwReadIndex;
+    uint16_t hwWriteIndex;
+    uint16_t hwBufferSize;
+} object_ring_buffer_t;
+
 typedef struct {
     uint8_t *pchMessage;
     uint16_t hwLength;
@@ -34,6 +41,7 @@ typedef struct {
     uint32_t wId;
     uint32_t wEvent;
     struct xLIST tListMessage;
+    object_ring_buffer_t tRingBuffer;
     gmsi_interface_t *pFcnInterface;
     uintptr_t wParent;
     struct xLIST_ITEM tListItem;
@@ -45,8 +53,10 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t gbase_EventPend(gmsi_base_t *ptBase);
 int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem);
 int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg);
+int gbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLength);
+int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16_t hwMaxSize);
 struct xLIST* gbase_GetBaseList(void);
-void gbase_DegugListBase(void);
+void gbase_DebugListBase(void);
 
 // msg item macros
 #define GMSI_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
@@ -109,6 +119,6 @@ void gbase_DegugListBase(void);
     }while(0)
 
 #define GMSI_MSG_GET_BUFFER(NAME) (t##NAME##Msg).pchMessage
-#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##Msg).hwLength        
+#define GMSI_MSG_GET_LENGTH(NAME) (t##NAME##Msg).hwLength
 
 #endif // __GMSI_BASE_H__

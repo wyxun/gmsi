@@ -67,7 +67,7 @@ void gmsi_Init(gmsi_t *ptGmsi)
     // Initialize coroutine
     gcoroutine_Init();
     // Print list information
-    gbase_DegugListBase();
+    gbase_DebugListBase();
 }
 
 /**
