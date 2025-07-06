@@ -4,7 +4,7 @@
 
 gmsi_t tGmsi = {NULL};
 
-void main(void)
+int main(void)
 {
     //at32_board_init();
     gmsi_Init(&tGmsi);
@@ -13,4 +13,5 @@ void main(void)
     {
         
     }
+    return 0;
 }

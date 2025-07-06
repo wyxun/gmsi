@@ -1,6 +1,6 @@
 #include "util_queue.h"
 
-/* pfifo¸´Î» */
+/* pfifoï¿½ï¿½Î» */
 qstatus_t queue_init(util_queue_t *q, uint8_t* pchData, uint16_t hwLength)
 {
     int i = 0;
@@ -15,7 +15,7 @@ qstatus_t queue_init(util_queue_t *q, uint8_t* pchData, uint16_t hwLength)
     return QUEUE_OK;
 }
 
-/* pfifoÐ´ÈëÊý¾Ý */
+/* pfifoÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 qstatus_t queue_write(util_queue_t *q, qdata_t data)
 {
     if(queue_isFull(q))
@@ -32,7 +32,7 @@ qstatus_t queue_write(util_queue_t *q, qdata_t data)
     return QUEUE_OK;
 }
 
-/* pfifo¶Á³öÊý¾Ý */
+/* pfifoï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 qstatus_t queue_read(util_queue_t *q, qdata_t *pdata)
 {
     if(queue_isEmpty(q))
@@ -51,19 +51,19 @@ qstatus_t queue_read(util_queue_t *q, qdata_t *pdata)
 }
 
 
-/* pfifoÊÇ·ñÎª¿Õ */
+/* pfifoï¿½Ç·ï¿½Îªï¿½ï¿½ */
 int queue_isEmpty(util_queue_t *q)
 {
     return (q->addr_wr == q->addr_rd);
 }
 
-/* pfifoÊÇ·ñÎªÂú */
+/* pfifoï¿½Ç·ï¿½Îªï¿½ï¿½ */
 int queue_isFull(util_queue_t *q)
 {
     return ((q->addr_wr + 1) % q->length == q->addr_rd);
 }
 
-/* pfifoÄÚÊý¾ÝµÄ¸öÊý */
+/* pfifoï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¸ï¿½ï¿½ï¿½ */
 int queue_count(util_queue_t *q)
 {
     if(q->addr_rd <= q->addr_wr)
@@ -72,12 +72,12 @@ int queue_count(util_queue_t *q)
     return (q->length + q->addr_wr - q->addr_rd);
 }
 
-/* ´òÓ¡µ±Ç°pfifoÄÚµÄÊý¾ÝºÍ¶ÁÐ´Ö¸ÕëµÄÎ»ÖÃ */
+/* ï¿½ï¿½Ó¡ï¿½ï¿½Ç°pfifoï¿½Úµï¿½ï¿½ï¿½ï¿½ÝºÍ¶ï¿½Ð´Ö¸ï¿½ï¿½ï¿½Î»ï¿½ï¿½ */
 int queue_print(util_queue_t *q)
 {
     int i = 0;
     int j = 0;
-
+#if 0
     for(i = 0; i < q->addr_rd; i++)
         printf("     ");
 
@@ -108,7 +108,7 @@ int queue_print(util_queue_t *q)
 
     printf("wr=%d", q->addr_wr);
     printf("\n");
-
+#endif
     return QUEUE_OK;
 }
 

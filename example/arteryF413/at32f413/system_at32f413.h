@@ -43,7 +43,7 @@ extern "C" {
 
 #define HEXT_STABLE_DELAY                (5000u)
 #define PLL_STABLE_DELAY                 (500u)
-#define SystemCoreClock                  system_core_clock
+#define SystemCoreClock                  SystemCoreClock
 #define DUMMY_NOP()                      {__NOP();__NOP();__NOP();__NOP();__NOP(); \
                                           __NOP();__NOP();__NOP();__NOP();__NOP(); \
                                           __NOP();__NOP();__NOP();__NOP();__NOP(); \
@@ -57,7 +57,7 @@ extern "C" {
   * @{
   */
 
-extern unsigned int system_core_clock; /*!< system clock frequency (core clock) */
+extern unsigned int SystemCoreClock; /*!< system clock frequency (core clock) */
 
 /**
   * @}

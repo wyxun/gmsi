@@ -309,6 +309,20 @@ int gbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLeng
     return wRet;
 }
 
+/**
+ * Function: gbase_MessagePendFromRing
+ * -----------------------------------
+ * This function retrieves messages from a ring buffer of a base object. It reads messages from the ring 
+ * buffer until it reaches the maximum size specified or until there are no more messages to read.
+ *
+ * Parameters: 
+ * ptBase: A pointer to the gmsi_base_t structure containing the ring buffer.
+ * pchMsgBuffer: A pointer to the buffer to copy the messages to.
+ * hwMaxSize: The maximum size of the buffer.
+ *
+ * Returns: 
+ * The number of bytes read from the ring buffer, or an error code if the input parameters are invalid.
+ */
 int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16_t hwMaxSize)
 {
     // Check for null pointer

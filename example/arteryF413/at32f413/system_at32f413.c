@@ -43,7 +43,7 @@
 /** @addtogroup AT32F413_system_private_variables
   * @{
   */
-unsigned int system_core_clock           = HICK_VALUE; /*!< system clock frequency (core clock) */
+unsigned int SystemCoreClock           = HICK_VALUE; /*!< system clock frequency (core clock) */
 /**
   * @}
   */
@@ -100,8 +100,8 @@ void SystemInit (void)
 }
 
 /**
-  * @brief  update system_core_clock variable according to clock register values.
-  *         the system_core_clock variable contains the core clock (hclk), it can
+  * @brief  update SystemCoreClock variable according to clock register values.
+  *         the SystemCoreClock variable contains the core clock (hclk), it can
   *         be used by the user application to setup the systick timer or configure
   *         other parameters.
   * @param  none
@@ -121,12 +121,12 @@ void system_core_clock_update(void)
   {
     case CRM_SCLK_HICK:
       if(((CRM->misc3_bit.hick_to_sclk) != RESET) && ((CRM->misc1_bit.hickdiv) != RESET))
-        system_core_clock = HICK_VALUE * 6;
+        SystemCoreClock = HICK_VALUE * 6;
       else
-        system_core_clock = HICK_VALUE;
+        SystemCoreClock = HICK_VALUE;
       break;
     case CRM_SCLK_HEXT:
-      system_core_clock = HEXT_VALUE;
+      SystemCoreClock = HEXT_VALUE;
       break;
     case CRM_SCLK_PLL:
       pll_clock_source = CRM->cfg_bit.pllrcs;
@@ -146,7 +146,7 @@ void system_core_clock_update(void)
         if (pll_clock_source == 0x00)
         {
           /* hick divided by 2 selected as pll clock entry */
-          system_core_clock = (HICK_VALUE >> 1) * pll_mult;
+          SystemCoreClock = (HICK_VALUE >> 1) * pll_mult;
         }
         else
         {
@@ -154,17 +154,17 @@ void system_core_clock_update(void)
           if (CRM->cfg_bit.pllhextdiv != RESET)
           {
             /* hext clock divided by 2 */
-            system_core_clock = (HEXT_VALUE / 2) * pll_mult;
+            SystemCoreClock = (HEXT_VALUE / 2) * pll_mult;
           }
           else
           {
-            system_core_clock = HEXT_VALUE * pll_mult;
+            SystemCoreClock = HEXT_VALUE * pll_mult;
           }
         }
       }
       break;
     default:
-      system_core_clock = HICK_VALUE;
+      SystemCoreClock = HICK_VALUE;
       break;
   }
 
@@ -173,7 +173,7 @@ void system_core_clock_update(void)
   temp = CRM->cfg_bit.ahbdiv;
   div_value = sys_ahb_div_table[temp];
   /* ahbclk frequency */
-  system_core_clock = system_core_clock >> div_value;
+  SystemCoreClock = SystemCoreClock >> div_value;
 }
 /**
   * @}

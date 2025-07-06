@@ -313,7 +313,7 @@ void delay_init()
 {
   /* configure systick */
   systick_clock_source_config(SYSTICK_CLOCK_SOURCE_AHBCLK_NODIV);
-  fac_us = system_core_clock / (1000000U);
+  fac_us = SystemCoreClock / (1000000U);
   fac_ms = fac_us * (1000U);
 }
 
