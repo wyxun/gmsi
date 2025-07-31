@@ -19,7 +19,7 @@ SIZE = $(COMPILER_PATH)/llvm-size
 LTO_FLAGS = -flto
 # Compiler flags
 CFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=soft
-CFLAGS += -std=gnu11 -Wall -Wextra -O0
+CFLAGS += -std=gnu11 -Wall -Wextra -Os
 CFLAGS += -fno-builtin -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fshort-enums -fomit-frame-pointer -c -fdata-sections -ffunction-sections
 CFLAGS += \

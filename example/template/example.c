@@ -7,6 +7,12 @@ int example_Run(uintptr_t wObjectAddr);
 // Define a global example base of type gmsi_base_t
 static gmsi_base_t s_tExampleBase;
 
+example_share_mem_t tExampleShareMem;
+share_mem_t s_tExampleShareMem = {
+    .pchBuffer = (uint8_t *)&tExampleShareMem,  // Initialize the pointer to the shared memory buffer
+    .hwSize = sizeof(tExampleShareMem)          // Initialize the size of the shared memory
+};
+
 // Define and initialize a global example base configuration of type gmsi_base_cfg_t
 gmsi_base_cfg_t s_tExampleBaseCfg = {
     .wId = EXAMPLE,                 // Set the ID to EXAMPLE
@@ -15,6 +21,7 @@ gmsi_base_cfg_t s_tExampleBaseCfg = {
         .Clock = example_Clock,     // Set the Clock function to example_Clock
         .Run = example_Run,         // Set the Run function to example_Run
     },
+    .ptShareMem = &s_tExampleShareMem // Set the shared memory configuration
 };
 
 gcoroutine_handle_t tGcoroutineExampleHandle = {
@@ -139,14 +146,15 @@ int example_Run(uintptr_t wObjectAddr)
     if(wEvent)
         example_EventHandle(ptThis, wEvent);
     
-    
     // If the ring buffer is enabled, check for messages in the ring buffer
     uint16_t hwLength = gbase_MessagePendFromRing(ptThis->ptBase, chRingBufferMsg, sizeof(chRingBufferMsg));
     if(hwLength > 0)
     {
+
         // Process the messages received from the ring buffer
         GLOG_PRINTF("get chRingBufferMsg");
         GVAL_PRINTF(hwLength);
+        tExampleShareMem.value2 = hwLength; // Reset the shared memory value
     }
 
     // Logic or state machine programs

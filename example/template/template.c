@@ -148,14 +148,32 @@ int template_Run(uintptr_t wObjectAddr)
         GLOG_PRINTF("ptThis is NULL.");
         return GMSI_EFAIL;
     }
-
+    
     template_msg_t *ptMsg = (template_msg_t *)GMSI_MSG_ITEM_GET_BUFFER(g_tTemplatePost);
-    //ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);
+    //ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);4
+    ptMsg->hwLength = 6;      // test gbase_MessagePostToRing
     if(ptMsg->hwLength)
     {
         ptMsg->chStatus = 0;
         gbase_MessagePostToRing(EXAMPLE, (uint8_t *)ptMsg, ptMsg->hwLength);
         gbase_MessagePost(EXAMPLE, GMSI_MSG_ITEM_GET_HANDLE(g_tTemplatePost));
+    }
+    share_mem_t *ptShareMem = gbase_ShareMemRead(EXAMPLE);
+    if(ptShareMem != NULL)
+    {
+        const example_share_mem_t *ptGetExampleShareData = (example_share_mem_t *)ptShareMem->pchBuffer;
+        if(ptGetExampleShareData->value2 != 5)
+        {
+            GLOG_PRINTF("Error: Shared memory values are not as expected.");
+        }
+        else
+        {
+            GLOG_PRINTF("Shared memory values are correct.");
+        }
+    }
+    else
+    {
+        GLOG_PRINTF("Error: ptShareMem is NULL.");
     }
     // Get the events for the template object
     wEvent = gbase_EventPend(ptThis->ptBase);

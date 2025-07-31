@@ -11,6 +11,8 @@
 
 static struct xLIST tListObject;
 
+int gbase_ShareMemInit(gmsi_base_t *ptBase, share_mem_t *ptShareMem);
+
 /**
  * Function: gbase_Init
  * ----------------------------
@@ -60,6 +62,14 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     else
         wRet = GMSI_EAGAIN;
     ptBase->pFcnInterface = &ptCfg->FcnInterface;
+    // Initialize share memory if provided
+    if(ptCfg->ptShareMem != NULL)
+    {
+        wRet = gbase_ShareMemInit(ptBase, ptCfg->ptShareMem);
+        if (wRet != GMSI_SUCCESS) {
+            return wRet;
+        }
+    }
     return wRet;
 }
 
@@ -91,7 +101,8 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent)
     }
 
     // Find the list item with the given ID
-    for (; ptListItemDes != &tListObject.xListEnd; ptListItemDes = ptListItemDes->pxPrevious, chErgodicTime++) {
+    for (; ptListItemDes != &tListObject.xListEnd; ptListItemDes = ptListItemDes->pxPrevious, \
+            chErgodicTime++) {
         if(ptListItemDes->xItemValue == wId)
             break;
     }
@@ -341,6 +352,89 @@ int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16
     wRet = hwLength; // Return the number of bytes read, 0 if no data
     return wRet;
 }
+
+/**
+ * Function: gbase_ShareMemInit
+ * ----------------------------
+ * This function initializes the shared memory for a base object. It checks if the base and shared memory 
+ * pointers are not NULL, clears the shared memory buffer, and returns a status code indicating the result.
+ *
+ * Parameters: 
+ * ptBase: A pointer to the gmsi_base_t structure to initialize.
+ * ptShareMem: A pointer to the share_mem_t structure containing the shared memory configuration.
+ *
+ * Returns: 
+ * GMSI_SUCCESS if the function runs successfully, GMSI_EINVAL if any of the pointers is NULL or if the 
+ * shared memory buffer is NULL or has a size of zero.
+ */
+int gbase_ShareMemInit(gmsi_base_t *ptBase, share_mem_t *ptShareMem)
+{
+    // Check for null pointers
+    if (ptBase == NULL || ptShareMem == NULL) {
+        return GMSI_EINVAL;
+    }
+
+    // Initialize the shared memory structure
+    ptBase->ptShareMem = ptShareMem;
+    if(ptShareMem->pchBuffer != NULL && ptShareMem->hwSize > 0) {
+        uint8_t *pchBuffer = (uint8_t *)ptShareMem->pchBuffer;
+        // Clear the shared memory buffer
+        memset(pchBuffer, 0, ptShareMem->hwSize);
+    } else {
+        // If the buffer is NULL or size is zero, return an error
+        return GMSI_EINVAL;
+    }
+
+    return GMSI_SUCCESS;
+}
+
+/**
+ * Function: gbase_ShareMemRead
+ * ----------------------------
+ * This function retrieves the shared memory pointer for a base object with a specific ID. It traverses 
+ * a list of base objects, finds the one with the given ID, and returns its shared memory pointer. 
+ * If no base object with the given ID is found, it returns NULL.
+ *
+ * Parameters: 
+ * wId: The ID of the base object to retrieve the shared memory pointer from.
+ *
+ * Returns: 
+ * A pointer to the shared memory structure of the base object, or NULL if no base object with the given ID is found.
+ */
+share_mem_t* gbase_ShareMemRead(uint32_t wId)
+{
+    // Check for valid input
+    if (wId == 0) {
+        return NULL;
+    }
+
+    int wRet = 0;
+    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
+    uint8_t chErgodicTime = 1;
+    gmsi_base_t *ptBaseDes;
+
+    // Find the list item with the given ID
+    for (uint8_t chErgodicTime = 1;                                         \
+            ptListItemDes != &tListObject.xListEnd;                         \
+            ptListItemDes = ptListItemDes->pxPrevious, chErgodicTime++) {
+        if(ptListItemDes->xItemValue == wId)
+            break;
+    }
+
+    if(chErgodicTime <= tListObject.uxNumberOfItems)
+    {
+        ptBaseDes = ptListItemDes->pvOwner;
+        GMSI_ASSERT(NULL != ptBaseDes);
+        // Return the shared memory pointer
+        return ptBaseDes->ptShareMem;
+    }
+    else
+    {
+        // If the item was not found, return NULL
+        return NULL;
+    }
+}
+
 /**
  * Function: gbase_DebugListBase
  * ----------------------------

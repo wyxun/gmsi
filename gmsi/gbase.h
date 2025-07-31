@@ -25,6 +25,11 @@ typedef struct {
 }message_t;
 
 typedef struct {
+    uint8_t *pchBuffer;
+    uint16_t hwSize;
+} share_mem_t;
+
+typedef struct {
     uint8_t *pchMessage;
     uint16_t hwLength;
     uint16_t hwMaxSize;
@@ -34,6 +39,7 @@ typedef struct {
 typedef struct {
     uint32_t wId;
     uintptr_t wParent;
+    share_mem_t *ptShareMem;
     gmsi_interface_t FcnInterface;
 } gmsi_base_cfg_t;
 
@@ -43,6 +49,7 @@ typedef struct {
     struct xLIST tListMessage;
     object_ring_buffer_t tRingBuffer;
     gmsi_interface_t *pFcnInterface;
+    share_mem_t *ptShareMem;
     uintptr_t wParent;
     struct xLIST_ITEM tListItem;
 } gmsi_base_t;
@@ -55,6 +62,7 @@ int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem);
 int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg);
 int gbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLength);
 int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16_t hwMaxSize);
+share_mem_t* gbase_ShareMemRead(uint32_t wId);
 struct xLIST* gbase_GetBaseList(void);
 void gbase_DebugListBase(void);
 

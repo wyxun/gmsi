@@ -15,6 +15,11 @@ typedef struct{
 }template_msg_t;
 #endif
 
+typedef struct{
+    uint32_t value1;  // Example shared memory value
+    uint32_t value2;  // Another example shared memory value
+}example_share_mem_t;
+
 typedef enum {
     Event_SyncButtonPushed = Gmsi_Event00,
     Event_PacketReceived = Gmsi_Event01,

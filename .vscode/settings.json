@@ -17,6 +17,7 @@
         "plooc.h": "c",
         "at32f421_board.h": "c",
         "at32f421.h": "c",
-        "at32f421_misc.h": "c"
+        "at32f421_misc.h": "c",
+        "example.h": "c"
     }
 }
