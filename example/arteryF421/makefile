@@ -6,8 +6,8 @@ CHIP_DIR = at32f421
 GMSI_OBJECT_DIR = object
 GMSI_DIR := ../../gmsi
 GMSI_UTL_DIR := ../../gmsi/utilities
-GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
-GMSI_THREEPART_PERF_COUNTER = ../../ThirdParty/perf_counter
+GMSI_THREEPART_PLOOC = ../../lib/plooc
+GMSI_THREEPART_PERF_COUNTER = ../../lib/perf_counter
 TARGET := 421demo
 
 # Compiler

@@ -1,6 +1,6 @@
 GMSI_DIR := ../../gmsi
 GMSI_UTL_DIR := ../../gmsi/utilities
-GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
+GMSI_THREEPART_PLOOC = ../../lib/plooc
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/demo
 
