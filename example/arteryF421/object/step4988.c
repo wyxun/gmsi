@@ -1,5 +1,6 @@
 #include "step4988.h"
 #include "userconfig.h"
+#include "bsp_stepmotor.h"
 
 int step4988_Clock(uintptr_t wObjectAddr);
 int step4988_Run(uintptr_t wObjectAddr);
@@ -88,6 +89,21 @@ static void step4988_EventHandle(step4988_t *ptThis, uint32_t wEvent)
         GLOG_PRINTF("ptThis is NULL.");
         return;
     }
+    
+    if(wEvent & twoInOneHandle_Event_StartStepMotor)
+    {
+        bsp_StepMotorEnable(true);
+    }
+    
+    if(wEvent & twoInOneHandle_Event_StopStepMotor)
+    {
+        bsp_StepMotorEnable(false);
+    }
+    if(wEvent & twoInOneHandle_Event_MotorDirCCW)
+        bsp_StepMotorSetDirection(STEP_MOTOR_DIRECTION_CCW);
+    if(wEvent & twoInOneHandle_Event_MotorDirCW)
+        bsp_StepMotorSetDirection(STEP_MOTOR_DIRECTION_CW);
+    
 #if 0
     // Check if the event Event_SyncMissed is set
     if(wEvent & Event_SyncMissed)
@@ -168,11 +184,12 @@ int step4988_Run(uintptr_t wObjectAddr)
  */
 int step4988_Clock(uintptr_t wObjectAddr)
 {
+    volatile static bool bStatus = true;
     // Get the step4988 object from the given address
     step4988_t *ptThis = (step4988_t *)wObjectAddr;
 
     int wRet = GMSI_SUCCESS;
-    
+
     // Perform operations on ptThis
 
     return wRet;
@@ -208,7 +225,8 @@ int step4988_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     /* Copy the configuration members to the object */
 
     /* Initialize the hardware */
-
+    bsp_StepMotorInit();
+    
     // Register the object in the GMSI list
     ptThis->ptBase = &s_tStep4988Base;
     if (ptThis->ptBase == NULL) {

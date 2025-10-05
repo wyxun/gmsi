@@ -1,9 +1,12 @@
 #include "rfid.h"
 #include "userconfig.h"
+#include "at32f421_bsp.h"
+#include "perf_counter.h"
 
 int rfid_Clock(uintptr_t wObjectAddr);
 int rfid_Run(uintptr_t wObjectAddr);
 
+extern rfid_io_t c_tRFIDIO;
 // Define a global rfid base of type gmsi_base_t
 static gmsi_base_t s_tRfidBase;
 
@@ -103,7 +106,7 @@ static int rfid_SendCommand(rfid_t *ptThis, uint8_t chCmd, uint8_t *pchData, uin
     chFrame[5 + chDataLen] = 0x03; // ETX
     
     // 通过配置的串口接口发送
-    if(ptThis->Write(0, chFrame, 6 + chDataLen) == 0) {
+    if(ptThis->Write(ptThis->wFd, chFrame, 6 + chDataLen) == 0) {
         return GMSI_EFAIL;
     }
     return GMSI_SUCCESS;
@@ -131,24 +134,16 @@ static void rfid_EventHandle(rfid_t *ptThis, uint32_t wEvent)
     }
 
 #if 1 // 启用事件处理
-    if(wEvent & Rfid_Event_PacketReceived) 
+    if(wEvent & twoInOneHandle_Event_ReadNfcData) 
     {
-        uint8_t chBuffer[32];
-        uint16_t hwLength = ptThis->Read(0, chBuffer);
-        
-        // 验证数据帧格式
-        if(hwLength >= 6 && 
-           chBuffer[0] == 0x20 && 
-           chBuffer[hwLength-1] == 0x03)
+        // 有数据
+        if(ptThis->tNfcMessage.chNfcType == NFC_TYPE_NTAG213)
         {
-            // 提取数据并处理
-            uint8_t chCmd = chBuffer[2];
-            uint8_t chDataLen = chBuffer[3];
-            
-            // 触发回调函数
-            if(ptThis->pfcnCallback) {
-                ptThis->pfcnCallback(chCmd, &chBuffer[4], chDataLen);
-            }
+            gbase_MessagePostToRing(CORRESPONDENT, (uint8_t *)&ptThis->tNfcMessage, 24);
+        }
+        else
+        {
+            gbase_MessagePostToRing(CORRESPONDENT, (uint8_t *)&ptThis->tNfcMessage.chNfcType, 1);
         }
     }
 #endif
@@ -175,10 +170,48 @@ int rfid_Configure(rfid_t *ptThis, uint8_t chSettingType, uint8_t chValue)
 }
 
 // 自定义回调函数
-void rfid_callback(uint8_t chCmd, uint8_t *pchData, uint8_t chLength)
+void rfid_RecvHandle(rfid_t *ptThis, uint8_t chCmd, uint8_t *pchData, uint8_t chLength)
 {
-    if(chCmd == 0x27) {
-        // 自定义卡处理逻辑
+    uint8_t chData[7] = {0};
+    switch(chCmd)
+    {
+        case 0x27:
+            // 自定义卡处理逻辑
+            break;
+        case 0x00:
+            // NTAG213 UUID
+            if(pchData[0] == 0x44 && pchData[1] == 0x00) 
+            {
+                for(uint8_t i = 0; i < 7; i++) {
+                    ptThis->tNfcMessage.chNfcUUID[i] = pchData[i+2];
+                    GVAL_PRINTF(pchData[i+2]);
+                }
+                // 发送读取用户区数据请求
+                chData[0] = 0x00; // 读取0-3用户区
+                rfid_SendCommand(ptThis, 0x52, chData, 1);
+                ptThis->tNfcMessage.chNfcType = NFC_TYPE_UNKNOWN;
+            }
+        // 读卡成功
+        case 0x52:
+            if(chLength == 0x11)
+            {
+                for(uint8_t i = 0; i < 16; i++) {
+                    ptThis->tNfcMessage.chData[i+pchData[0]*4] = pchData[i+1];
+                }
+                ptThis->tNfcMessage.chNfcType = NFC_TYPE_NTAG213; // 设置NFC类型
+                // 启动读取下四个块数据
+//                else if(pchData[0] < 4)
+//                {
+//                    chData[0] = 0x03; // 读取4-7用户区
+//                    rfid_SendCommand(ptThis, 0x52, chData, 1);
+//                }
+            }
+            else
+            {
+                ptThis->tNfcMessage.chNfcType = NFC_TYPE_UNKNOWN;
+            }
+            break;
+        break;
     }
 }
 
@@ -213,11 +246,23 @@ int rfid_Run(uintptr_t wObjectAddr)
 
     // Get the events for the rfid object
     wEvent = gbase_EventPend(ptThis->ptBase);
-
     // If there are any events, handle them
     if(wEvent)
         rfid_EventHandle(ptThis, wEvent);
     
+    uint8_t chBuffer[32];
+    uint16_t hwLength = ptThis->Read(ptThis->wFd, chBuffer);
+    // 验证数据帧格式
+    if(hwLength >= 6 && 
+        chBuffer[0] == 0x20 && 
+        chBuffer[hwLength-1] == 0x03)
+    {
+        // 提取数据并处理
+        uint8_t chCmd = chBuffer[2];
+        uint8_t chDataLen = chBuffer[3];
+        
+        rfid_RecvHandle(ptThis, chCmd, &chBuffer[4], chDataLen);
+    }
     // Logic or state machine programs
 
     return wRet;
@@ -237,11 +282,28 @@ int rfid_Run(uintptr_t wObjectAddr)
  */
 int rfid_Clock(uintptr_t wObjectAddr)
 {
+    static uint8_t chCardReadStatus = 0;
+    static uint8_t chCardStatusChangeCount = 0;
     // Get the rfid object from the given address
     rfid_t *ptThis = (rfid_t *)wObjectAddr;
-
+    static uint16_t s_hwTestDelay = 1000;
     int wRet = GMSI_SUCCESS;
     
+    // 卡状态检测
+    if(chCardReadStatus != RFID_CARDIN_READ)
+    {
+        chCardStatusChangeCount++;
+        if(chCardStatusChangeCount > 5)
+        {
+            chCardReadStatus = RFID_CARDIN_READ;
+            if(!chCardReadStatus)   // 下降沿拔卡
+            {
+                ptThis->tNfcMessage.chNfcType = NFC_TYPE_UNKNOWN;
+            }
+            chCardStatusChangeCount = 0;
+        }
+    }
+
     // Perform operations on ptThis
 
     return wRet;
@@ -275,9 +337,9 @@ int rfid_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     }
 
     /* Copy the configuration members to the object */
-    ptThis->pfcnCallback = ptCfg->pfcnCallback;
     ptThis->Read = ptCfg->Read;
     ptThis->Write = ptCfg->Write;
+    ptThis->wFd = ptCfg->wFd;
     /* Initialize the hardware */
 
     // Register the object in the GMSI list
@@ -288,6 +350,11 @@ int rfid_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         s_tRfidBaseCfg.wParent = wObjectAddr;
         return gbase_Init(ptThis->ptBase, &s_tRfidBaseCfg);
     }
+    ptThis->tNfcMessage.chNfcType = NFC_TYPE_UNKNOWN;
+    RFID_RESET;
+    delay_ms(100);
+    // test
+    
 }
 
 

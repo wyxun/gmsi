@@ -34,7 +34,7 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
     static uint8_t chInitCount = 0;
 
     // Check for null pointers
-    if (ptBase == NULL || ptCfg == NULL) {
+    if (NULL == ptBase || NULL == ptCfg) {
         return GMSI_EINVAL;
     }
     // Initialise list object on first call
@@ -63,7 +63,7 @@ int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
         wRet = GMSI_EAGAIN;
     ptBase->pFcnInterface = &ptCfg->FcnInterface;
     // Initialize share memory if provided
-    if(ptCfg->ptShareMem != NULL)
+    if(NULL != ptCfg->ptShareMem)
     {
         wRet = gbase_ShareMemInit(ptBase, ptCfg->ptShareMem);
         if (wRet != GMSI_SUCCESS) {
@@ -139,7 +139,7 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent)
 uint32_t gbase_EventPend(gmsi_base_t *ptBase)
 {
     // Check for null pointer
-    if (ptBase == NULL) {
+    if (NULL == ptBase) {
         return 0;
     }
 
@@ -169,7 +169,7 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
 int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 {
     // Check for valid input
-    if (wId == 0 || ptMsgItem == NULL) {
+    if (wId == 0 || NULL == ptMsgItem) {
         return GMSI_EINVAL;
     }
 
@@ -276,7 +276,7 @@ int gbase_MessagePend(gmsi_base_t *ptBase, message_t *ptMsg)
 int gbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLength)
 {
     // Check for valid input
-    if (wId == 0 || pchMsgBuffer == NULL || hwLength == 0) {
+    if (wId == 0 || NULL == pchMsgBuffer || hwLength == 0) {
         return GMSI_EINVAL;
     }
 
@@ -337,7 +337,7 @@ int gbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLeng
 int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16_t hwMaxSize)
 {
     // Check for null pointer
-    if (ptBase == NULL || pchMsgBuffer == NULL || hwMaxSize == 0) {
+    if (NULL == ptBase || NULL == pchMsgBuffer || hwMaxSize == 0) {
         return GMSI_EINVAL;
     }
 
@@ -370,7 +370,7 @@ int gbase_MessagePendFromRing(gmsi_base_t *ptBase, uint8_t *pchMsgBuffer, uint16
 int gbase_ShareMemInit(gmsi_base_t *ptBase, share_mem_t *ptShareMem)
 {
     // Check for null pointers
-    if (ptBase == NULL || ptShareMem == NULL) {
+    if (NULL == ptBase || NULL == ptShareMem) {
         return GMSI_EINVAL;
     }
 

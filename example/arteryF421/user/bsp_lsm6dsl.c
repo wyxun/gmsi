@@ -62,7 +62,8 @@ void bsp_Lsm6dslInit(void)
 }
 
 // 软件SPI传输（模式3：CPOL=1, CPHA=1）
-uint8_t SPI_Transfer(uint8_t data) {
+uint8_t SPI_Transfer(uint8_t data) 
+{
     uint8_t rx_data = 0;
     
     // 每个bit传输
@@ -89,6 +90,8 @@ uint8_t SPI_Transfer(uint8_t data) {
 }
 
 void LSM6DSL_WriteReg(uint8_t reg, uint8_t value) {
+    // 将CS引脚拉低，选择LSM6DSL传感器
+    // 将CS引脚拉低，选中LSM6DSL
     gpio_bits_write(c_tlsm6dslio.tLsmCs.ptPort, c_tlsm6dslio.tLsmCs.wPin, 0);
     SPI_Transfer(reg & 0x7F);  // 清除MSB表示写操作（文档6.4.2节）
     SPI_Transfer(value);
@@ -105,7 +108,8 @@ uint8_t LSM6DSL_ReadReg(uint8_t reg) {
 }
 
 // 初始化传感器
-uint8_t LSM6DSL_Init(void) {
+uint8_t LSM6DSL_Init(void) 
+{
     bsp_Lsm6dslInit();
     
     // 检查设备ID（文档9.12节）
@@ -122,7 +126,8 @@ uint8_t LSM6DSL_Init(void) {
     return 1;  // 初始化成功
 }
 
-void LSM6DSL_ReadRawData(int16_t* accel, int16_t* gyro) {
+void LSM6DSL_ReadRawData(int16_t* accel, int16_t* gyro) 
+{
     uint8_t buffer[12];
     
     // 启动多字节读取（文档6.4.1节）

@@ -33,6 +33,7 @@ gstorage_cfg_t tGstorageCfg = {
 };
 gstorage_t tGstorage;
 
+static bool s_bGmsiInit = false;
 /**
  * Function: gmsi_Init
  * ----------------------------
@@ -101,13 +102,13 @@ void gmsi_Run(void)
         ptBaseDes = ptListItemDes->pvOwner;
 
         // Check if the base descriptor is NULL
-        if (ptBaseDes == NULL) {
+        if (NULL == ptBaseDes) {
             LOG_OUT("Error: ptBaseDes is NULL.\n");
             return;
         }
 
         // Check if the function interface is NULL
-        if (ptBaseDes->pFcnInterface == NULL) {
+        if (NULL == ptBaseDes->pFcnInterface) {
             LOG_OUT("Error: ptBaseDes->pFcnInterface is NULL.\n");
             return;
         }
@@ -134,9 +135,12 @@ void gmsi_Clock(void)
 {
     // read point only
     struct xLIST *const ptListObject = gbase_GetBaseList();
-
+    
+    if(false == s_bGmsiInit)
+        return;
+    
     // Check if the list object is NULL
-    if (ptListObject == NULL) {
+    if (NULL == ptListObject) {
         LOG_OUT("Error: ptListObject is NULL.\n");
         return;
     }
@@ -145,11 +149,13 @@ void gmsi_Clock(void)
     const struct xLIST_ITEM *ptListItemDes;
     gmsi_base_t *ptBaseDes;
 
-    for (ptListItemDes = ptListObject->xListEnd.pxPrevious; ptListItemDes != &ptListObject->xListEnd; ptListItemDes = ptListItemDes->pxPrevious) {
+    for (ptListItemDes = ptListObject->xListEnd.pxPrevious;                 \
+            ptListItemDes != &ptListObject->xListEnd;                       \
+            ptListItemDes = ptListItemDes->pxPrevious) {
         ptBaseDes = ptListItemDes->pvOwner;
 
         // Check if the base descriptor is NULL
-        if (ptBaseDes == NULL) {
+        if (NULL == ptBaseDes) {
             LOG_OUT("Error: ptBaseDes is NULL.\n");
             return;
         }

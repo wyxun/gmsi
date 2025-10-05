@@ -22,29 +22,35 @@ typedef struct{
     uint8_t chTXFinishTime;
     uint8_t chTXFlag;
     
+    uint8_t chWaitBusIdleFlag;
+    
     usart_type* ptUsart;
 }usartbuffer_t;
 
 usartbuffer_t tUsart1Buffer;
 usartbuffer_t tUsart2Buffer;
 usartbuffer_t tUsart3Buffer;
+
+// RFID
 #if (defined USART1_ENABLE) && (USART1_ENABLE == TRUE)
 #define USART1_RX_BUFFER_MAX			100
 #define USART1_TX_BUFFER_MAX			100
 uint8_t chUsart1TxBuffer[USART1_TX_BUFFER_MAX];
-uint8_t chUsart1RxBuffer[USART1_TX_BUFFER_MAX];
+uint8_t chUsart1RxBuffer[USART1_RX_BUFFER_MAX];
 #endif
 
+// CONNECT UPPER
 #if (defined USART2_ENABLE) && (USART2_ENABLE == TRUE)
 #define USART2_RX_BUFFER_MAX			100
 #define USART2_TX_BUFFER_MAX			100
 uint8_t chUsart2TxBuffer[USART2_TX_BUFFER_MAX];
-uint8_t chUsart2RxBuffer[USART2_TX_BUFFER_MAX];
+uint8_t chUsart2RxBuffer[USART2_RX_BUFFER_MAX];
 #endif
 
+// UNUSE
 const ggpio_t c_tLed = {
-    .ptPort = GPIOA,
-    .wPin = GPIO_PINS_5
+    .ptPort = GPIOF,
+    .wPin = GPIO_PINS_0
 };
 
 const ggpio_t c_tUart2Tx = {
@@ -67,7 +73,7 @@ const ggpio_t c_tUart2Rx = {
 
 const ggpio_t c_tUart485 = {
     .ptPort = GPIOA,
-    .wPin = GPIO_PINS_4,
+    .wPin = GPIO_PINS_1,
 };
 
 const ggpio_t c_tUart1Tx = {
@@ -88,7 +94,16 @@ const ggpio_t c_tUart1Rx = {
     },
 };
 
-
+const rfid_io_t c_tRFIDIO = {
+    .tCardIn = {
+        .ptPort = GPIOA,
+        .wPin = GPIO_PINS_12,
+    },
+    .tReset = {
+        .ptPort = GPIOA,
+        .wPin = GPIO_PINS_11,
+    },
+};
 
 void system_clock_config(void)
 {
@@ -150,7 +165,7 @@ void bsp_UartInit(void)
     /* enable the usart1 and gpio clock */
     gpio_default_para_init(&gpio_init_struct);
     
-#if (defined USART1_RS485_ENABLE) && (USART1_RS485_ENABLE == TRUE)
+#if (defined USART1_ENABLE) && (USART1_ENABLE == TRUE)
     crm_periph_clock_enable(CRM_USART1_PERIPH_CLOCK, TRUE);
     // TX
     gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
@@ -314,8 +329,15 @@ void bsp_GpioInit(void)
     gpio_init_struct.gpio_pull = GPIO_PULL_NONE;
     gpio_init_struct.gpio_drive_strength = GPIO_DRIVE_STRENGTH_STRONGER;
     gpio_init(c_tLed.ptPort, &gpio_init_struct);
-    
-    
+
+    gpio_init_struct.gpio_pins = c_tRFIDIO.tReset.wPin;
+    gpio_init(c_tRFIDIO.tReset.ptPort, &gpio_init_struct);
+
+    // input
+    gpio_init_struct.gpio_pins = c_tRFIDIO.tCardIn.wPin;
+    gpio_init_struct.gpio_mode = GPIO_MODE_INPUT;
+    gpio_init_struct.gpio_pull = GPIO_PULL_UP;
+    gpio_init(c_tRFIDIO.tCardIn.ptPort, &gpio_init_struct);
 }
 
 void bsp_LedSet(bool bStatus)
@@ -364,12 +386,24 @@ uint16_t usart_sendData(uint8_t chUsartNum, uint8_t *pchSendData, uint16_t hwLen
     if(ptUsartBuffer->chTXFlag == USART_TXFLAG_BUSY)return hwCounter;
 
 #if (defined USART1_RS485_ENABLE) && (USART1_RS485_ENABLE == TRUE)
+    // 总线忙，不可发数据
+    if(ptUsartBuffer->chRXFlag == USART_RXFLAG_BUSY)
+        return hwCounter;
+    
     if(chUsartNum == 0)
     {
         gpio_bits_set(c_tUart485.ptPort, c_tUart485.wPin);
     }
 #endif
 #if (defined USART2_RS485_ENABLE) && (USART2_RS485_ENABLE == TRUE)
+    // 总线忙，不可发数据
+    if(ptUsartBuffer->chRXFlag == USART_RXFLAG_BUSY)
+    {
+        ptUsartBuffer->chWaitBusIdleFlag = 1;
+        return hwCounter;
+    }
+        
+    
     if(chUsartNum == 1)
     {
         gpio_bits_set(c_tUart485.ptPort, c_tUart485.wPin);
@@ -382,11 +416,13 @@ uint16_t usart_sendData(uint8_t chUsartNum, uint8_t *pchSendData, uint16_t hwLen
     return hwCounter;
 }
 
+
 uint16_t usart_receiveData(uint8_t chUsartNum, uint8_t *pchReceiveData)
 {
     uint16_t hwCounter=0;
     usartbuffer_t *ptUsartBuffer;
     qstatus_t tQueueStatus;
+    uint8_t chData;
     
     if(chUsartNum == 1)ptUsartBuffer = (usartbuffer_t *)&tUsart2Buffer;
     else if(!chUsartNum)ptUsartBuffer = (usartbuffer_t *)&tUsart1Buffer;
@@ -404,6 +440,18 @@ uint16_t usart_receiveData(uint8_t chUsartNum, uint8_t *pchReceiveData)
     }while(tQueueStatus != QUEUE_EMPTY);
     
     ptUsartBuffer->chRXFlag = USART_RXFLAG_IDLE;
+    
+    // 有数据压栈未发送
+    if(ptUsartBuffer->chWaitBusIdleFlag == 1)
+    {
+        if(queue_read((util_queue_t *)&ptUsartBuffer->tTXQueue, (uint8_t *)&chData) == QUEUE_OK)
+        {
+            // 启动发送
+            usart_data_transmit(ptUsartBuffer->ptUsart, chData);
+            ptUsartBuffer->chTXFlag = USART_TXFLAG_BUSY;
+            ptUsartBuffer->chWaitBusIdleFlag = 0;
+        }
+    }
     return hwCounter;
 }
 

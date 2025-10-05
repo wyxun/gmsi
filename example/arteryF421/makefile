@@ -130,3 +130,7 @@ clean:
 
 printf_value:
 	@echo $(info show obj '$(OBJECTS)')
+
+# 使用 openocd + DAP 下载器烧录程序
+flash:
+	openocd -f interface/cmsis-dap.cfg -f target/stm32f4x.cfg -c "program $(BIN_OUTPUT) verify reset exit"

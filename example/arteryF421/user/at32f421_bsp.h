@@ -22,10 +22,22 @@ typedef struct{
     gmux_t tGmux;
 }ggpio_t;
 
+typedef struct 
+{
+    ggpio_t tReset;
+    ggpio_t tCardIn;
+}rfid_io_t;
 
 // A:which
 // B:status
 #define TRIGGER(A,B)        gpio_bits_write(c_tTrigger[A].ptPort, c_tTrigger[A].wPin, B)
+
+#define RFID_RESET          do{                                                                     \
+                                gpio_bits_write(c_tRFIDIO.tReset.ptPort, c_tRFIDIO.tReset.wPin, 0); \
+                                delay_ms(50);                                                       \
+                                gpio_bits_write(c_tRFIDIO.tReset.ptPort, c_tRFIDIO.tReset.wPin, 1); \
+                            }while(0)
+#define RFID_CARDIN_READ    gpio_input_data_bit_read(c_tRFIDIO.tCardIn.ptPort, c_tRFIDIO.tCardIn.wPin)
 
 void system_clock_config(void);
 void bsp_Init(void);

@@ -27,4 +27,8 @@ typedef struct{
 #define GYRO_ODR_416HZ      0x60  // 416Hz输出数据率
 #define GYRO_FS_2000DPS     0x0C  // ±2000dps量程
 
+uint8_t LSM6DSL_Init(void);
+void LSM6DSL_ReadRawData(int16_t* accel, int16_t* gyro);
+
+
 #endif // __BSP_LSM6DSL_H
