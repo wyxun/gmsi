@@ -6,7 +6,7 @@
 
 #define BUFFER_SIZE 100
 pc_uart_cfg_t tPcUartCfg = {
-    .pchCom = "/dev/ttyS1",
+    .pchCom = "/dev/ttyS5",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
 };
 

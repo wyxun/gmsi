@@ -1,4 +1,6 @@
 #include "template.h"
+#include "perf_counter.h"
+
 #include "userconfig.h"
 
 #ifdef TEMPLATE_ITEM_MESSAGE
@@ -46,31 +48,25 @@ uint8_t chTemplateBufferTest[20] = {11, 22, 33, 44, 55, 66, 77, 88, 99, 0x0A, 0x
  */
 fsm_rt_t template_gcoroutine(void *pvParam)
 {
-    static uint8_t s_eState = 0;
-    fsm_rt_t tFsm = fsm_rt_on_going;
-    template_t *ptThis = (template_t *)pvParam;
+    template_t *ptObject = (template_t *)pvParam;
+    gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineTemplateHandle;
 
-    // Check if ptThis is not NULL
-    if (ptThis == NULL) {
-        GLOG_PRINTF("Error: ptThis is NULL.\n");
-        return fsm_rt_err;
-    }
+PERFC_PT_BEGIN(this.chState)
+    // Example coroutine logic
+    do {
+    PERFC_PT_WAIT_FOR_RES_UNTIL( 
+        (ptObject != NULL),           /* quit condition */
+        ptObject = (template_t *)pvParam; /* try to allocate memory */
+    )
+    GLOG_PRINTF("Template Coroutine Running");
+    PERFC_PT_DELAY_MS(1000);
+    GLOG_PRINTF("Template Coroutine delay 1s");
+    PERFC_PT_DELAY_MS(500);
+    GLOG_PRINTF("Template Coroutine delay 0.5s");
+    } while(0);
+PERFC_PT_END()
 
-    switch(s_eState)
-    {
-        case 0:
-            GLOG_PRINTF("get template event");
-            s_eState++;
-            break;
-        case 1:
-            GLOG_PRINTF("finish get template event handle");
-            fsm_cpl();
-            break;
-        default:
-            fsm_cpl();
-        break;
-    }
-    fsm_on_going(); 
+    return fsm_rt_cpl;
 }
 
 /**
@@ -258,10 +254,12 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         s_tTemplateBaseCfg.wParent = wObjectAddr;
         if(ptCfg->pchRingBuffer != NULL && ptCfg->hwRingSize != 0) {
             // Initialize the ring buffer in the example object
-            ptThis->ptBase->tRingBuffer.buffer = ptCfg->pchRingBuffer;
-            ptThis->ptBase->tRingBuffer.hwBufferSize = ptCfg->hwRingSize;
-            ptThis->ptBase->tRingBuffer.hwWriteIndex = 0;
-            ptThis->ptBase->tRingBuffer.hwReadIndex = 0;
+            perfc_with(ptThis->ptBase){
+                _->tRingBuffer.buffer = ptCfg->pchRingBuffer;
+                _->tRingBuffer.hwBufferSize = ptCfg->hwRingSize;
+                _->tRingBuffer.hwWriteIndex = 0;
+                _->tRingBuffer.hwReadIndex = 0;
+            };
         }
         return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
     }
