@@ -52,6 +52,8 @@ int gcoroutine_Insert(gcoroutine_handle_t *ptHandle, void *pvParam, fcnCoroutine
     int wRet = GMSI_SUCCESS;
     if(false == ptHandle->bIsRunning)
     {
+        // Initialize the list item and set its owner, parameters, and function
+        // ptHandle->chState = 0;
         ptHandle->tListItem.pvOwner = ptHandle;
         ptHandle->pvParam = pvParam;
         ptHandle->pfcn = pfcn;

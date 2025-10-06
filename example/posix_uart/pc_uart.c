@@ -17,6 +17,11 @@ gmsi_base_cfg_t tUartBaseCfg = {
     },
 };
 
+gcoroutine_handle_t tGcoroutineUartHandle = {
+    .bIsRunning = false,
+    .pfcn = NULL,
+};
+
 static gmsi_base_t tBase;
 
 GMSI_MSG_ITEM_DECLARE(PC_UART, Uartreceive, 100);
@@ -25,30 +30,22 @@ uint8_t chReceiveData[100];
 
 fsm_rt_t pcuart_gcoroutine(void *pvParam)
 {
-    static uint8_t s_eState = 0;
-    fsm_rt_t tFsm = fsm_rt_on_going;
     pc_uart_t *ptThis = (pc_uart_t *)pvParam;
-    switch(s_eState)
-    {
-        case 0:
-            //printf("entry");
-            GLOG_PRINTF("get uart data");
-            //GVAL_PRINTF(ptThis->chBufferData);
-            pcuart_Write(ptThis, ptThis->chBufferData, ptThis->hwBufferLength);
-            s_eState++;
-        break;
-        case 1:
-            GLOG_PRINTF("finish get uart data handle");
-            fsm_cpl();
-        default:
-        break;
-    }
-    return tFsm;
+
+PERFC_PT_BEGIN(tGcoroutineUartHandle.chState)
+    do {
+        GLOG_PRINTF("get uart data");
+        //GVAL_PRINTF(ptThis->chBufferData);
+        pcuart_Write(ptThis, ptThis->chBufferData, ptThis->hwBufferLength);
+        PERFC_PT_YIELD(fsm_rt_on_going);
+        GLOG_PRINTF("finish get uart data handle");
+    } while (1);
+
+PERFC_PT_END()
+
+    return fsm_rt_cpl;
 }
-gcoroutine_handle_t tGcoroutineUartHandle = {
-    .bIsRunning = false,
-    .pfcn = NULL,
-};
+
 
 int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {

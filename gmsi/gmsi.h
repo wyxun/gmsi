@@ -9,6 +9,9 @@
 #include "glog.h"
 #include "gstorage.h"
 
+#undef this
+#define this    (*ptThis)
+
 // Define types
 typedef struct {
     gstorage_data_t *ptData;

@@ -2,6 +2,11 @@
 #include "userconfig.h"
 #include <stdint.h>
 #include "gcoroutine.h"
+#include <perf_counter.h>
+
+#include <signal.h>
+#include <time.h>
+#include <stdio.h>
 
 timer_t timerid;
 extern void timer_handler(int signum);
@@ -19,36 +24,46 @@ gmsi_base_cfg_t tTimerBaseCfg = {
 gmsi_base_t tBase;
 
 GMSI_MSG_ITEM_DECLARE(PC_CLOCK, Clockbuffer, 30);
-
-fsm_rt_t pcclock_gcoroutine(void *pvParam)
-{
-    static uint8_t s_eState = 0;
-    fsm_rt_t tFsm = fsm_rt_on_going;
-    pc_clock_t *ptThis = (pc_clock_t *)pvParam;
-    switch(s_eState)
-    {
-        case 0:
-            //printf("entry");
-            GLOG_PRINTF("ENTRY Gcoroutine");
-            s_eState++;
-        break;
-        case 1:
-            GLOG_PRINTF("finish gcoroutine");
-            fsm_cpl();
-        default:
-        break;
-    }
-    return tFsm;
-    
-}
 gcoroutine_handle_t tGcoroutineHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
+
+fsm_rt_t pcclock_gcoroutine(void *pvParam)
+{
+    gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineHandle;
+    pc_clock_t *ptObject = (pc_clock_t *)pvParam;
+    uint8_t *pchMessage = NULL;
+
+PERFC_PT_BEGIN(this.chState)
+    do {
+    PERFC_PT_WAIT_FOR_RES_UNTIL( 
+        (pchMessage != NULL),               /* quit condition */
+        pchMessage = malloc(100);          /* try to allocate memory */
+    )
+
+        printf("LED ON  [%lld]\r\n", get_system_ms());
+
+    PERFC_PT_DELAY_MS(1000);
+        
+        printf("LED OFF [%lld]\r\n", get_system_ms());
+
+
+    PERFC_PT_DELAY_MS(1000);
+        
+        free(pchMessage);
+    } while(0);
+
+PERFC_PT_END()
+
+    return fsm_rt_cpl;
+}
+
 int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     struct sigaction sa;
     struct itimerspec its;
+    struct sigevent sev;
     pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
     pc_clock_cfg_t* ptCfg = (pc_clock_cfg_t *)wObjectCfgAddr;
 
@@ -57,19 +72,31 @@ int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     sa.sa_flags = 0;
     sigaction(SIGALRM, &sa, NULL);
 
-    timer_create(CLOCK_REALTIME, NULL, &timerid);
+    /* Create a signal-based timer that delivers SIGALRM */
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGALRM;
+    sev.sigev_value.sival_ptr = &timerid;
+
+    if (timer_create(CLOCK_REALTIME, &sev, &timerid) != 0) {
+        perror("timer_create failed\n");
+        return -1;
+    }
 
     its.it_value.tv_sec = INTERVAL_MS / 1000;
     its.it_value.tv_nsec = (INTERVAL_MS % 1000) * 1000000;
     its.it_interval.tv_sec = its.it_value.tv_sec;
     its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
-    timer_settime(timerid, 0, &its, NULL);
+    if (timer_settime(timerid, 0, &its, NULL) != 0) {
+        perror("timer_settime failed\n");
+        timer_delete(timerid);
+        return -1;
+    }
     ptThis->ptBase = &tBase;
     tTimerBaseCfg.wParent = wObjectAddr;
 
     if(GMSI_SUCCESS != gbase_Init(ptThis->ptBase, &tTimerBaseCfg))
-        printf("pcclock base Init fail\n");
+        printf("pcclock base Init failed\n");
     return 0;
 }
 
@@ -93,13 +120,14 @@ int pcclock_Run(uintptr_t wObjectAddr)
         //printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
         //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
     }
-    
-    // GMSI_MSG_UPDATE(TestBuffer, GMSI_MSG_ITEM_GET_BUFFER(Clockbuffer), 10);
 
-    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TestBuffer)) > 0)
+    if(perfc_is_time_out_ms(5000))
     {
-        printf("get message, length is %d\n", GMSI_MSG_GET_LENGTH(TestBuffer));
-        //GLOG_PRINTF(tMessage.pchMessage);
+        gcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_gcoroutine);
+    }
+    if(perfc_is_time_out_ms(1000))
+    {
+        GLOG_PRINTF("insert coroutine");
     }
     return 0;
 }
@@ -111,9 +139,8 @@ int pcclock_Clock(uintptr_t wObjectAddr)
     if(!timeoutcount)
     {
         timeoutcount = 999;
-        gbase_EventPost(PC_UART, Gmsi_Event00);
-
-        gcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_gcoroutine);
+        // gbase_EventPost(PC_UART, Gmsi_Event00);
+        GLOG_PRINTF("post event to pc_uart");
     }
     else
         timeoutcount--;

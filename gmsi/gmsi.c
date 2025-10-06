@@ -69,6 +69,8 @@ void gmsi_Init(gmsi_t *ptGmsi)
     gcoroutine_Init();
     // Print list information
     gbase_DebugListBase();
+    /* Mark framework as initialized so gmsi_Clock will execute callbacks */
+    s_bGmsiInit = true;
 }
 
 /**

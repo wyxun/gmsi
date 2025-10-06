@@ -18,6 +18,13 @@
         "at32f421_board.h": "c",
         "at32f421.h": "c",
         "at32f421_misc.h": "c",
-        "example.h": "c"
+        "example.h": "c",
+        "simple_fsm.h": "c",
+        "list.h": "c",
+        "perf_counter.h": "c",
+        "pc_clock.h": "c",
+        "compare": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

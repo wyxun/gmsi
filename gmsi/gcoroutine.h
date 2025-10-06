@@ -2,7 +2,7 @@
 #define __GCOROUTINE_H__
 
 #include "utilities/list.h"
-#include "simple_fsm.h"
+#include "perf_counter.h"
 #include <stdbool.h>
 
 // Function pointer type for coroutine functions.
@@ -10,9 +10,10 @@
 typedef fsm_rt_t (*fcnCoroutine)(void *pvParam);
 
 typedef struct{
-    void *pvParam;                      // Pointer to the coroutine parameters                  
+    uint8_t chState;
+    void *pvParam;                      // Pointer to the coroutine parameters
     fcnCoroutine pfcn;                  // Pointer to the coroutine function
-    bool bIsRunning;                     // Flag to indicate if the coroutine is running
+    bool bIsRunning;                    // Flag to indicate if the coroutine is running
     struct xLIST_ITEM tListItem;        // List item for the coroutine
 }gcoroutine_handle_t;
 
