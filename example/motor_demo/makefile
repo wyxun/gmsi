@@ -1,6 +1,5 @@
-# Makefile for STM32G431RBT6 project with LLVM compiler
-COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
-#COMPILER_PATH = ~/llvm_for_arm/bin/
+#COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
+COMPILER_PATH = ~/llvm_for_arm/bin/
 BUILD_DIR = build
 CHIP_DIR = at32f413
 GMSI_DIR := ../../gmsi
@@ -32,6 +31,10 @@ AS = $(COMPILER_PATH)/clang
 OBJCOPY = $(COMPILER_PATH)/llvm-objcopy
 SIZE = $(COMPILER_PATH)/llvm-size
 
+# Path to OpenOCD executable (can be overridden on make command line)
+# Example: make OPENOCD=/home/xun/usr/home/tools/openocd/bin/openocd flash
+OPENOCD ?= $(HOME)/usr/home/tools/OpenOCD/bin/openocd
+
 LTO_FLAGS = -flto
 # Compiler flags
 CFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -51,7 +54,6 @@ CFLAGS +=   \
 -I$(GMSI_DIR)
 
 DFLAGS += -DUSE_STDPERIPH_DRIVER -DAT32F413C8T7 -DAT_START_F413_V1 -DCORTEX_M -D__NO_USE_LOG__
-
 ASFLAGS = -target armv7em-none-eabi -mthumb
 
 #LDSCRIPT = AT32F413x8_FLASH.ld  
@@ -151,3 +153,13 @@ clean:
 
 printf_value:
 	@echo $(info show obj '$(OBJECTS)')
+
+# 使用 openocd + DAP 下载器烧录程序
+flash:
+	@echo Flashing via OpenOCD...
+	@if [ ! -x "$(OPENOCD)" ]; then \
+		echo "OpenOCD not found or not executable at '$(OPENOCD)'."; \
+		echo "Set OPENOCD=path/to/openocd or install OpenOCD there."; \
+		exit 1; \
+	fi
+	@"$(OPENOCD)" -f interface/atlink.cfg -f target/at32f413xx.cfg -c "program $(OUTPUT) verify reset exit"
