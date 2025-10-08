@@ -149,8 +149,13 @@ SECTIONS
   ._user_heap_stack :
   {
     . = ALIGN(8);
+    /* define end/_end for compatibility and provide heap symbols
+       used by some C libraries (picolibc expects __heap_start/__heap_end) */
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
+    /* heap starts at 'end' and spans _Min_Heap_Size bytes */
+    PROVIDE ( __heap_start = end );
+    PROVIDE ( __heap_end = end + _Min_Heap_Size );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);

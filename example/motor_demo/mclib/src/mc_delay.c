@@ -48,7 +48,7 @@ static __IO uint32_t fac_ms;
 void systick_init(void)
 {
   systick_clock_source_config(SYSTICK_CLOCK_SOURCE_AHBCLK_NODIV);
-  SysTick->LOAD = (uint32_t)(system_core_clock / 1000);
+  SysTick->LOAD = (uint32_t)(SystemCoreClock / 1000);
   SysTick->VAL = 0x00;
   SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
   NVIC_SetPriority(SysTick_IRQn, 3);
@@ -62,7 +62,7 @@ void systick_init(void)
 void mc_delay_init()
 {
   /* configure systick */
-  fac_us = system_core_clock / (1000000U);
+  fac_us = SystemCoreClock / (1000000U);
   fac_ms = fac_us * (1000U);
 }
 
