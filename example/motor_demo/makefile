@@ -1,12 +1,30 @@
 # Makefile for STM32G431RBT6 project with LLVM compiler
-#COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
-COMPILER_PATH = ~/llvm_for_arm/bin/
+COMPILER_PATH = D:\01SoftwareInstall\LLVM\LLVM_EmbeddedToolchainForArm\bin
+#COMPILER_PATH = ~/llvm_for_arm/bin/
 BUILD_DIR = build
 CHIP_DIR = at32f413
 GMSI_DIR := ../../gmsi
 GMSI_UTL_DIR := ../../gmsi/utilities
-GMSI_THREEPART_PLOOC = ../../ThirdParty/plooc
-TARGET := follow
+GMSI_THREEPART_PLOOC = ../../lib/plooc
+GMSI_THREEPART_PERF = ../../lib/perf_counter
+USER_DIR = ./user
+HW_DIR = ./hwio
+MC_DIR = ./mclib
+# MC library - prefer .a (Unix archive) for cross-linking; fall back to .lib if only that exists
+# look for libmc_foc_kernal.a first, then mc_foc_kernal.lib
+MC_LIB_A := $(wildcard $(MC_DIR)/src/libmc_foc_kernal.a)
+MC_LIB_LIB := $(wildcard $(MC_DIR)/src/mc_foc_kernal.lib)
+ifneq ($(MC_LIB_A),)
+MC_LIB := $(MC_LIB_A)
+else ifneq ($(MC_LIB_LIB),)
+MC_LIB := $(MC_LIB_LIB)
+else
+MC_LIB :=
+endif
+
+MC_LIB_PATH := $(MC_DIR)/src
+# Target executable name
+TARGET := motor
 
 # Compiler
 CC = $(COMPILER_PATH)/clang
@@ -23,16 +41,21 @@ CFLAGS += -fshort-enums -fomit-frame-pointer -c -fdata-sections -ffunction-secti
 CFLAGS +=   \
 -I$(CHIP_DIR)	\
 -I$(CHIP_DIR)/inc \
+-I$(HW_DIR)	\
+-I$(USER_DIR)	\
+-I$(MC_DIR)/inc	\
 -I$(CHIP_DIR)/core_support	\
 -I$(GMSI_UTL_DIR)	\
 -I$(GMSI_THREEPART_PLOOC) \
+-I$(GMSI_THREEPART_PERF) \
 -I$(GMSI_DIR)
 
 DFLAGS += -DUSE_STDPERIPH_DRIVER -DAT32F413C8T7 -DAT_START_F413_V1 -DCORTEX_M -D__NO_USE_LOG__
 
 ASFLAGS = -target armv7em-none-eabi -mthumb
 
-LDSCRIPT = AT32F413x8_FLASH.ld  
+#LDSCRIPT = AT32F413x8_FLASH.ld  
+LDSCRIPT = AT32F413xC_FLASH.ld
 
 # Linker flags
 LDFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -41,11 +64,18 @@ LDFLAGS += -Wl,--gc-sections -Wl,--print-memory-usage
 LDFLAGS += -T $(LDSCRIPT)
 
 # Source files
-SRC_MAIN = main.c at32f413_board.c $(CHIP_DIR)/system_at32f413.c
-SRC_CHIP = $(filter-out $(CHIP_DIR)/system_at32f413.c $(CHIP_DIR)/startup_at32f413.s, $(shell find $(CHIP_DIR) -name '*.c'))
+#SRC_MAIN = main.c at32f413_board.c $(CHIP_DIR)/system_at32f413.c
+SRC_MAIN = $(wildcard $(USER_DIR)/*.c)
+SRC_MAIN += $(wildcard $(HW_DIR)/*.c)
+#SRC_CHIP = $(filter-out $(CHIP_DIR)/system_at32f413.c $(CHIP_DIR)/startup_at32f413.s, $(shell find $(CHIP_DIR) -name '*.c'))
+SRC_CHIP = $(shell find $(CHIP_DIR) -name '*.c')
 SRC_GMSI = $(wildcard $(GMSI_DIR)/*.c)
 SRC_GMSI_UTL = $(wildcard $(GMSI_UTL_DIR)/*.c)
 SRC_ASM = $(CHIP_DIR)/startup_at32f413.s
+
+SRC_MAIN += mc_delay.c mc_foc.c mc_curr_fdbk.c mc_encoder.c mc_pid_controller.c \
+	mc_foc_globals.c mc_math.c mc_field_weakening.c mc_hall.c mc_foc_sensorless.c \
+	mc_comm_uart.c user_interface_foc.c motor_control_foc.c mc_flash_data_table_foc.c
 
 # 生成 build 下的子目录结构，防止同名 .o 冲突
 OBJ_MAIN = $(addprefix $(BUILD_DIR)/, $(SRC_MAIN:.c=.o))
@@ -76,13 +106,16 @@ $(BUILD_DIR)/gmsi/%.o: $(GMSI_DIR)/%.c
 $(BUILD_DIR)/gmsi_utilities/%.o: $(GMSI_UTL_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+$(BUILD_DIR)/perf_counter/%.o: $(GMSI_THREEPART_PERF)/%.c
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 # 汇编
 $(BUILD_DIR)/$(CHIP_DIR)/%.o: $(CHIP_DIR)/%.s
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OUTPUT): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(LTO_FLAGS) $(OBJECTS) -o $@
+	# link objects first, then libraries (order matters)
+	$(CC) $(LDFLAGS) $(LTO_FLAGS) $(OBJECTS) $(MC_LIB) -o $@
 
 $(HEX_OUTPUT): $(OUTPUT)
 	$(OBJCOPY) -O ihex $< $@
