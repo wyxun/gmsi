@@ -2,28 +2,9 @@
 #include "example.h"
 #include "template.h"
 
-typedef int (*InitObject)(uint32_t, uint32_t);
-typedef struct
-{
-    uint32_t wObjectAddr;
-    uint32_t wObjectCfgAddr;
-    InitObject pFcn;
-}init_object_t;
-
 #define EXAMPLE_RING_BUFFER_SIZE 256
 uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
-// example_cfg_t tExampleCfg = {
-//     //.chExampleData = 0,
-//     .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
-//     .pchRingBuffer = gchExampleBuffer,
-// };
-// example_t tExample;
 
-// template_cfg_t tTemplateCfg = {
-//     .hwRingSize = 0,
-//     .pchRingBuffer = NULL,
-// };
-// template_t tTemplate;
 GMSI_DECLARE_OBJECT(example, Example, 
     .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
     .pchRingBuffer = gchExampleBuffer,
@@ -58,11 +39,6 @@ gmsi_t tGmsi = {&tSysData};
 int main()
 {   
     // example hardware init
-
-    // example object init
-
-    // example_Init((uintptr_t)&tExample, (uintptr_t)&tExampleCfg);
-    // template_Init((uintptr_t)&tTemplate, (uintptr_t)&tTemplateCfg);
     
     gmsi_Init(&tGmsi);
     while (1)

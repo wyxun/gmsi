@@ -49,10 +49,6 @@ gmsi_t tGmsi = {&tSysData};
 int main()
 {   
     int16_t hwLength;
-    // // Initialise the pcclock object
-    // pcclock_Init((uintptr_t)&tClock, (uintptr_t)&tClockCfg);
-    // // Initialise the pcuart object
-    // pcuart_Init((uintptr_t)&tPcUart, (uintptr_t)&tPcUartCfg);
     
     GVAL_PRINTF((uint32_t)g_hwSystemDataArrary);
     gmsi_Init(&tGmsi);

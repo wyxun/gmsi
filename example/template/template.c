@@ -168,13 +168,6 @@ int template_Run(uintptr_t wObjectAddr)
     if(wEvent)
         template_EventHandle(ptThis, wEvent);
 
-    #ifdef TEMPLATE_ITEM_MESSAGE
-    if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(tTemplatePend)) > 0)
-    {
-        // Handle the message
-        GLOG_PRINTF("get example message");
-    }
-    #endif
     // Logic or state machine programs
 
     return wRet;
@@ -231,10 +224,6 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return GMSI_EFAIL;
     }
 
-#ifdef TEMPLATE_ITEM_MESSAGE
-    /* Copy the configuration members to the object */
-    GMSI_MSG_ITEM_INITIALISE_LIST(g_tTemplatePost);
-#endif
     /* Initialize the hardware */
 
     // Register the object in the GMSI list
