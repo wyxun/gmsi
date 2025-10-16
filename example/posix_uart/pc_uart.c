@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 int pcuart_Run(uintptr_t wObjectAddr);
-int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
+int pcuart_Write(pcuart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
 int pcuart_Clock(uintptr_t addr);
 
 gmsi_base_cfg_t tUartBaseCfg = {
@@ -30,7 +30,7 @@ uint8_t chReceiveData[100];
 
 fsm_rt_t pcuart_gcoroutine(void *pvParam)
 {
-    pc_uart_t *ptThis = (pc_uart_t *)pvParam;
+    pcuart_t *ptThis = (pcuart_t *)pvParam;
 
 PERFC_PT_BEGIN(tGcoroutineUartHandle.chState)
     do {
@@ -49,8 +49,8 @@ PERFC_PT_END()
 
 int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
-    pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
-    pc_uart_cfg_t *ptCfg = (pc_uart_cfg_t *)wObjectCfgAddr;
+    pcuart_t *ptThis = (pcuart_t *)wObjectAddr;
+    pcuart_cfg_t *ptCfg = (pcuart_cfg_t *)wObjectCfgAddr;
 
     // Open the serial port device
     ptThis->fd = open(ptCfg->pchCom, ptCfg->wOflag);
@@ -91,7 +91,7 @@ int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     return 0;
 }
 
-int pcuart_Read(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
+int pcuart_Read(pcuart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
 {
     ssize_t bytesRead = read(ptThis->fd, pchData, hwMaxLength);
     if (bytesRead > 0)
@@ -107,7 +107,7 @@ int pcuart_Read(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
     return bytesRead;
 }
 
-int pcuart_Write(pc_uart_t *ptThis, uint8_t *pchData, uint16_t hwLength)
+int pcuart_Write(pcuart_t *ptThis, uint8_t *pchData, uint16_t hwLength)
 {
     int wRet = write(ptThis->fd, pchData, hwLength);
 
@@ -118,7 +118,7 @@ int pcuart_Run(uintptr_t wObjectAddr)
 {
     int16_t hwLength = 0;
     uint32_t wEvent;
-    pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
+    pcuart_t *ptThis = (pcuart_t *)wObjectAddr;
     GMSI_ASSERT(NULL != ptThis);
 
     hwLength = pcuart_Read(ptThis, chReceiveData, 100);
@@ -139,7 +139,7 @@ int pcuart_Run(uintptr_t wObjectAddr)
     }
     return 0;
 }
-int pcuart_close(pc_uart_t *ptThis)
+int pcuart_close(pcuart_t *ptThis)
 {
     return close(ptThis->fd);
 }
@@ -148,7 +148,7 @@ uint8_t chTestBuffer[3] = {1,2,3};
 int pcuart_Clock(uintptr_t wObjectAddr)
 {
     static uint32_t s_count = 0;
-    pc_uart_t *ptThis = (pc_uart_t *)wObjectAddr;
+    pcuart_t *ptThis = (pcuart_t *)wObjectAddr;
 
     s_count++;
     if(s_count > 5000)

@@ -162,4 +162,4 @@ flash:
 		echo "Set OPENOCD=path/to/openocd or install OpenOCD there."; \
 		exit 1; \
 	fi
-	@"$(OPENOCD)" -f interface/atlink.cfg -f target/at32f413xx.cfg -c "program $(OUTPUT) verify reset exit"
+	@"$(OPENOCD)" -f interface/cmsis-dap.cfg -f target/at32f413xx.cfg -c "program $(OUTPUT) verify reset exit"

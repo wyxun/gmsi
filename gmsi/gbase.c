@@ -450,7 +450,15 @@ void gbase_DebugListBase(void)
 {
     LOG_OUT("List all object:\n");
 
-    // Traverse the list and print each item's ID
+    /* Defensive: if the list hasn't been initialised, the end pointers may be NULL
+       and walking them will crash. Detect an uninitialised list and print a
+       friendly message instead. */
+    if (tListObject.xListEnd.pxPrevious == NULL || tListObject.xListEnd.pxNext == NULL || tListObject.uxNumberOfItems == 0) {
+        LOG_OUT("    <empty>\n");
+        return;
+    }
+
+    /* Traverse the list and print each item's ID */
     for (struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious; ptListItemDes != &tListObject.xListEnd; ptListItemDes = ptListItemDes->pxPrevious) {
         LOG_OUT("    item id:");
         LOG_OUT((uint32_t)ptListItemDes->xItemValue);

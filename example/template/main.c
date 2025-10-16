@@ -12,18 +12,27 @@ typedef struct
 
 #define EXAMPLE_RING_BUFFER_SIZE 256
 uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
-example_cfg_t tExampleCfg = {
-    //.chExampleData = 0,
+// example_cfg_t tExampleCfg = {
+//     //.chExampleData = 0,
+//     .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
+//     .pchRingBuffer = gchExampleBuffer,
+// };
+// example_t tExample;
+
+// template_cfg_t tTemplateCfg = {
+//     .hwRingSize = 0,
+//     .pchRingBuffer = NULL,
+// };
+// template_t tTemplate;
+GMSI_DECLARE_OBJECT(example, Example, 
     .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
     .pchRingBuffer = gchExampleBuffer,
-};
-example_t tExample;
+);
 
-template_cfg_t tTemplateCfg = {
+GMSI_DECLARE_OBJECT(template, Template, 
     .hwRingSize = 0,
     .pchRingBuffer = NULL,
-};
-template_t tTemplate;
+);
 
 void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
 {
@@ -52,8 +61,8 @@ int main()
 
     // example object init
 
-    example_Init((uintptr_t)&tExample, (uintptr_t)&tExampleCfg);
-    template_Init((uintptr_t)&tTemplate, (uintptr_t)&tTemplateCfg);
+    // example_Init((uintptr_t)&tExample, (uintptr_t)&tExampleCfg);
+    // template_Init((uintptr_t)&tTemplate, (uintptr_t)&tTemplateCfg);
     
     gmsi_Init(&tGmsi);
     while (1)

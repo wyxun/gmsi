@@ -32,7 +32,7 @@ gcoroutine_handle_t tGcoroutineHandle = {
 fsm_rt_t pcclock_gcoroutine(void *pvParam)
 {
     gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineHandle;
-    pc_clock_t *ptObject = (pc_clock_t *)pvParam;
+    pcclock_t *ptObject = (pcclock_t *)pvParam;
     uint8_t *pchMessage = NULL;
 
 PERFC_PT_BEGIN(this.chState)
@@ -64,8 +64,8 @@ int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     struct sigaction sa;
     struct itimerspec its;
     struct sigevent sev;
-    pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
-    pc_clock_cfg_t* ptCfg = (pc_clock_cfg_t *)wObjectCfgAddr;
+    pcclock_t *ptThis = (pcclock_t *)wObjectAddr;
+    pcclock_cfg_t* ptCfg = (pcclock_cfg_t *)wObjectCfgAddr;
 
     sa.sa_handler = timer_handler;
     sigemptyset(&sa.sa_mask);
@@ -111,7 +111,7 @@ GMSI_MSG_DECLARE(TestBuffer, 30);
 int pcclock_Run(uintptr_t wObjectAddr)
 {
     uint32_t wEvent;
-    pc_clock_t *ptThis = (pc_clock_t *)wObjectAddr;
+    pcclock_t *ptThis = (pcclock_t *)wObjectAddr;
     
     GMSI_ASSERT(NULL != ptThis);
     wEvent = gbase_EventPend(ptThis->ptBase);

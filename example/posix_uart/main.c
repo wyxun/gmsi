@@ -1,22 +1,29 @@
 #include <stdint.h>
 #include <unistd.h>
+#include "gmsi.h"
 #include "pc_clock.h"
 #include "pc_uart.h"
 #include "utilities/util_debug.h"
 
 #define BUFFER_SIZE 100
-pc_uart_cfg_t tPcUartCfg = {
+// pcuart_cfg_t tPcUartCfg = {
+//     .pchCom = "/dev/ttyS5",
+//     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
+// };
+GMSI_DECLARE_OBJECT(pcuart, PcUart, 
     .pchCom = "/dev/ttyS5",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
-};
+);
 
-pc_uart_t tPcUart;
 uint8_t ReceiveData[100];
 
-pc_clock_t tClock;
-pc_clock_cfg_t tClockCfg = {
+// pcclock_t tClock;
+// pcclock_cfg_t tClockCfg = {
+//     .chClockbase = 5,
+// };
+GMSI_DECLARE_OBJECT(pcclock, Pcclock, 
     .chClockbase = 5,
-};
+);
 
 void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
 {
@@ -42,10 +49,10 @@ gmsi_t tGmsi = {&tSysData};
 int main()
 {   
     int16_t hwLength;
-    // Initialise the pcclock object
-    pcclock_Init((uintptr_t)&tClock, (uintptr_t)&tClockCfg);
-    // Initialise the pcuart object
-    pcuart_Init((uintptr_t)&tPcUart, (uintptr_t)&tPcUartCfg);
+    // // Initialise the pcclock object
+    // pcclock_Init((uintptr_t)&tClock, (uintptr_t)&tClockCfg);
+    // // Initialise the pcuart object
+    // pcuart_Init((uintptr_t)&tPcUart, (uintptr_t)&tPcUartCfg);
     
     GVAL_PRINTF((uint32_t)g_hwSystemDataArrary);
     gmsi_Init(&tGmsi);

@@ -6,15 +6,6 @@
 #define EXAMPLE     ((GMSI_ID_MOCK<<8)+1)
 #define TEMPLATE    ((GMSI_ID_MOCK<<8)+2)
 
-#define TEMPLATE_ITEM_MESSAGE
-#ifdef TEMPLATE_ITEM_MESSAGE
-typedef struct{
-    uint8_t chStatus;
-    uint8_t chData[20];
-    uint16_t hwLength;
-}template_msg_t;
-#endif
-
 typedef struct{
     uint32_t value1;  // Example shared memory value
     uint32_t value2;  // Another example shared memory value

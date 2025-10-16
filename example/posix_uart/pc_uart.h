@@ -15,14 +15,14 @@ typedef struct{
     const char* pchCom;
     struct termios serialAttr;
     int wOflag;
-}pc_uart_cfg_t;
+}pcuart_cfg_t;
 typedef struct{
     gmsi_base_t *ptBase;
     int fd;
     uint8_t chBufferData[100];
     uint16_t hwBufferLength;
     gmsi_interface_t impl;
-}pc_uart_t;
+}pcuart_t;
 
 int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 

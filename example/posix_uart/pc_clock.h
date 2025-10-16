@@ -12,12 +12,12 @@
 
 typedef struct{
     uint8_t chClockbase;
-}pc_clock_cfg_t;
+}pcclock_cfg_t;
 
 typedef struct{
     gmsi_base_t *ptBase;
-}pc_clock_t;
-//int pcclock_Init(pc_clock_t *ptThis, pc_clock_cfg_t *ptCfg);
+}pcclock_t;
+//int pcclock_Init(pcclock_t *ptThis, pcclock_cfg_t *ptCfg);
 int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 int pcclock_Run(uintptr_t wObjectAddr);
 #endif

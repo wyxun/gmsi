@@ -13,7 +13,7 @@ DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX
 # -lrt:timer
 # Link with rt and pthread (pthread provides pthread_sigmask)
 LDFLAGS := -fno-autolink -Wall -lrt -lpthread
-CFLAGS := -std=gnu11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
+CFLAGS := -std=gnu11 -W -O0 -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare
 CFLAGS += -Wno-compare-distinct-pointer-types
 CFLAGS += -pthread
 CFLAGS += -I$(GMSI_DIR) -I/usr/include \

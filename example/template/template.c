@@ -3,11 +3,6 @@
 
 #include "userconfig.h"
 
-#ifdef TEMPLATE_ITEM_MESSAGE
-GMSI_MSG_ITEM_DECLARE(TEMPLATE, g_tTemplatePost, sizeof(template_msg_t));
-#define PEND_BUFFER_SIZE    100
-#endif
-
 int template_Clock(uintptr_t wObjectAddr);
 int template_Run(uintptr_t wObjectAddr);
 
@@ -29,7 +24,6 @@ gcoroutine_handle_t tGcoroutineTemplateHandle = {
     .pfcn = NULL,
 };
 
-uint8_t chTemplateBufferTest[20] = {11, 22, 33, 44, 55, 66, 77, 88, 99, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14};
 /**
  * Function: template_gcoroutine
  * ----------------------------
@@ -101,7 +95,8 @@ static void template_EventHandle(template_t *ptThis, uint32_t wEvent)
     // Check if the event Event_SyncButtonPushed is set
     if(wEvent & Event_SyncButtonPushed)
     {
-        if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle, (void *)ptThis, template_gcoroutine))
+        if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle,    \
+            (void *)ptThis, template_gcoroutine))
         {
             GLOG_PRINTF("Error: gcoroutine_Insert failed.");
         }
@@ -133,9 +128,9 @@ int template_Run(uintptr_t wObjectAddr)
 {
     int wRet = GMSI_SUCCESS;
     uint32_t wEvent;
-    #ifdef TEMPLATE_ITEM_MESSAGE
-    GMSI_MSG_DECLARE(tTemplatePend, PEND_BUFFER_SIZE);
-    #endif
+    uint8_t chTemplateBufferTest[] = {11, 22, 33, 44, 55, 66, 77, 88, 99,   \
+                0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12,       \
+                0x13, 0x14};
     // Get the template object from the given address
     template_t *ptThis = (template_t *)wObjectAddr;
 
@@ -144,15 +139,11 @@ int template_Run(uintptr_t wObjectAddr)
         GLOG_PRINTF("ptThis is NULL.");
         return GMSI_EFAIL;
     }
-    
-    template_msg_t *ptMsg = (template_msg_t *)GMSI_MSG_ITEM_GET_BUFFER(g_tTemplatePost);
-    //ptMsg->hwLength = ptThis->read(ptThis->wFd, ptMsg->chData);4
-    ptMsg->hwLength = 6;      // test gbase_MessagePostToRing
-    if(ptMsg->hwLength)
+
+    if(perfc_is_time_out_ms(3000))
     {
-        ptMsg->chStatus = 0;
-        gbase_MessagePostToRing(EXAMPLE, (uint8_t *)ptMsg, ptMsg->hwLength);
-        gbase_MessagePost(EXAMPLE, GMSI_MSG_ITEM_GET_HANDLE(g_tTemplatePost));
+        gbase_MessagePostToRing(EXAMPLE, (uint8_t *)chTemplateBufferTest, \
+                                        sizeof(chTemplateBufferTest));
     }
     share_mem_t *ptShareMem = gbase_ShareMemRead(EXAMPLE);
     if(ptShareMem != NULL)
@@ -160,7 +151,7 @@ int template_Run(uintptr_t wObjectAddr)
         const example_share_mem_t *ptGetExampleShareData = (example_share_mem_t *)ptShareMem->pchBuffer;
         if(ptGetExampleShareData->value2 != 5)
         {
-            GLOG_PRINTF("Error: Shared memory values are not as expected.");
+            //GLOG_PRINTF("Error: Shared memory values are not as expected.");
         }
         else
         {
@@ -264,3 +255,11 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
     }
 }
+
+/**
+ * @brief Template object for GMSI system
+ */
+// GMSI_DECLARE_OBJECT(template, Template, 
+//     .hwRingSize = 0,
+//     .pchRingBuffer = NULL,
+// );

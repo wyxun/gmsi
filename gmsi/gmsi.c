@@ -26,14 +26,30 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
-// GMSI configuration
-gstorage_cfg_t tGstorageCfg = {
-    .ptData = NULL,
+// // GMSI configuration
+// gstorage_cfg_t tGstorageCfg = {
+//     .ptData = NULL,
+//     .hwStorageTimeOut = 60000,
+// };
+// gstorage_t tGstorage;
+uint8_t g_chSystemData;
+GMSI_DECLARE_OBJECT(gstorage, Gstorage, 
+    .ptData = &g_chSystemData,
     .hwStorageTimeOut = 60000,
-};
-gstorage_t tGstorage;
+);
 
 static bool s_bGmsiInit = false;
+
+/* GNU ld style (weak) */
+extern const gmsi_init_info_t __start_init_infos[] __attribute__((weak));
+extern const gmsi_init_info_t __stop_init_infos[]  __attribute__((weak));
+
+#ifdef __ARMCC_VERSION
+/* Keil/armlink style symbols (objects) */
+extern const uint8_t Image$$init_infos$$Base;
+extern const uint8_t Image$$init_infos$$Limit;
+#endif
+
 /**
  * Function: gmsi_Init
  * ----------------------------
@@ -48,6 +64,9 @@ static bool s_bGmsiInit = false;
  */
 void gmsi_Init(gmsi_t *ptGmsi)
 {
+    const gmsi_init_info_t *start = NULL;
+    const gmsi_init_info_t *stop  = NULL;
+
     // Check if the input parameter is NULL
     if (ptGmsi == NULL) {
         LOG_OUT("Error: ptGmsi is NULL.\n");
@@ -57,14 +76,33 @@ void gmsi_Init(gmsi_t *ptGmsi)
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
 
-    if(NULL != ptGmsi->ptData)
-    {
-        tGstorageCfg.ptData = ptGmsi->ptData;
-        if (gstorage_Init((uintptr_t)&tGstorage, (uintptr_t)&tGstorageCfg)) {
-            LOG_OUT("Error: Failed to initialize gstorage.\n");
-            //return;
+    tGstorageCfg.ptData = ptGmsi->ptData;
+
+if ((const void *)__start_init_infos != NULL && (const void *)__stop_init_infos != NULL &&
+    __start_init_infos < __stop_init_infos) {
+    start = __start_init_infos;
+    stop  = __stop_init_infos;
+}
+#ifdef __ARMCC_VERSION
+else {
+    /* armlink provides Image$$<sec>$$Base/Limit as addresses — take address & cast */
+    const gmsi_init_info_t *arm_start = (const gmsi_init_info_t *)&Image$$init_infos$$Base;
+    const gmsi_init_info_t *arm_stop  = (const gmsi_init_info_t *)&Image$$init_infos$$Limit;
+    if ((const void *)arm_start != NULL && (const void *)arm_stop != NULL && arm_start < arm_stop) {
+        start = arm_start;
+        stop  = arm_stop;
+    }
+}
+#endif
+
+    if (start != NULL && stop != NULL && start < stop) {
+        for (const gmsi_init_info_t *info = start; info < stop; ++info) {
+            if (info->pfcnInitFunc) {
+                info->pfcnInitFunc(info->wObjectAddr, info->wConfigAddr);
+            }
         }
     }
+
     // Initialize coroutine
     gcoroutine_Init();
     // Print list information
@@ -76,8 +114,8 @@ void gmsi_Init(gmsi_t *ptGmsi)
 /**
  * Function: gmsi_Run
  * ----------------------------
- * This function runs the GMSI framework. It traverses the list of objects, and for each object, 
- * it calls the object's Run function.
+ * This function runs the GMSI framework. It traverses the list of objects, and
+ * for each object, it calls the object's Run function.
  *
  * Parameters: 
  * None
@@ -100,7 +138,9 @@ void gmsi_Run(void)
     const struct xLIST_ITEM *ptListItemDes;
     gmsi_base_t *ptBaseDes;
 
-    for (ptListItemDes = ptListObject->xListEnd.pxPrevious; ptListItemDes != &ptListObject->xListEnd; ptListItemDes = ptListItemDes->pxPrevious) {
+    for (ptListItemDes = ptListObject->xListEnd.pxPrevious;                 \
+                ptListItemDes != &ptListObject->xListEnd;                   \
+            ptListItemDes = ptListItemDes->pxPrevious) {
         ptBaseDes = ptListItemDes->pvOwner;
 
         // Check if the base descriptor is NULL
@@ -124,9 +164,10 @@ void gmsi_Run(void)
 /**
  * Function: gmsi_Clock
  * ----------------------------
- * This function calls the Clock function of each object in the GMSI framework. It traverses the list 
- * of objects, and for each object, it calls the object's Clock function.
- *
+ * This function calls the Clock function of each object in the GMSI framework. 
+ * It traverses the list of objects, and for each object, it calls the object's 
+ * Clock function.
+ * 
  * Parameters: 
  * None
  *
