@@ -54,6 +54,12 @@ void blm_port_UartFlush(void);
  *===========================================================================*/
 
 /**
+ * @brief Initialize flash interface
+ * @return 0 on success
+ */
+int blm_port_FlashInit(void);
+
+/**
  * @brief Unlock flash for write/erase operations
  * @return 0 on success
  */

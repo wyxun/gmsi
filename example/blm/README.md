@@ -1,6 +1,6 @@
 # BLM (Bootloader Manager)
 
-BLM 是一个基于 [GMSI](https://github.com/GorgonMeducer/Generic-Microcontroller-Software-Infrastructure) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader 示例。它实现了通过 Ymodem 协议进行串口固件升级的功能，并且代码体积极小（< 8KB）。
+BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader 示例。它实现了通过 Ymodem 协议进行串口固件升级的功能，并且代码体积极小（< 8KB）。
 
 ## 🔥 特性
 
@@ -69,15 +69,29 @@ make size
 3.  准备启动文件 `startup_your_mcu.c` (或汇编 `.s`)。
 
 ### 第二步：实现硬件接口
-在 `blm_port_your_mcu.c` 中实现以下函数：
+在 `blm_port_your_mcu.c` 中实现 `port/blm_port.h` 定义的接口：
 
-- **`blm_platform_init()`**: 初始化时钟、GPIO、UART。
-- **`blm_uart_config()`**: 配置波特率 (115200)。
-- **`blm_uart_write_byte()`**: 发送一个字节（轮询模式）。
-- **`blm_uart_read_byte()`**: 读取一个字节（非阻塞，无数据返回 -1）。
-- **`blm_flash_erase_page()`**: 擦除指定页。
-- **`blm_flash_write_word()`**: 写入数据。
-- **`blm_jump_to_app()`**: 跳转到 App 地址 (通常是 0x08000000 + Bootloader Size)。
+**1. 系统与控制**
+- `blm_port_GetTickMs()`: 获取毫秒级系统时间 (SysTick)。
+- `blm_port_DelayMs()`: 毫秒延时。
+- `blm_port_SystemReset()`: 系统复位。
+- `blm_port_JumpToApp()`: 跳转到 App 地址 (设置 MSP, VTOR 并跳转)。
+- `blm_port_IsUpgradeButtonPressed()`: 检测升级按键状态。
+
+**2. UART 通信**
+- `blm_port_UartInit()`: 初始化 UART (GPIO, Clock, Baudrate)。
+- `blm_port_UartSend()`: 发送数据 (轮询/阻塞)。
+- `blm_port_UartRecv()`: 接收数据 (带超时)。
+- `blm_port_UartAvailable()`: 查询是否有数据。
+- `blm_port_UartFlush()`: 清空接收缓存。
+
+**3. Flash 操作**
+- `blm_port_FlashInit()`: Flash 初始化 (清除错误标志等)。
+- `blm_port_FlashUnlock()` / `Lock()`: 解锁/上锁。
+- `blm_port_FlashErase()`: 擦除指定区域 (需处理页对齐)。
+- `blm_port_FlashWrite()`: 写入数据 (需处理字/双字对齐)。
+- `blm_port_FlashRead()`: 读取数据 (直接寻址或SPI读取)。
+- `blm_port_FlashGetPageSize()`: 获取页大小。
 
 ### 第三步：修改配置
 1.  **makefile**:

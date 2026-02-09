@@ -308,6 +308,17 @@ static void flash_clear_errors(void)
 }
 
 /**
+ * @brief Initialize Flash
+ * 
+ * Clears error flags and prepares flash for operation.
+ */
+int blm_port_FlashInit(void)
+{
+    flash_clear_errors();
+    return 0;
+}
+
+/**
  * @brief Unlock flash for programming
  */
 int blm_port_FlashUnlock(void)

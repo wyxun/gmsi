@@ -7,6 +7,7 @@
 
 /*============================ INCLUDES ======================================*/
 #include "core/blm.h"
+#include "port/blm_port.h"
 #include "gblinfo.h"
 #include <perf_counter.h>
 
@@ -103,7 +104,41 @@ static void System_Init(void)
     
     /* Initialize perf_counter with SysTick */
     perfc_init(false);  /* We manage SysTick ourselves */
+    
+    /* Initialize Hardware */
+    blm_port_UartInit(115200);
+    blm_port_FlashInit();
 }
+
+/*============================ GMSI CONFIG ===================================*/
+
+static void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
+{
+    /* Dummy write for Bootloader */
+    (void)phwStorageStartAddr;
+    (void)hwStorageLength;
+}
+
+static void StorageRead(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
+{
+    /* Dummy read for Bootloader */
+    (void)phwStorageStartAddr;
+    (void)hwStorageLength;
+}
+
+static uint16_t s_hwSystemData[4];
+
+static gstorage_data_t s_tSysData = {
+    .phwStorageStartAddr = s_hwSystemData,
+    .hwStorageLength = 4,
+    .hwCrcFlag = 0,
+    .fcnWrite = StorageWrite,
+    .fcnRead = StorageRead,
+};
+
+static gmsi_t s_tGmsi = {
+    .ptData = &s_tSysData,
+};
 
 /*============================ MAIN ==========================================*/
 
@@ -116,7 +151,7 @@ int main(void)
     System_Init();
     
     /* Initialize GMSI framework */
-    gmsi_Init(NULL);
+    gmsi_Init(&s_tGmsi);
     
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
