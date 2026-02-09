@@ -4,7 +4,40 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
-
+        {
+            "name": "Debug BLM (OpenOCD)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/example/blm/build/blm.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb-multiarch", // 原为 "arm-none-eabi-gdb"
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "text": "target remote localhost:3333",
+                    "description": "Connect to OpenOCD",
+                    "ignoreFailures": false
+                },
+                {
+                    "text": "monitor reset halt",
+                    "description": "Reset and Halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "text": "load",
+                    "description": "Load ELF",
+                    "ignoreFailures": false
+                }
+            ]
+        }
     ]
 }

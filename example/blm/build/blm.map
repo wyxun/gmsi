@@ -1,0 +1,535 @@
+     VMA      LMA     Size Align Out     In      Symbol
+       0        0        0     1 _Min_Stack_Size = 0x400
+ 8000000  8000000      1cc     4 .isr_vector
+ 8000000  8000000        0     1         . = ALIGN ( 4 )
+ 8000000  8000000      1cc     4         build/startup_stm32g431xx.o:(.isr_vector)
+ 8000000  8000000      1cc     1                 g_pfnVectors
+ 80001cc  80001cc        0     1         . = ALIGN ( 4 )
+ 80001cc  80001cc      96c     4 .text
+ 80001cc  80001cc        0     1         . = ALIGN ( 4 )
+ 80001cc  80001cc       14     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libclang_rt.builtins.a(aeabi_ldivmod.S.obj):(.text)
+ 80001cc  80001cc        0     1                 $t
+ 80001cd  80001cd       14     1                 __aeabi_ldivmod
+ 80001e0  80001e0       74     4         build/main.o:(.text.led_blink_task)
+ 80001e0  80001e0        0     1                 $t
+ 80001e1  80001e1       74     1                 led_blink_task
+ 8000250  8000250        0     1                 $d
+ 8000254  8000254       28     4         build/main.o:(.text.main)
+ 8000254  8000254        0     1                 $t
+ 8000255  8000255       28     1                 main
+ 8000278  8000278        0     1                 $d
+ 800027c  800027c       10     2         build/main.o:(.text.SysTick_Handler)
+ 800027c  800027c        0     1                 $t
+ 800027d  800027d       10     1                 SysTick_Handler
+ 800028c  800028c        4     2         build/startup_stm32g431xx.o:(.text.Default_Handler)
+ 800028c  800028c        0     1                 $t
+ 800028d  800028d        4     1                 Default_Handler
+ 800028d  800028d        4     1                 NMI_Handler
+ 800028d  800028d        4     1                 HardFault_Handler
+ 800028d  800028d        4     1                 MemManage_Handler
+ 800028d  800028d        4     1                 BusFault_Handler
+ 800028d  800028d        4     1                 UsageFault_Handler
+ 800028d  800028d        4     1                 SVC_Handler
+ 800028d  800028d        4     1                 DebugMon_Handler
+ 800028d  800028d        4     1                 PendSV_Handler
+ 800028d  800028d        4     1                 WWDG_IRQHandler
+ 800028d  800028d        4     1                 PVD_PVM_IRQHandler
+ 800028d  800028d        4     1                 RTC_TAMP_LSECSS_IRQHandler
+ 800028d  800028d        4     1                 RTC_WKUP_IRQHandler
+ 800028d  800028d        4     1                 FLASH_IRQHandler
+ 800028d  800028d        4     1                 RCC_IRQHandler
+ 800028d  800028d        4     1                 EXTI0_IRQHandler
+ 800028d  800028d        4     1                 EXTI1_IRQHandler
+ 800028d  800028d        4     1                 EXTI2_IRQHandler
+ 800028d  800028d        4     1                 EXTI3_IRQHandler
+ 800028d  800028d        4     1                 EXTI4_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel1_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel2_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel3_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel4_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel5_IRQHandler
+ 800028d  800028d        4     1                 DMA1_Channel6_IRQHandler
+ 800028d  800028d        4     1                 ADC1_2_IRQHandler
+ 800028d  800028d        4     1                 USB_HP_IRQHandler
+ 800028d  800028d        4     1                 USB_LP_IRQHandler
+ 800028d  800028d        4     1                 FDCAN1_IT0_IRQHandler
+ 800028d  800028d        4     1                 FDCAN1_IT1_IRQHandler
+ 800028d  800028d        4     1                 EXTI9_5_IRQHandler
+ 800028d  800028d        4     1                 TIM1_BRK_TIM15_IRQHandler
+ 800028d  800028d        4     1                 TIM1_UP_TIM16_IRQHandler
+ 800028d  800028d        4     1                 TIM1_TRG_COM_TIM17_IRQHandler
+ 800028d  800028d        4     1                 TIM1_CC_IRQHandler
+ 800028d  800028d        4     1                 TIM2_IRQHandler
+ 800028d  800028d        4     1                 TIM3_IRQHandler
+ 800028d  800028d        4     1                 TIM4_IRQHandler
+ 800028d  800028d        4     1                 I2C1_EV_IRQHandler
+ 800028d  800028d        4     1                 I2C1_ER_IRQHandler
+ 800028d  800028d        4     1                 I2C2_EV_IRQHandler
+ 800028d  800028d        4     1                 I2C2_ER_IRQHandler
+ 800028d  800028d        4     1                 SPI1_IRQHandler
+ 800028d  800028d        4     1                 SPI2_IRQHandler
+ 800028d  800028d        4     1                 USART1_IRQHandler
+ 800028d  800028d        4     1                 USART2_IRQHandler
+ 800028d  800028d        4     1                 USART3_IRQHandler
+ 800028d  800028d        4     1                 EXTI15_10_IRQHandler
+ 800028d  800028d        4     1                 RTC_Alarm_IRQHandler
+ 800028d  800028d        4     1                 USBWakeUp_IRQHandler
+ 800028d  800028d        4     1                 TIM8_BRK_IRQHandler
+ 800028d  800028d        4     1                 TIM8_UP_IRQHandler
+ 800028d  800028d        4     1                 TIM8_TRG_COM_IRQHandler
+ 800028d  800028d        4     1                 TIM8_CC_IRQHandler
+ 800028d  800028d        4     1                 LPTIM1_IRQHandler
+ 800028d  800028d        4     1                 SPI3_IRQHandler
+ 800028d  800028d        4     1                 UART4_IRQHandler
+ 800028d  800028d        4     1                 TIM6_DAC_IRQHandler
+ 800028d  800028d        4     1                 TIM7_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel1_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel2_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel3_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel4_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel5_IRQHandler
+ 800028d  800028d        4     1                 UCPD1_IRQHandler
+ 800028d  800028d        4     1                 COMP1_2_3_IRQHandler
+ 800028d  800028d        4     1                 COMP4_IRQHandler
+ 800028d  800028d        4     1                 CRS_IRQHandler
+ 800028d  800028d        4     1                 SAI1_IRQHandler
+ 800028d  800028d        4     1                 FPU_IRQHandler
+ 800028d  800028d        4     1                 I2C3_EV_IRQHandler
+ 800028d  800028d        4     1                 I2C3_ER_IRQHandler
+ 800028d  800028d        4     1                 DMAMUX_OVR_IRQHandler
+ 800028d  800028d        4     1                 DMA2_Channel6_IRQHandler
+ 800028d  800028d        4     1                 CORDIC_IRQHandler
+ 800028d  800028d        4     1                 FMAC_IRQHandler
+ 8000290  8000290       54     4         build/startup_stm32g431xx.o:(.text.Reset_Handler)
+ 8000290  8000290        0     1                 $t
+ 8000291  8000291       54     1                 Reset_Handler
+ 80002cc  80002cc        0     1                 $d
+ 80002e4  80002e4       2c     4         build/perfc_port_user.o:(.text.perfc_port_init_system_timer)
+ 80002e4  80002e4        0     1                 $t
+ 80002e5  80002e5       2c     1                 perfc_port_init_system_timer
+ 8000308  8000308        0     1                 $d
+ 8000310  8000310        8     4         build/perfc_port_user.o:(.text.perfc_port_get_system_timer_freq)
+ 8000310  8000310        0     1                 $t
+ 8000311  8000311        8     1                 perfc_port_get_system_timer_freq
+ 8000314  8000314        0     1                 $d
+ 8000318  8000318       10     4         build/perfc_port_user.o:(.text.perfc_port_is_system_timer_ovf_pending)
+ 8000318  8000318        0     1                 $t
+ 8000319  8000319       10     1                 perfc_port_is_system_timer_ovf_pending
+ 8000324  8000324        0     1                 $d
+ 8000328  8000328        c     4         build/perfc_port_user.o:(.text.perfc_port_get_system_timer_top)
+ 8000328  8000328        0     1                 $t
+ 8000329  8000329        c     1                 perfc_port_get_system_timer_top
+ 8000330  8000330        0     1                 $d
+ 8000334  8000334       10     4         build/perfc_port_user.o:(.text.perfc_port_get_system_timer_elapsed)
+ 8000334  8000334        0     1                 $t
+ 8000335  8000335       10     1                 perfc_port_get_system_timer_elapsed
+ 8000340  8000340        0     1                 $d
+ 8000344  8000344        c     4         build/perfc_port_user.o:(.text.perfc_port_clear_system_timer_ovf_pending)
+ 8000344  8000344        0     1                 $t
+ 8000345  8000345        c     1                 perfc_port_clear_system_timer_ovf_pending
+ 800034c  800034c        0     1                 $d
+ 8000350  8000350        2     2         build/trace_stub.o:(.text.trace_init_stub)
+ 8000350  8000350        0     1                 $t
+ 8000351  8000351        2     1                 trace_init_stub
+ 8000352  8000352        2     2         build/trace_stub.o:(.text.trace_double_stub)
+ 8000352  8000352        0     1                 $t
+ 8000353  8000353        2     1                 trace_double_stub
+ 8000354  8000354        2     2         build/trace_stub.o:(.text.trace_float_stub)
+ 8000354  8000354        0     1                 $t
+ 8000355  8000355        2     1                 trace_float_stub
+ 8000356  8000356        2     2         build/trace_stub.o:(.text.trace_uint32_stub)
+ 8000356  8000356        0     1                 $t
+ 8000357  8000357        2     1                 trace_uint32_stub
+ 8000358  8000358        2     2         build/trace_stub.o:(.text.trace_int32_stub)
+ 8000358  8000358        0     1                 $t
+ 8000359  8000359        2     1                 trace_int32_stub
+ 800035a  800035a        2     2         build/trace_stub.o:(.text.trace_uint16_stub)
+ 800035a  800035a        0     1                 $t
+ 800035b  800035b        2     1                 trace_uint16_stub
+ 800035c  800035c        2     2         build/trace_stub.o:(.text.trace_int16_stub)
+ 800035c  800035c        0     1                 $t
+ 800035d  800035d        2     1                 trace_int16_stub
+ 800035e  800035e        2     2         build/trace_stub.o:(.text.trace_uint8_stub)
+ 800035e  800035e        0     1                 $t
+ 800035f  800035f        2     1                 trace_uint8_stub
+ 8000360  8000360        2     2         build/trace_stub.o:(.text.trace_int8_stub)
+ 8000360  8000360        0     1                 $t
+ 8000361  8000361        2     1                 trace_int8_stub
+ 8000362  8000362        2     2         build/trace_stub.o:(.text.trace_string_stub)
+ 8000362  8000362        0     1                 $t
+ 8000363  8000363        2     1                 trace_string_stub
+ 8000364  8000364        2     2         build/trace_stub.o:(.text.trace_words_stub)
+ 8000364  8000364        0     1                 $t
+ 8000365  8000365        2     1                 trace_words_stub
+ 8000366  8000366        2     2         build/trace_stub.o:(.text.trace_hwords_stub)
+ 8000366  8000366        0     1                 $t
+ 8000367  8000367        2     1                 trace_hwords_stub
+ 8000368  8000368        2     2         build/trace_stub.o:(.text.trace_bytes_stub)
+ 8000368  8000368        0     1                 $t
+ 8000369  8000369        2     1                 trace_bytes_stub
+ 800036c  800036c       84     4         build/gmsi.o:(.text.gmsi_Init)
+ 800036c  800036c        0     1                 $t
+ 800036d  800036d       84     1                 gmsi_Init
+ 80003d0  80003d0        0     1                 $d
+ 80003f0  80003f0       60     4         build/gmsi.o:(.text.gmsi_Run)
+ 80003f0  80003f0        0     1                 $t
+ 80003f1  80003f1       60     1                 gmsi_Run
+ 8000440  8000440        0     1                 $d
+ 8000450  8000450       70     4         build/gmsi.o:(.text.gmsi_Clock)
+ 8000450  8000450        0     1                 $t
+ 8000451  8000451       70     1                 gmsi_Clock
+ 80004ac  80004ac        0     1                 $d
+ 80004c0  80004c0       38     4         build/gmsi.o:(.text.assert_failed)
+ 80004c0  80004c0        0     1                 $t
+ 80004c1  80004c1       38     1                 assert_failed
+ 80004e8  80004e8        0     1                 $d
+ 80004f8  80004f8       70     4         build/gbase.o:(.text.gbase_DebugListBase)
+ 80004f8  80004f8        0     1                 $t
+ 80004f9  80004f9       70     1                 gbase_DebugListBase
+ 8000550  8000550        0     1                 $d
+ 8000568  8000568        c     4         build/gbase.o:(.text.gbase_GetBaseList)
+ 8000568  8000568        0     1                 $t
+ 8000569  8000569        c     1                 gbase_GetBaseList
+ 8000570  8000570        0     1                 $d
+ 8000574  8000574        c     4         build/gcoroutine.o:(.text.gcoroutine_Init)
+ 8000574  8000574        0     1                 $t
+ 8000575  8000575        c     1                 gcoroutine_Init
+ 800057c  800057c        0     1                 $d
+ 8000580  8000580       12     2         build/gcoroutine.o:(.text.gcoroutine_Delete)
+ 8000580  8000580        0     1                 $t
+ 8000581  8000581       12     1                 gcoroutine_Delete
+ 8000594  8000594       50     4         build/gcoroutine.o:(.text.gcoroutine_Run)
+ 8000594  8000594        0     1                 $t
+ 8000595  8000595       50     1                 gcoroutine_Run
+ 80005dc  80005dc        0     1                 $d
+ 80005e4  80005e4       16     2         build/list.o:(.text.vListInitialise)
+ 80005e4  80005e4        0     1                 $t
+ 80005e5  80005e5       16     1                 vListInitialise
+ 80005fa  80005fa       20     2         build/list.o:(.text.uxListRemove)
+ 80005fa  80005fa        0     1                 $t
+ 80005fb  80005fb       20     1                 uxListRemove
+ 800061c  800061c       88     4         build/perf_counter.o:(.text.perfc_port_insert_to_system_timer_insert_ovf_handler)
+ 800061c  800061c        0     1                 $t
+ 800061d  800061d       88     1                 perfc_port_insert_to_system_timer_insert_ovf_handler
+ 800069c  800069c        0     1                 $d
+ 80006a4  80006a4        2     2         build/perf_counter.o:(.text.__perf_os_patch_init)
+ 80006a4  80006a4        0     1                 $t
+ 80006a5  80006a5        2     1                 __perf_os_patch_init
+ 80006a8  80006a8       50     4         build/perf_counter.o:(.text.update_perf_counter)
+ 80006a8  80006a8        0     1                 $t
+ 80006a9  80006a9       50     1                 update_perf_counter
+ 80006ec  80006ec        0     1                 $d
+ 80006f8  80006f8       4c     4         build/perf_counter.o:(.text.get_system_ticks)
+ 80006f8  80006f8        0     1                 $t
+ 80006f9  80006f9       4c     1                 get_system_ticks
+ 8000740  8000740        0     1                 $d
+ 8000744  8000744       60     4         build/perf_counter.o:(.text.perfc_init)
+ 8000744  8000744        0     1                 $t
+ 8000745  8000745       60     1                 perfc_init
+ 80007a0  80007a0        0     1                 $d
+ 80007a4  80007a4        6     2         build/perf_counter.o:(.text.__perf_counter_init)
+ 80007a4  80007a4        0     1                 $t
+ 80007a5  80007a5        6     1                 __perf_counter_init
+ 80007aa  80007aa       2e     2         build/perf_counter.o:(.text.check_systick)
+ 80007aa  80007aa        0     1                 $t
+ 80007ab  80007ab       2e     1                 check_systick
+ 80007d8  80007d8       68     4         build/perf_counter.o:(.text.get_system_ms)
+ 80007d8  80007d8        0     1                 $t
+ 80007d9  80007d9       68     1                 get_system_ms
+ 8000838  8000838        0     1                 $d
+ 8000840  8000840        e     2         build/perf_counter.o:(.text.OUTLINED_FUNCTION_0)
+ 8000840  8000840        0     1                 $t
+ 8000841  8000841        e     1                 OUTLINED_FUNCTION_0
+ 800084e  800084e        6     2         build/perf_counter.o:(.text.OUTLINED_FUNCTION_1)
+ 800084e  800084e        0     1                 $t
+ 800084f  800084f        6     1                 OUTLINED_FUNCTION_1
+ 8000854  8000854       5c     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libclang_rt.builtins.a(divmoddi4.c.obj):(.text.__divmoddi4)
+ 8000854  8000854        0     1                 $t
+ 8000855  8000855       5c     1                 __divmoddi4
+ 80008b0  80008b0      26e     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libclang_rt.builtins.a(udivmoddi4.c.obj):(.text.__udivmoddi4)
+ 80008b0  80008b0        0     1                 $t
+ 80008b1  80008b1      26e     1                 __udivmoddi4
+ 80001cc  80001cc       14     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(strlen.S.o):(.eh_frame+0x0)
+ 8000b38  8000b38        0     1         . = ALIGN ( 4 )
+ 8000b38  8000b38        0     1         _etext = .
+ 8000b38  8000b38        0     1 .init_infos
+ 8000b38  8000b38        0     1         . = ALIGN ( 4 )
+ 8000b38  8000b38        0     1         __start_init_infos = .
+ 8000b38  8000b38        0     1         __stop_init_infos = .
+ 8000b38  8000b38        0     1         . = ALIGN ( 4 )
+ 8000b38  8000b38      124     4 .rodata
+ 8000b38  8000b38        0     1         . = ALIGN ( 4 )
+ 8000b38  8000b38       34     4         build/trace_stub.o:(.rodata.TRACE)
+ 8000b38  8000b38       34     1                 TRACE
+ 8000b6c  8000b6c        4     1         build/gmsi.o:(.rodata.GMSIVersion)
+ 8000b6c  8000b6c        4     1                 GMSIVersion
+ 8000b70  8000b70       eb     1         <internal>:(.rodata.str1.1)
+ 8000c5b  8000c5b        1     1         . = ALIGN ( 4 )
+ 8000c5c  8000c5c       10     4 .ARM
+ 8000c5c  8000c5c        0     1         __exidx_start = .
+ 8000c5c  8000c5c       10     4         <internal>:(.ARM.exidx)
+ 8000c6c  8000c6c        0     1         __exidx_end = .
+ 8002000  8002000        0     1 .shared_info
+ 8002000  8002000        0     1         . = ALIGN ( 4 )
+ 8002000  8002000        0     1         . = ALIGN ( 4 )
+ 8002000  8002000        0     1 _sidata = LOADADDR ( .data )
+20000000  8000c6c       10     4 .data
+20000000  8000c6c        0     1         . = ALIGN ( 4 )
+20000000  8000c6c        0     1         _sdata = .
+20000000  8000c6c        8     4         build/gmsi.o:(.data.tGstorageCfg)
+20000000  8000c6c        8     1                 tGstorageCfg
+20000008  8000c74        8     4         build/perf_counter.o:(.data..L_MergedGlobals)
+20000008  8000c74        4     1                 s_wMSUnit
+2000000c  8000c78        4     1                 s_wUSUnit
+20000010  8000c7c        0     1         . = ALIGN ( 4 )
+20000010  8000c7c        0     1         _edata = .
+20000010 20000010       98     8 .bss
+20000010 20000010        0     1         . = ALIGN ( 4 )
+20000010 20000010        0     1         _sbss = .
+20000010 20000010        0     1         __bss_start__ = _sbss
+20000010 20000010        1     1         build/main.o:(.bss.s_tLedBlink)
+20000010 20000010        1     1                 s_tLedBlink
+20000018 20000018       10     8         build/main.o:(.bss..L_MergedGlobals)
+20000018 20000018        8     1                 led_blink_task.__s_lTimestamp81
+20000020 20000020        8     1                 led_blink_task.__s_lTimestamp86
+20000028 20000028        4     4         build/perfc_port_user.o:(.bss.s_wSysTickOvfCnt)
+20000028 20000028        4     1                 s_wSysTickOvfCnt
+2000002c 2000002c        1     1         build/gmsi.o:(.bss.g_chSystemData)
+2000002c 2000002c        1     1                 g_chSystemData
+2000002d 2000002d        1     1         build/gmsi.o:(.bss.s_bGmsiInit)
+2000002d 2000002d        1     1                 s_bGmsiInit
+20000030 20000030       18     4         build/gbase.o:(.bss..L_MergedGlobals)
+20000030 20000030        1     1                 gbase_Init.chInitCount
+20000034 20000034       14     1                 tListObject
+20000048 20000048       14     4         build/gcoroutine.o:(.bss.tListCoroutine)
+20000048 20000048       14     1                 tListCoroutine
+20000060 20000060       48     8         build/perf_counter.o:(.bss..L_MergedGlobals.1)
+20000060 20000060        4     1                 g_nOffset
+20000064 20000064        4     1                 s_wMSResidule
+20000068 20000068        4     1                 s_wUSResidule
+20000070 20000070        8     1                 g_lLastTimeStamp
+20000078 20000078        8     1                 s_lSystemClockCounts
+20000080 20000080        8     1                 s_lSystemMS
+20000088 20000088        8     1                 s_lSystemUS
+20000090 20000090        8     1                 s_lOldTimestamp
+20000098 20000098        8     1                 s_lOldTimestampUS
+200000a0 200000a0        8     1                 s_lOldTimestampMS
+200000a8 200000a8        0     1         . = ALIGN ( 4 )
+200000a8 200000a8        0     1         _ebss = .
+200000a8 200000a8        0     1         __bss_end__ = _ebss
+200000a8 200000a8        4     4 .init_array
+200000a8 200000a8        4     4         build/perf_counter.o:(.init_array)
+200000ac 200000ac      404     1 ._user_stack
+200000ac 200000ac        4     1         . = ALIGN ( 8 )
+200000b0 200000b0      400     1         . = . + _Min_Stack_Size
+200004b0 200004b0        0     1         . = ALIGN ( 8 )
+200004b0 200004b0        0     1         _estack = .
+       0        0       49     1 .ARM.attributes
+       0        0       49     1         build/main.o:(.ARM.attributes)
+       0        0       29     1 .comment
+       0        0       29     1         <internal>:(.comment)
+       0        0       b8     1 .debug_loclists
+       0        0       1b     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_loclists)
+      1b       1b       5f     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_loclists)
+      7a       7a       3e     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_loclists)
+       0        0      1da     1 .debug_abbrev
+       0        0       94     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_abbrev)
+      94       94       a0     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_abbrev)
+     134      134       85     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_abbrev)
+     1b9      1b9       21     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(strlen.S.o):(.debug_abbrev)
+       0        0      2b8     1 .debug_info
+       0        0       76     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_info)
+      76       76       97     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_info)
+     10d      10d       78     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_info)
+     185      185      133     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(strlen.S.o):(.debug_info)
+       0        0       a4     1 .debug_str_offsets
+       0        0       30     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_str_offsets)
+      30       30       3c     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_str_offsets)
+      6c       6c       38     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_str_offsets)
+       0        0      1d0     1 .debug_str
+       0        0      1d0     1         <internal>:(.debug_str)
+       0        0       28     1 .debug_addr
+       0        0       10     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_addr)
+      10       10        c     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_addr)
+      1c       1c        c     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_addr)
+       0        0       7c     4 .debug_frame
+       0        0       24     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_frame)
+      24       24       34     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_frame)
+      58       58       24     4         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_frame)
+       0        0      21a     1 .debug_line
+       0        0       a1     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(bzero.c.o):(.debug_line)
+      a1       a1       99     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memcpy.c.o):(.debug_line)
+     13a      13a       91     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(memset.c.o):(.debug_line)
+     1cb      1cb       4f     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(strlen.S.o):(.debug_line)
+       0        0      2ea     1 .debug_line_str
+       0        0      2ea     1         <internal>:(.debug_line_str)
+       0        0       20     1 .debug_aranges
+       0        0       20     1         /home/xun/llvm_for_arm/bin/../lib/clang-runtimes/arm-none-eabi/armv7m_hard_fpv4_sp_d16_exn_rtti/lib/libc.a(strlen.S.o):(.debug_aranges)
+       0        0      ff0     4 .symtab
+       0        0      ff0     4         <internal>:(.symtab)
+       0        0      11c     1 .shstrtab
+       0        0      11c     1         <internal>:(.shstrtab)
+       0        0      d3c     1 .strtab
+       0        0      d3c     1         <internal>:(.strtab)
+
+Cross Reference Table
+
+Symbol                                            File
+led_blink_task                                    build/main.o
+get_system_ms                                     build/perf_counter.o
+                                                  build/main.o
+                                                  build/blm.o
+                                                  build/blm_port_stm32g431.o
+main                                              build/main.o
+                                                  build/startup_stm32g431xx.o
+perfc_init                                        build/perf_counter.o
+                                                  build/main.o
+                                                  build/blm.o
+gmsi_Init                                         build/gmsi.o
+                                                  build/main.o
+gmsi_Run                                          build/gmsi.o
+                                                  build/main.o
+SysTick_Handler                                   build/main.o
+                                                  build/startup_stm32g431xx.o
+perfc_port_insert_to_system_timer_insert_ovf_handler build/perf_counter.o
+                                                  build/main.o
+gmsi_Clock                                        build/gmsi.o
+                                                  build/main.o
+Default_Handler                                   build/startup_stm32g431xx.o
+Reset_Handler                                     build/startup_stm32g431xx.o
+_sdata                                            linker.ld:91
+                                                  build/startup_stm32g431xx.o
+_sidata                                           linker.ld:87
+                                                  build/startup_stm32g431xx.o
+_edata                                            linker.ld:95
+                                                  build/startup_stm32g431xx.o
+_sbss                                             linker.ld:102
+                                                  build/startup_stm32g431xx.o
+_ebss                                             linker.ld:108
+                                                  build/startup_stm32g431xx.o
+g_pfnVectors                                      build/startup_stm32g431xx.o
+_estack                                           linker.ld:118
+                                                  build/startup_stm32g431xx.o
+NMI_Handler                                       build/startup_stm32g431xx.o
+HardFault_Handler                                 build/startup_stm32g431xx.o
+MemManage_Handler                                 build/startup_stm32g431xx.o
+BusFault_Handler                                  build/startup_stm32g431xx.o
+UsageFault_Handler                                build/startup_stm32g431xx.o
+SVC_Handler                                       build/startup_stm32g431xx.o
+DebugMon_Handler                                  build/startup_stm32g431xx.o
+PendSV_Handler                                    build/startup_stm32g431xx.o
+WWDG_IRQHandler                                   build/startup_stm32g431xx.o
+PVD_PVM_IRQHandler                                build/startup_stm32g431xx.o
+RTC_TAMP_LSECSS_IRQHandler                        build/startup_stm32g431xx.o
+RTC_WKUP_IRQHandler                               build/startup_stm32g431xx.o
+FLASH_IRQHandler                                  build/startup_stm32g431xx.o
+RCC_IRQHandler                                    build/startup_stm32g431xx.o
+EXTI0_IRQHandler                                  build/startup_stm32g431xx.o
+EXTI1_IRQHandler                                  build/startup_stm32g431xx.o
+EXTI2_IRQHandler                                  build/startup_stm32g431xx.o
+EXTI3_IRQHandler                                  build/startup_stm32g431xx.o
+EXTI4_IRQHandler                                  build/startup_stm32g431xx.o
+DMA1_Channel1_IRQHandler                          build/startup_stm32g431xx.o
+DMA1_Channel2_IRQHandler                          build/startup_stm32g431xx.o
+DMA1_Channel3_IRQHandler                          build/startup_stm32g431xx.o
+DMA1_Channel4_IRQHandler                          build/startup_stm32g431xx.o
+DMA1_Channel5_IRQHandler                          build/startup_stm32g431xx.o
+DMA1_Channel6_IRQHandler                          build/startup_stm32g431xx.o
+ADC1_2_IRQHandler                                 build/startup_stm32g431xx.o
+USB_HP_IRQHandler                                 build/startup_stm32g431xx.o
+USB_LP_IRQHandler                                 build/startup_stm32g431xx.o
+FDCAN1_IT0_IRQHandler                             build/startup_stm32g431xx.o
+FDCAN1_IT1_IRQHandler                             build/startup_stm32g431xx.o
+EXTI9_5_IRQHandler                                build/startup_stm32g431xx.o
+TIM1_BRK_TIM15_IRQHandler                         build/startup_stm32g431xx.o
+TIM1_UP_TIM16_IRQHandler                          build/startup_stm32g431xx.o
+TIM1_TRG_COM_TIM17_IRQHandler                     build/startup_stm32g431xx.o
+TIM1_CC_IRQHandler                                build/startup_stm32g431xx.o
+TIM2_IRQHandler                                   build/startup_stm32g431xx.o
+TIM3_IRQHandler                                   build/startup_stm32g431xx.o
+TIM4_IRQHandler                                   build/startup_stm32g431xx.o
+I2C1_EV_IRQHandler                                build/startup_stm32g431xx.o
+I2C1_ER_IRQHandler                                build/startup_stm32g431xx.o
+I2C2_EV_IRQHandler                                build/startup_stm32g431xx.o
+I2C2_ER_IRQHandler                                build/startup_stm32g431xx.o
+SPI1_IRQHandler                                   build/startup_stm32g431xx.o
+SPI2_IRQHandler                                   build/startup_stm32g431xx.o
+USART1_IRQHandler                                 build/startup_stm32g431xx.o
+USART2_IRQHandler                                 build/startup_stm32g431xx.o
+USART3_IRQHandler                                 build/startup_stm32g431xx.o
+EXTI15_10_IRQHandler                              build/startup_stm32g431xx.o
+RTC_Alarm_IRQHandler                              build/startup_stm32g431xx.o
+USBWakeUp_IRQHandler                              build/startup_stm32g431xx.o
+TIM8_BRK_IRQHandler                               build/startup_stm32g431xx.o
+TIM8_UP_IRQHandler                                build/startup_stm32g431xx.o
+TIM8_TRG_COM_IRQHandler                           build/startup_stm32g431xx.o
+TIM8_CC_IRQHandler                                build/startup_stm32g431xx.o
+LPTIM1_IRQHandler                                 build/startup_stm32g431xx.o
+SPI3_IRQHandler                                   build/startup_stm32g431xx.o
+UART4_IRQHandler                                  build/startup_stm32g431xx.o
+TIM6_DAC_IRQHandler                               build/startup_stm32g431xx.o
+TIM7_IRQHandler                                   build/startup_stm32g431xx.o
+DMA2_Channel1_IRQHandler                          build/startup_stm32g431xx.o
+DMA2_Channel2_IRQHandler                          build/startup_stm32g431xx.o
+DMA2_Channel3_IRQHandler                          build/startup_stm32g431xx.o
+DMA2_Channel4_IRQHandler                          build/startup_stm32g431xx.o
+DMA2_Channel5_IRQHandler                          build/startup_stm32g431xx.o
+UCPD1_IRQHandler                                  build/startup_stm32g431xx.o
+COMP1_2_3_IRQHandler                              build/startup_stm32g431xx.o
+COMP4_IRQHandler                                  build/startup_stm32g431xx.o
+CRS_IRQHandler                                    build/startup_stm32g431xx.o
+SAI1_IRQHandler                                   build/startup_stm32g431xx.o
+FPU_IRQHandler                                    build/startup_stm32g431xx.o
+I2C3_EV_IRQHandler                                build/startup_stm32g431xx.o
+I2C3_ER_IRQHandler                                build/startup_stm32g431xx.o
+DMAMUX_OVR_IRQHandler                             build/startup_stm32g431xx.o
+DMA2_Channel6_IRQHandler                          build/startup_stm32g431xx.o
+CORDIC_IRQHandler                                 build/startup_stm32g431xx.o
+FMAC_IRQHandler                                   build/startup_stm32g431xx.o
+perfc_port_init_system_timer                      build/perfc_port_user.o
+                                                  build/perf_counter.o
+perfc_port_get_system_timer_freq                  build/perfc_port_user.o
+                                                  build/perf_counter.o
+perfc_port_is_system_timer_ovf_pending            build/perfc_port_user.o
+                                                  build/perf_counter.o
+perfc_port_get_system_timer_top                   build/perfc_port_user.o
+                                                  build/perf_counter.o
+perfc_port_get_system_timer_elapsed               build/perfc_port_user.o
+                                                  build/perf_counter.o
+perfc_port_clear_system_timer_ovf_pending         build/perfc_port_user.o
+                                                  build/perf_counter.o
+TRACE                                             build/trace_stub.o
+                                                  build/gmsi.o
+                                                  build/gbase.o
+                                                  build/glog.o
+gcoroutine_Init                                   build/gcoroutine.o
+                                                  build/gmsi.o
+gbase_DebugListBase                               build/gbase.o
+                                                  build/gmsi.o
+GMSIVersion                                       build/gmsi.o
+tGstorageCfg                                      build/gmsi.o
+__stop_init_infos                                 linker.ld:52
+                                                  build/gmsi.o
+__start_init_infos                                linker.ld:50
+                                                  build/gmsi.o
+gbase_GetBaseList                                 build/gbase.o
+                                                  build/gmsi.o
+gcoroutine_Run                                    build/gcoroutine.o
+                                                  build/gmsi.o
+assert_failed                                     build/gmsi.o
+                                                  build/gbase.o
+                                                  build/gcoroutine.o
+g_chSystemData                                    build/gmsi.o
+vListInitialise                                   build/list.o
+                                                  build/gbase.o
+                                                  build/gcoroutine.o
+uxListRemove                                      build/list.o
+                                                  build/gbase.o
+                                                  build/gcoroutine.o
+gcoroutine_Delete                                 build/gcoroutine.o
+__perf_os_patch_init                              build/perf_counter.o
+update_perf_counter                               build/perf_counter.o
+get_system_ticks                                  build/perf_counter.o
+__perf_counter_init                               build/perf_counter.o
+g_nOffset                                         build/perf_counter.o
+g_lLastTimeStamp                                  build/perf_counter.o

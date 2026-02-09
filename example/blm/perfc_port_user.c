@@ -1,0 +1,170 @@
+/**
+ * @file perfc_port_user.c
+ * @brief perf_counter porting implementation for STM32G431
+ * 
+ * Uses SysTick as the system timer with maximum reload value
+ * for high-precision timing.
+ */
+
+/*============================ INCLUDES ======================================*/
+#undef __PERF_COUNT_PLATFORM_SPECIFIC_HEADER__
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define __IMPLEMENT_PERF_COUNTER
+#include "perf_counter.h"
+#include "cmsis/stm32g431xx.h"
+
+#if defined(__IS_COMPILER_GCC__) || defined(__clang__)
+#   pragma GCC diagnostic ignored "-Wattributes"
+#endif
+
+#if defined(__clang__)
+#   pragma clang diagnostic ignored "-Wunknown-warning-option"
+#   pragma clang diagnostic ignored "-Wreserved-identifier"
+#   pragma clang diagnostic ignored "-Wconditional-uninitialized"
+#   pragma clang diagnostic ignored "-Wcast-align"
+#   pragma clang diagnostic ignored "-Wmissing-prototypes"
+#   pragma clang diagnostic ignored "-Wimplicit-function-declaration"
+#endif
+
+/*============================ MACROS ========================================*/
+/*============================ TYPES =========================================*/
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ LOCAL VARIABLES ===============================*/
+
+/* Overflow counter for extending SysTick to 64-bit */
+static volatile uint32_t s_wSysTickOvfCnt = 0;
+
+/*============================ PROTOTYPES ====================================*/
+/* low level interface for porting */
+extern uint32_t perfc_port_get_system_timer_freq(void);
+extern int64_t perfc_port_get_system_timer_top(void);
+extern bool perfc_port_is_system_timer_ovf_pending(void);
+extern bool perfc_port_init_system_timer(bool bTimerOccupied);
+extern int64_t perfc_port_get_system_timer_elapsed(void);
+extern void perfc_port_clear_system_timer_ovf_pending(void);
+extern void perfc_port_stop_system_timer_counting(void);
+extern void perfc_port_clear_system_timer_counter(void);
+
+/*============================ IMPLEMENTATION ================================*/
+
+#if __PERFC_USE_USER_CUSTOM_PORTING__
+
+/**
+ * @brief Initialize system timer (SysTick) - called by perfc_init
+ * @param bIsTimeOccupied true if timer is already used by application
+ * @return true on success
+ */
+bool perfc_port_init_system_timer(bool bIsTimeOccupied)
+{
+    bool bResult = true;
+    
+    do {
+        if (bIsTimeOccupied) {
+            /* Timer already in use by application, just hook into it */
+            break;
+        }
+
+        __IRQ_SAFE {
+            /* Configure SysTick with maximum reload value for highest precision */
+            SysTick->LOAD = SysTick_LOAD_RELOAD_Msk;
+            SysTick->VAL  = 0;
+            SysTick->CTRL = SysTick_CTRL_CLKSOURCE |    /* Use processor clock */
+                            SysTick_CTRL_TICKINT   |    /* Enable interrupt */
+                            SysTick_CTRL_ENABLE;        /* Enable SysTick */
+            
+            s_wSysTickOvfCnt = 0;
+        }
+    } while(0);
+    
+    return bResult;
+}
+
+/**
+ * @brief Get system timer frequency
+ * @return Frequency in Hz
+ */
+uint32_t perfc_port_get_system_timer_freq(void)
+{
+    return SystemCoreClock;
+}
+
+/**
+ * @brief Check if system timer overflow is pending
+ * @return true if overflow pending
+ */
+bool perfc_port_is_system_timer_ovf_pending(void)
+{
+    return (SysTick->CTRL & SysTick_CTRL_COUNTFLAG) != 0;
+}
+
+/**
+ * @brief Get the top (reload) value of the system timer
+ * @return Top value
+ */
+int64_t perfc_port_get_system_timer_top(void)
+{
+    return (int64_t)SysTick->LOAD;
+}
+
+/**
+ * @brief Get elapsed count since last overflow
+ * @return Elapsed ticks (SysTick counts down)
+ */
+int64_t perfc_port_get_system_timer_elapsed(void)
+{
+    /* SysTick counts down, so elapsed = LOAD - VAL */
+    return (int64_t)(SysTick->LOAD - SysTick->VAL);
+}
+
+/**
+ * @brief Clear the overflow pending flag
+ */
+void perfc_port_clear_system_timer_ovf_pending(void)
+{
+    /* Reading CTRL clears the countflag */
+    (void)SysTick->CTRL;
+}
+
+/**
+ * @brief Stop system timer counting
+ */
+void perfc_port_stop_system_timer_counting(void)
+{
+    SysTick->CTRL &= ~SysTick_CTRL_ENABLE;
+}
+
+/**
+ * @brief Clear system timer counter
+ */
+void perfc_port_clear_system_timer_counter(void)
+{
+    SysTick->VAL = 0;
+    s_wSysTickOvfCnt = 0;
+}
+
+/**
+ * @brief Get current stack pointer (for RTOS support)
+ */
+__attribute__((noinline))
+uintptr_t __perfc_port_get_sp(void)
+{
+    uintptr_t result;
+    __asm volatile ("mov %0, sp" : "=r" (result));
+    return result;
+}
+
+/**
+ * @brief Set stack pointer (for RTOS support)
+ */
+__attribute__((noinline))
+void __perfc_port_set_sp(uintptr_t nSP)
+{
+    uint32_t nAlign8Padding = nSP;
+    __asm volatile ("mov sp, %0" : "=r" (nAlign8Padding));
+}
+
+#endif  /* __PERFC_USE_USER_CUSTOM_PORTING__ */

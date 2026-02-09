@@ -17,6 +17,7 @@
 #define GMSI_ID_TIMER       7
 #define GMSI_ID_IO          8
 #define GMSI_ID_STORAGE     9
+#define GMSI_ID_BLM         10
 // SOFTWARE
 #define GMSI_ID_CLASS       100
 #define GMSI_ID_MOCK        101
@@ -90,13 +91,12 @@ typedef enum{
 #define GMSI_INPUT          ((GMSI_ID_IO<<8)+1)
 
 #define GET_OBJECT_POINT(OBJECT, ADDR)    (OBJECT *)(ADDR)
-/*
-#define DEFINE_OBJECT(OBJECT)   \
-    do{
-        OBJECT##_cfg_t t##OBJECT##Cfg = {
-            .
-    }
-    }while(0)
-*/
+
+// GBLINFO shared memory address
+#define GBLINFO_SHARED_ADDR     0x08002000
+#define GBLINFO_SHARED_SIZE     0x400       // 1KB
+#define GBLINFO_MAGIC           0x424C4946  // "BLIF"
+
+#define GMSI_GBLINFO            ((GMSI_ID_BLM<<8)+1)
 
 #endif
