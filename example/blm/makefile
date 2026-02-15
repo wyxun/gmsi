@@ -39,6 +39,7 @@ C_SOURCES = \
     $(GMSI_DIR)/glog.c \
     $(GMSI_DIR)/gstorage.c \
     $(GMSI_DIR)/utilities/list.c \
+    $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
     $(LIB_DIR)/perf_counter/perf_counter.c
 
 # Assembly sources (perf_counter SysTick wrapper)
@@ -171,11 +172,30 @@ OPENOCD_CMD = openocd -f $(OPENOCD_INTERFACE) -c "cmsis_dap_backend hid" -f $(OP
 flash: $(BUILD_DIR)/$(TARGET).hex
 	$(OPENOCD_CMD) -c "program $< verify reset exit"
 
+# Flash via already-running OpenOCD (e.g. RTT session), then restart RTT
+flash-rtt: $(BUILD_DIR)/$(TARGET).hex
+	@ABS=$$(realpath $<); \
+	printf "program $$ABS verify reset\nexit\n" | nc -w 10 localhost 4444; \
+	sleep 1; \
+	printf "rtt stop\nrtt start\n" | nc -w 3 localhost 4444
+
 debug-server:
 	$(OPENOCD_CMD)
 
 debug: $(BUILD_DIR)/$(TARGET).elf
 	gdb-multiarch -x debug.gdb $<
+
+# RTT address from map file
+RTT_ADDR = $(shell grep ' _SEGGER_RTT$$' $(BUILD_DIR)/$(TARGET).map 2>/dev/null | awk '{print "0x"$$1}')
+
+# Print RTT address
+rtt-addr: $(BUILD_DIR)/$(TARGET).elf
+	@echo "RTT CB address: $(RTT_ADDR)"
+
+# Start OpenOCD with RTT server on port 9090
+rtt: $(BUILD_DIR)/$(TARGET).elf
+	@echo "RTT CB address: $(RTT_ADDR)"
+	$(OPENOCD_CMD) -c "init" -c 'rtt setup $(RTT_ADDR) 0xa8 "SEGGER RTT"' -c "rtt start" -c "rtt server start 9090 0"
 
 # Print current config
 info:
@@ -184,4 +204,5 @@ info:
 	@echo "LDSCRIPT = $(LDSCRIPT)"
 	@echo "SOURCES  = $(CHIP_SOURCES)"
 
-.PHONY: all clean flash debug-server size check-size info
+.PHONY: all clean flash flash-rtt debug-server size check-size info rtt rtt-addr
+

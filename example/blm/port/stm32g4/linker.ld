@@ -44,11 +44,11 @@ SECTIONS
     } >FLASH
 
     /* GMSI init section */
-    .init_infos :
+    init_infos :
     {
         . = ALIGN(4);
         __start_init_infos = .;
-        KEEP(*(.init_infos))
+        KEEP(*(init_infos))
         __stop_init_infos = .;
         . = ALIGN(4);
     } >FLASH

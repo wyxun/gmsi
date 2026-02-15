@@ -10,6 +10,7 @@
 #include "port/blm_port.h"
 #include "gblinfo.h"
 #include <perf_counter.h>
+#include "utilities/util_debug.h"
 
 #if defined(AT32F407xx)
 #   include "cmsis/at32f407xx.h"
@@ -157,6 +158,10 @@ int main(void)
 {
     /* System initialization */
     System_Init();
+    
+    /* Initialize TRACE (SEGGER RTT) */
+    TRACE.Init(NULL);
+    LOG_OUT("BLM Bootloader Started\r\n");
     
     /* Initialize GMSI framework */
     gmsi_Init(&s_tGmsi);

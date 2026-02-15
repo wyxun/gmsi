@@ -197,6 +197,70 @@ quit
 gdb-multiarch -batch -x verify_led.gdb build/at32f4/blm.elf
 ```
 
+## � RTT 虚拟串口 (SEGGER RTT)
+
+本项目集成了 [SEGGER RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/)，通过 SWD 调试接口实现高速日志输出，**无需额外串口线**。
+
+### 原理
+
+RTT 在 RAM 中维护一个环形缓冲区（控制块 `_SEGGER_RTT`），固件通过 `LOG_OUT()` 宏写入数据，OpenOCD 通过调试接口读取并转发到 TCP 端口。
+
+```
+LOG_OUT(...) → snprintf → SEGGER_RTT_WriteString() → RAM 环形缓冲区
+                                                          ↓
+                                            OpenOCD RTT → TCP:9090 → nc / telnet
+```
+
+### 使用方法（三终端工作流）
+
+**终端 1：启动 OpenOCD + RTT Server**
+```bash
+make rtt                  # 自动提取 RTT 地址，启动 RTT server (端口 9090)
+```
+
+**终端 2：查看 RTT 输出**
+```bash
+nc localhost 9090         # 持续显示 RTT 打印
+```
+
+**终端 3：编译 + 烧录（每次修改代码后）**
+```bash
+make CHIP=at32f4          # 编译
+make flash-rtt            # 通过已运行的 OpenOCD 烧录，自动重启 RTT
+```
+
+### Makefile 命令
+
+| 命令 | 说明 |
+| :--- | :--- |
+| `make rtt` | 启动 OpenOCD + RTT server（端口 9090），自动从 map 文件提取控制块地址 |
+| `make flash-rtt` | 通过已运行的 OpenOCD 烧录固件并自动重启 RTT 轮询 |
+| `make rtt-addr` | 仅打印当前 RTT 控制块地址（调试用） |
+
+### 代码中使用
+
+```c
+#include "utilities/util_debug.h"
+
+// 初始化（main 函数中调用一次）
+TRACE.Init(NULL);
+
+// 日志输出
+LOG_OUT("Hello RTT!\r\n");
+
+// 支持多种类型
+uint32_t val = 42;
+LOG_OUT("value = ");
+LOG_OUT(val);
+LOG_OUT("\r\n");
+```
+
+### ⚠️ 注意事项
+
+1. **每次 `make flash-rtt` 后**，RTT 会自动重启。如果手动烧录（`make flash`），需要重启 OpenOCD。
+2. **RTT 控制块地址会随编译变化**，`make rtt` 每次自动提取最新地址，无需手动查找。
+3. **WSL2 环境**需先通过 `usbipd attach --wsl` 将调试器透传到 WSL。
+
 ## 📖 移植指南 (Porting)
 
 若要支持新芯片：

@@ -2,7 +2,12 @@
 /example/posix_uart/.cache/*
 /example/posix_uart/compile_commands.json
 
-#所有编译后得文件
+#锟斤拷锟叫憋拷锟斤拷锟斤拷锟侥硷拷
 *.o
 *.elf
 *.bin
+*.log
+*.hex
+*.out
+*.map
+
