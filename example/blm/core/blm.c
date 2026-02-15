@@ -9,6 +9,7 @@
 #include "blm.h"
 #include "blm_protocol.h"
 #include "../port/blm_port.h"
+#include "../cmsis/cmsis_compiler.h"
 #include "gblinfo.h"
 #include <string.h>
 
@@ -332,7 +333,7 @@ int blm_JumpToApp(blm_cb_t *ptThis)
     }
     
     /* Disable interrupts */
-    __asm volatile ("cpsid i");
+    __disable_irq();
     
     /* Update boot status */
     gblinfo_UpdateBootStatus(1);

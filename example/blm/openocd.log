@@ -1,0 +1,60 @@
+openocd -f interface/cmsis-dap.cfg -c "cmsis_dap_backend hid" -f target/at32f407xx.cfg
+Open On-Chip Debugger 0.11.0+dev-00804-g6160aae74 (2026-02-15-16:55)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : auto-selecting first available session transport "swd". To override use 'transport select <transport>'.
+Info : flash reg address: 0x0, usd addr:  0x0
+Info : DEPRECATED target event trace-config; use TPIU events {pre,post}-{enable,disable}
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : CMSIS-DAP: SWD supported
+Info : CMSIS-DAP: SWO-UART supported
+Info : CMSIS-DAP: Atomic commands supported
+Info : CMSIS-DAP: Test domain timer supported
+Info : CMSIS-DAP: FW Version = 2.2.11
+Info : CMSIS-DAP: Interface Initialised (SWD)
+Info : SWCLK/TCK = 0 SWDIO/TMS = 1 TDI = 0 TDO = 0 nTRST = 0 nRESET = 1
+Info : CMSIS-DAP: Interface ready
+Info : clock speed 5000 kHz
+Info : SWD DPIDR 0x2ba01477
+Info : [at32f407xx.cpu] Cortex-M4 r0p1 processor detected
+Info : [at32f407xx.cpu] target has 6 breakpoints, 4 watchpoints
+Info : [at32f407xx.cpu] external reset detected
+Info : starting gdb server for at32f407xx.cpu on 3333
+Info : Listening on port 3333 for gdb connections
+Info : accepting 'gdb' connection on tcp/3333
+Info : This is target at32f407xx algorithm
+Info : main flash size: 0x100000, sector num:  0x100, sector size: 0x800,  bank size: 0x80000
+Warn : Prefer GDB command "target extended-remote :3333" instead of "target remote :3333"
+Info : This is target at32f407xx algorithm
+Info : main flash size: 0x100000, sector num:  0x100, sector size: 0x800,  bank size: 0x80000
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x08000eb0 msp: 0x200004c0
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x08000eb0 msp: 0x200004c0
+Info : This is target at32f407xx algorithm
+Info : main flash size: 0x100000, sector num:  0x100, sector size: 0x800,  bank size: 0x80000
+Info : This is target at32f407xx algorithm
+Info : main flash size: 0x100000, sector num:  0x100, sector size: 0x800,  bank size: 0x80000
+Info : Earse first sector = 0x0, last sector = 0x5 
+Info : This is target at32f407xx algorithm
+Info : main flash size: 0x100000, sector num:  0x100, sector size: 0x800,  bank size: 0x80000
+Info : Write address = 0x8000000, count: 0x2c4c
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x080023cc msp: 0x200008d8
+Warn : keep_alive() was not invoked in the 1000 ms timelimit. GDB alive packet not sent! (3958 ms). Workaround: increase "set remotetimeout" in GDB
+Warn : keep_alive() was not invoked in the 1000 ms timelimit. GDB alive packet not sent! (4036 ms). Workaround: increase "set remotetimeout" in GDB
+Info : rejected 'gdb' connection, no more connections allowed
+Warn : keep_alive() was not invoked in the 1000 ms timelimit. GDB alive packet not sent! (4026 ms). Workaround: increase "set remotetimeout" in GDB
+Error: CMSIS-DAP command mismatch. Expected 0x5 received 0x0
+Warn : target at32f407xx.cpu is not halted (gdb fileio)
+Polling target at32f407xx.cpu failed, trying to reexamine
+Error: CMSIS-DAP command mismatch. Sent 0x3 received 0x5
+Error: CMSIS-DAP command CMD_DISCONNECT failed.
+Info : SWD DPIDR 0x2ba01477
+Info : [at32f407xx.cpu] Cortex-M4 r0p1 processor detected
+Info : [at32f407xx.cpu] target has 6 breakpoints, 4 watchpoints
+Info : dropped 'gdb' connection
+Killed
+make: *** [makefile:168: debug-server] Error 137

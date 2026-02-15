@@ -1,14 +1,14 @@
 /**
- * @file blm_port_stm32g431.c
- * @brief BLM Port Implementation for STM32G431
+ * @file blm_port_stm32g4.c
+ * @brief BLM Port Implementation for STM32G4 Series
  * 
  * Uses direct register access for UART, Flash, and GPIO operations.
  * Based on STM32G431 reference manual (RM0440).
  */
 
 /*============================ INCLUDES ======================================*/
-#include "blm_port.h"
-#include "../cmsis/stm32g431xx.h"
+#include "../blm_port.h"
+#include "../../cmsis/stm32g431xx.h"
 #include <perf_counter.h>
 
 /*============================ MACROS ========================================*/
@@ -41,6 +41,9 @@
 #endif
 
 /*============================ IMPLEMENTATION ================================*/
+
+/* Define SystemCoreClock variable (used by perf_counter) */
+uint32_t SystemCoreClock = BLM_SYSCLK;
 
 /*----------------------------------------------------------------------------*
  * GPIO Configuration
@@ -133,7 +136,7 @@ void blm_port_JumpToApp(uint32_t wAppAddr)
     uint32_t wResetHandler = *(volatile uint32_t *)(wAppAddr + 4);
     
     /* Disable all interrupts */
-    __asm volatile ("cpsid i");
+    __disable_irq();
     
     /* Set vector table offset */
     SCB->VTOR = wAppAddr;

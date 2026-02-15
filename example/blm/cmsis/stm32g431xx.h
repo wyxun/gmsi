@@ -1,14 +1,14 @@
 /**
  * @file stm32g431xx.h
- * @brief STM32G431 Register Definitions (Minimal for Bootloader)
- * 
- * This is a minimal CMSIS-style header for bootloader use.
- * Contains only the registers needed for UART, Flash, and RCC.
+ * @brief STM32G431 Peripheral Register Definitions (Minimal for Bootloader)
+ *
+ * Contains only the peripheral registers needed for UART, Flash, RCC, and GPIO.
+ * Core CM4 registers (SCB, SysTick, NVIC) are in core_cm4.h.
  */
 #ifndef __STM32G431XX_H__
 #define __STM32G431XX_H__
 
-#include <stdint.h>
+#include "core_cm4.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,10 +39,6 @@ extern "C" {
 #define GPIOB_BASE          (AHB2PERIPH_BASE + 0x0400UL)
 #define GPIOC_BASE          (AHB2PERIPH_BASE + 0x0800UL)
 
-#define SCB_BASE            0xE000ED00UL
-#define NVIC_BASE           0xE000E100UL
-#define SYSTICK_BASE        0xE000E010UL
-
 /*============================ RCC REGISTERS =================================*/
 
 typedef struct {
@@ -72,7 +68,6 @@ typedef struct {
     volatile uint32_t APB2ENR;      /* 0x60 */
 } RCC_TypeDef;
 
-/* RCC peripheral */
 #define RCC                 ((RCC_TypeDef *)RCC_BASE)
 
 /* RCC bit definitions */
@@ -116,7 +111,6 @@ typedef struct {
     volatile uint32_t WRP1BR;       /* 0x30 */
 } FLASH_TypeDef;
 
-/* FLASH peripheral */
 #define FLASH_REG           ((FLASH_TypeDef *)FLASH_R_BASE)
 
 /* Flash key values */
@@ -124,29 +118,29 @@ typedef struct {
 #define FLASH_KEY2          0xCDEF89ABUL
 
 /* Flash SR bits */
-#define FLASH_SR_EOP        (1UL << 0)  /* End of operation */
-#define FLASH_SR_OPERR      (1UL << 1)  /* Operation error */
-#define FLASH_SR_PROGERR    (1UL << 3)  /* Programming error */
-#define FLASH_SR_WRPERR     (1UL << 4)  /* Write protection error */
-#define FLASH_SR_PGAERR     (1UL << 5)  /* Programming alignment error */
-#define FLASH_SR_SIZERR     (1UL << 6)  /* Size error */
-#define FLASH_SR_PGSERR     (1UL << 7)  /* Programming sequence error */
-#define FLASH_SR_MISERR     (1UL << 8)  /* Fast programming miss */
-#define FLASH_SR_FASTERR    (1UL << 9)  /* Fast programming error */
-#define FLASH_SR_BSY        (1UL << 16) /* Busy */
+#define FLASH_SR_EOP        (1UL << 0)
+#define FLASH_SR_OPERR      (1UL << 1)
+#define FLASH_SR_PROGERR    (1UL << 3)
+#define FLASH_SR_WRPERR     (1UL << 4)
+#define FLASH_SR_PGAERR     (1UL << 5)
+#define FLASH_SR_SIZERR     (1UL << 6)
+#define FLASH_SR_PGSERR     (1UL << 7)
+#define FLASH_SR_MISERR     (1UL << 8)
+#define FLASH_SR_FASTERR    (1UL << 9)
+#define FLASH_SR_BSY        (1UL << 16)
 
 /* Flash CR bits */
-#define FLASH_CR_PG         (1UL << 0)  /* Programming */
-#define FLASH_CR_PER        (1UL << 1)  /* Page erase */
-#define FLASH_CR_MER1       (1UL << 2)  /* Mass erase bank 1 */
-#define FLASH_CR_PNB_Pos    3           /* Page number position */
+#define FLASH_CR_PG         (1UL << 0)
+#define FLASH_CR_PER        (1UL << 1)
+#define FLASH_CR_MER1       (1UL << 2)
+#define FLASH_CR_PNB_Pos    3
 #define FLASH_CR_PNB_Msk    (0x7FUL << FLASH_CR_PNB_Pos)
-#define FLASH_CR_STRT       (1UL << 16) /* Start */
-#define FLASH_CR_LOCK       (1UL << 31) /* Lock */
+#define FLASH_CR_STRT       (1UL << 16)
+#define FLASH_CR_LOCK       (1UL << 31)
 
 /* Flash page size: 2KB for STM32G431 */
 #define FLASH_PAGE_SIZE     2048UL
-#define FLASH_PAGE_NB       64          /* 128KB / 2KB */
+#define FLASH_PAGE_NB       64
 
 /*============================ USART REGISTERS ===============================*/
 
@@ -165,47 +159,46 @@ typedef struct {
     volatile uint32_t PRESC;        /* 0x2C Prescaler */
 } USART_TypeDef;
 
-/* USART peripherals */
 #define USART1              ((USART_TypeDef *)USART1_BASE)
 #define USART2              ((USART_TypeDef *)USART2_BASE)
 #define USART3              ((USART_TypeDef *)USART3_BASE)
 
 /* USART CR1 bits */
-#define USART_CR1_UE        (1UL << 0)  /* USART enable */
-#define USART_CR1_RE        (1UL << 2)  /* Receiver enable */
-#define USART_CR1_TE        (1UL << 3)  /* Transmitter enable */
-#define USART_CR1_IDLEIE    (1UL << 4)  /* IDLE interrupt */
-#define USART_CR1_RXNEIE    (1UL << 5)  /* RXNE interrupt */
-#define USART_CR1_TCIE      (1UL << 6)  /* TC interrupt */
-#define USART_CR1_TXEIE     (1UL << 7)  /* TXE interrupt */
-#define USART_CR1_OVER8     (1UL << 15) /* Oversampling 8 */
-#define USART_CR1_M0        (1UL << 12) /* Word length bit 0 */
-#define USART_CR1_M1        (1UL << 28) /* Word length bit 1 */
-#define USART_CR1_FIFOEN    (1UL << 29) /* FIFO enable */
+#define USART_CR1_UE        (1UL << 0)
+#define USART_CR1_RE        (1UL << 2)
+#define USART_CR1_TE        (1UL << 3)
+#define USART_CR1_IDLEIE    (1UL << 4)
+#define USART_CR1_RXNEIE    (1UL << 5)
+#define USART_CR1_TCIE      (1UL << 6)
+#define USART_CR1_TXEIE     (1UL << 7)
+#define USART_CR1_OVER8     (1UL << 15)
+#define USART_CR1_M0        (1UL << 12)
+#define USART_CR1_M1        (1UL << 28)
+#define USART_CR1_FIFOEN    (1UL << 29)
 
 /* USART CR2 bits */
 #define USART_CR2_STOP_Pos  12
 #define USART_CR2_STOP_Msk  (3UL << USART_CR2_STOP_Pos)
-#define USART_CR2_STOP_1    (0UL << USART_CR2_STOP_Pos)  /* 1 stop bit */
-#define USART_CR2_STOP_2    (2UL << USART_CR2_STOP_Pos)  /* 2 stop bits */
+#define USART_CR2_STOP_1    (0UL << USART_CR2_STOP_Pos)
+#define USART_CR2_STOP_2    (2UL << USART_CR2_STOP_Pos)
 
 /* USART CR3 bits */
-#define USART_CR3_RTSE      (1UL << 8)  /* RTS enable */
-#define USART_CR3_CTSE      (1UL << 9)  /* CTS enable */
-#define USART_CR3_DMAT      (1UL << 7)  /* DMA transmit */
-#define USART_CR3_DMAR      (1UL << 6)  /* DMA receive */
+#define USART_CR3_RTSE      (1UL << 8)
+#define USART_CR3_CTSE      (1UL << 9)
+#define USART_CR3_DMAT      (1UL << 7)
+#define USART_CR3_DMAR      (1UL << 6)
 
 /* USART ISR bits */
-#define USART_ISR_PE        (1UL << 0)  /* Parity error */
-#define USART_ISR_FE        (1UL << 1)  /* Framing error */
-#define USART_ISR_NE        (1UL << 2)  /* Noise error */
-#define USART_ISR_ORE       (1UL << 3)  /* Overrun error */
-#define USART_ISR_IDLE      (1UL << 4)  /* IDLE detected */
-#define USART_ISR_RXNE      (1UL << 5)  /* RX not empty */
-#define USART_ISR_TC        (1UL << 6)  /* TX complete */
-#define USART_ISR_TXE       (1UL << 7)  /* TX empty */
-#define USART_ISR_TEACK     (1UL << 21) /* TX enable ACK */
-#define USART_ISR_REACK     (1UL << 22) /* RX enable ACK */
+#define USART_ISR_PE        (1UL << 0)
+#define USART_ISR_FE        (1UL << 1)
+#define USART_ISR_NE        (1UL << 2)
+#define USART_ISR_ORE       (1UL << 3)
+#define USART_ISR_IDLE      (1UL << 4)
+#define USART_ISR_RXNE      (1UL << 5)
+#define USART_ISR_TC        (1UL << 6)
+#define USART_ISR_TXE       (1UL << 7)
+#define USART_ISR_TEACK     (1UL << 21)
+#define USART_ISR_REACK     (1UL << 22)
 
 /* USART ICR bits */
 #define USART_ICR_PECF      (1UL << 0)
@@ -230,7 +223,6 @@ typedef struct {
     volatile uint32_t BRR;          /* 0x28 Bit reset */
 } GPIO_TypeDef;
 
-/* GPIO peripherals */
 #define GPIOA               ((GPIO_TypeDef *)GPIOA_BASE)
 #define GPIOB               ((GPIO_TypeDef *)GPIOB_BASE)
 #define GPIOC               ((GPIO_TypeDef *)GPIOC_BASE)
@@ -257,53 +249,10 @@ typedef struct {
 #define GPIO_AF7_USART2     7UL
 #define GPIO_AF7_USART3     7UL
 
-/*============================ SCB REGISTERS =================================*/
-
-typedef struct {
-    volatile uint32_t CPUID;        /* 0x00 */
-    volatile uint32_t ICSR;         /* 0x04 */
-    volatile uint32_t VTOR;         /* 0x08 Vector Table Offset */
-    volatile uint32_t AIRCR;        /* 0x0C Application Interrupt/Reset */
-    volatile uint32_t SCR;          /* 0x10 */
-    volatile uint32_t CCR;          /* 0x14 */
-    volatile uint32_t SHPR[3];      /* 0x18-0x20 */
-    volatile uint32_t SHCSR;        /* 0x24 */
-} SCB_TypeDef;
-
-/* SCB peripheral */
-#define SCB                 ((SCB_TypeDef *)SCB_BASE)
-
-/* SCB AIRCR bits */
-#define SCB_AIRCR_VECTKEY       (0x05FAUL << 16)
-#define SCB_AIRCR_SYSRESETREQ   (1UL << 2)
-
-/*============================ SYSTICK REGISTERS =============================*/
-
-typedef struct {
-    volatile uint32_t CTRL;         /* 0x00 Control */
-    volatile uint32_t LOAD;         /* 0x04 Reload */
-    volatile uint32_t VAL;          /* 0x08 Current value */
-    volatile uint32_t CALIB;        /* 0x0C Calibration */
-} SysTick_TypeDef;
-
-/* SysTick peripheral */
-#define SysTick             ((SysTick_TypeDef *)SYSTICK_BASE)
-
-/* SysTick CTRL bits */
-#define SysTick_CTRL_ENABLE     (1UL << 0)
-#define SysTick_CTRL_TICKINT    (1UL << 1)
-#define SysTick_CTRL_CLKSOURCE  (1UL << 2)
-#define SysTick_CTRL_COUNTFLAG  (1UL << 16)
-
-/* SysTick max value (24-bit) */
-#define SysTick_LOAD_RELOAD_Msk 0x00FFFFFFUL
-
 /*============================ SYSTEM ========================================*/
 
-/* System core clock (default HSI = 16MHz) */
-#ifndef SystemCoreClock
-#define SystemCoreClock     16000000UL
-#endif
+/* System core clock (defined in port file) */
+extern uint32_t SystemCoreClock;
 
 #ifdef __cplusplus
 }

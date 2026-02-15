@@ -12,11 +12,16 @@
 
 /* Flash Layout */
 #define BLM_BOOTLOADER_ADDR     0x08000000
-#define BLM_BOOTLOADER_SIZE     0x2000      // 8KB
+#define BLM_BOOTLOADER_SIZE     0x4000      // 16KB
 #define BLM_SHARED_INFO_ADDR    GBLINFO_SHARED_ADDR
 #define BLM_SHARED_INFO_SIZE    GBLINFO_SHARED_SIZE
-#define BLM_APP_ADDR            0x08002400
+#define BLM_APP_ADDR            0x08004400
+
+#if defined(AT32F407xx)
+#define BLM_APP_MAX_SIZE        0xFDC00     // ~1015KB (for 1MB flash)
+#else  /* STM32G431 default */
 #define BLM_APP_MAX_SIZE        0x3DC00     // ~247KB (for 256KB flash)
+#endif
 
 /* UART Configuration */
 #define BLM_UART_BAUDRATE       115200

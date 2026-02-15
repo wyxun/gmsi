@@ -1,9 +1,9 @@
 /**
  * @file perfc_port_user.c
- * @brief perf_counter porting implementation for STM32G431
+ * @brief perf_counter porting implementation (chip-agnostic)
  * 
  * Uses SysTick as the system timer with maximum reload value
- * for high-precision timing.
+ * for high-precision timing. Only depends on core_cm4.h.
  */
 
 /*============================ INCLUDES ======================================*/
@@ -15,7 +15,7 @@
 
 #define __IMPLEMENT_PERF_COUNTER
 #include "perf_counter.h"
-#include "cmsis/stm32g431xx.h"
+#include "cmsis/core_cm4.h"
 
 #if defined(__IS_COMPILER_GCC__) || defined(__clang__)
 #   pragma GCC diagnostic ignored "-Wattributes"
@@ -33,6 +33,8 @@
 /*============================ MACROS ========================================*/
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
+
+extern uint32_t SystemCoreClock;
 /*============================ LOCAL VARIABLES ===============================*/
 
 /* Overflow counter for extending SysTick to 64-bit */
@@ -69,8 +71,8 @@ bool perfc_port_init_system_timer(bool bIsTimeOccupied)
         }
 
         __IRQ_SAFE {
-            /* Configure SysTick with maximum reload value for highest precision */
-            SysTick->LOAD = SysTick_LOAD_RELOAD_Msk;
+            /* Configure SysTick for 1ms interrupt period */
+            SysTick->LOAD = SystemCoreClock / 1000 - 1;
             SysTick->VAL  = 0;
             SysTick->CTRL = SysTick_CTRL_CLKSOURCE |    /* Use processor clock */
                             SysTick_CTRL_TICKINT   |    /* Enable interrupt */
@@ -144,27 +146,6 @@ void perfc_port_clear_system_timer_counter(void)
 {
     SysTick->VAL = 0;
     s_wSysTickOvfCnt = 0;
-}
-
-/**
- * @brief Get current stack pointer (for RTOS support)
- */
-__attribute__((noinline))
-uintptr_t __perfc_port_get_sp(void)
-{
-    uintptr_t result;
-    __asm volatile ("mov %0, sp" : "=r" (result));
-    return result;
-}
-
-/**
- * @brief Set stack pointer (for RTOS support)
- */
-__attribute__((noinline))
-void __perfc_port_set_sp(uintptr_t nSP)
-{
-    uint32_t nAlign8Padding = nSP;
-    __asm volatile ("mov sp, %0" : "=r" (nAlign8Padding));
 }
 
 #endif  /* __PERFC_USE_USER_CUSTOM_PORTING__ */

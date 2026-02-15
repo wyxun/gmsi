@@ -137,4 +137,14 @@ void blm_port_DelayMs(uint32_t wMs);
  */
 int blm_port_IsUpgradeButtonPressed(void);
 
+/*============================================================================
+ * LED Interface (optional)
+ *===========================================================================*/
+
+/**
+ * @brief Set LED state
+ * @param nState 1 = ON, 0 = OFF
+ */
+void blm_port_LedSet(int nState);
+
 #endif  // __BLM_PORT_H__

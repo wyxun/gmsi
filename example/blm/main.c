@@ -11,6 +11,12 @@
 #include "gblinfo.h"
 #include <perf_counter.h>
 
+#if defined(AT32F407xx)
+#   include "cmsis/at32f407xx.h"
+#elif defined(STM32G431xx)
+#   include "cmsis/stm32g431xx.h"
+#endif
+
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
 #   pragma diag_suppress 550, 546, 111
 #endif
@@ -77,12 +83,12 @@ PERFC_PT_BEGIN(this.chState)
 
     do {
         /* LED ON - Toggle LED or visual indicator */
-        /* blm_port_LedSet(1); */
+        blm_port_LedSet(1); 
         
     PERFC_PT_DELAY_MS(500);
         
         /* LED OFF */
-        /* blm_port_LedSet(0); */
+        blm_port_LedSet(0);
         
     PERFC_PT_DELAY_MS(500);
         
@@ -101,6 +107,8 @@ PERFC_PT_END()
 static void System_Init(void)
 {
     /* SystemInit() is typically called by startup code */
+    /* Ensure VTOR points to Flash */
+    SCB->VTOR = FLASH_BASE;
     
     /* Initialize perf_counter with SysTick */
     perfc_init(false);  /* We manage SysTick ourselves */
@@ -152,7 +160,6 @@ int main(void)
     
     /* Initialize GMSI framework */
     gmsi_Init(&s_tGmsi);
-    
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
     
@@ -171,15 +178,13 @@ int main(void)
 /*============================ INTERRUPTS ====================================*/
 
 /**
- * @brief SysTick interrupt handler
+ * @brief SysTick interrupt handler (1ms)
  * 
- * Called by startup code, updates perf_counter and GMSI clock
+ * perf_counter overflow is handled by systick_wrapper_gcc.S automatically.
+ * This handler only needs to call application-level tick functions.
  */
 void SysTick_Handler(void)
 {
-    /* perf_counter overflow handler */
-    perfc_port_insert_to_system_timer_insert_ovf_handler();
-    
-    /* GMSI clock tick */
+    /* GMSI clock tick (1ms) */
     gmsi_Clock();
 }
