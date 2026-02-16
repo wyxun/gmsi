@@ -37,8 +37,8 @@ typedef struct {
 
 /*============================ GLOBAL VARIABLES ==============================*/
 
-/* Receive Buffer */
-#define BLM_RX_BUFFER_SIZE  2048
+/* Receive Buffer - reduced for size optimization */
+#define BLM_RX_BUFFER_SIZE  512
 static uint8_t s_achBlmRxBuffer[BLM_RX_BUFFER_SIZE];
 
 /* LED blink control block */

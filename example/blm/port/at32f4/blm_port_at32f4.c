@@ -32,7 +32,7 @@
 #define BLM_BTN_PIN         0
 #endif
 
-#define BLM_RX_BUF_SIZE         4096
+#define BLM_RX_BUF_SIZE         512  /* Reduced from 4096 for size optimization */
 
 #define CRM_CFG_PLLMULT_H   (1UL << 29)
 #define CRM_CFG_AHBPSC_Pos  4
@@ -47,7 +47,7 @@
 uint32_t SystemCoreClock = BLM_SYSCLK;
 #include "utilities/util_queue.h"
 static util_queue_t s_tRxQueue;
-static uint8_t s_achRxBuf[2048];
+static uint8_t s_achRxBuf[512];  /* Reduced from 2048 for size optimization */
 
 static void gpio_set_mode_cnf(GPIO_TypeDef *pGPIO, uint8_t chPin, uint8_t chModeCnf)
 {

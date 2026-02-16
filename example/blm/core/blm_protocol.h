@@ -16,15 +16,15 @@
 
 /* Ymodem Control Characters */
 #define YMODEM_SOH      0x01    // 128 byte data packet
-#define YMODEM_STX      0x02    // 1024 byte data packet (not used for 8KB limit)
+#define YMODEM_STX      0x02    // 1024 byte data packet (NOT SUPPORTED - size optimization)
 #define YMODEM_EOT      0x04    // End of transmission
 #define YMODEM_ACK      0x06    // Acknowledge
 #define YMODEM_NAK      0x15    // Negative acknowledge
 #define YMODEM_CAN      0x18    // Cancel transfer
 #define YMODEM_C        0x43    // 'C' - CRC mode request
 
-#define YMODEM_DATA_SIZE    1024    /* Max data size (STX) */
-#define YMODEM_FRAME_SIZE   1029    /* SOH/STX + SEQ + ~SEQ + DATA[1024] + CRC[2] */
+#define YMODEM_DATA_SIZE    128     /* Only SOH packets (128 bytes) */
+#define YMODEM_FRAME_SIZE   133     /* SOH + SEQ + ~SEQ + DATA[128] + CRC[2] */
 
 /*============================ TYPES =========================================*/
 
@@ -54,7 +54,7 @@ typedef struct {
     uint32_t wFileSize;
     uint32_t wReceivedSize;
     uint8_t chExpectedSeq;
-    uint8_t achFileName[64];
+    uint8_t achFileName[32];  /* Reduced from 64 for size optimization */
     
     /* Frame receive state */
     uint8_t achFrame[YMODEM_FRAME_SIZE];

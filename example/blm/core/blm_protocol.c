@@ -137,22 +137,20 @@ PERFC_PT_WAIT_UNTIL(
     }
 
     /* Check header byte */
-    if (this.achFrame[0] == YMODEM_SOH || this.achFrame[0] == YMODEM_STX) {
-        /* SOH: 128 byte data; STX: 1024 byte data */
-        {
-            uint16_t hwDataLen = (this.achFrame[0] == YMODEM_STX) ? 1024 : 128;
-            uint16_t hwFrameLen = hwDataLen + 5; /* Header + SEQ + ~SEQ + DATA + CRC */
-            
-            /* Use blocking read for remaining bytes */
-            this.lRecvStartMs = get_system_ms();
-            
-            wRet = blm_port_UartRecv(&this.achFrame[1], hwFrameLen - 1, BLM_PACKET_TIMEOUT_MS);
+    if (this.achFrame[0] == YMODEM_SOH) {
+        /* SOH: 128 byte data only (STX not supported for size optimization) */
+        uint16_t hwDataLen = 128;
+        uint16_t hwFrameLen = 133; /* SOH + SEQ + ~SEQ + DATA[128] + CRC[2] */
 
-            if (wRet < (hwFrameLen - 2)) {
-                /* Allow CRC (len-1) or Checksum (len-2) */
-                this.tResult = PROTO_TIMEOUT;
-                goto label_exit;
-            }
+        /* Use blocking read for remaining bytes */
+        this.lRecvStartMs = get_system_ms();
+
+        wRet = blm_port_UartRecv(&this.achFrame[1], hwFrameLen - 1, BLM_PACKET_TIMEOUT_MS);
+
+        if (wRet < (hwFrameLen - 2)) {
+            /* Allow CRC (len-1) or Checksum (len-2) */
+            this.tResult = PROTO_TIMEOUT;
+            goto label_exit;
         }
     } else if (this.achFrame[0] == YMODEM_EOT) {
         this.tResult = PROTO_EOT;
@@ -187,10 +185,10 @@ PERFC_PT_WAIT_UNTIL(
     
     /* Verify CRC */
     {
-        uint16_t hwDataLen = (this.achFrame[0] == YMODEM_STX) ? 1024 : 128;
+        uint16_t hwDataLen = 128;  /* Only SOH packets */
         uint16_t hwCrcCalc = blm_protocol_Crc16(&this.achFrame[3], hwDataLen);
         uint16_t hwCrcReceived = ((uint16_t)this.achFrame[hwDataLen + 3] << 8) | this.achFrame[hwDataLen + 4];
-        
+
         if (hwCrcCalc != hwCrcReceived) {
             /* If CRC failed, try Checksum (for compatibility if wRet was len-2) */
             uint8_t chSum = 0;
@@ -200,7 +198,7 @@ PERFC_PT_WAIT_UNTIL(
                 goto label_exit;
             }
         }
-        
+
         /* Copy data and update sequence */
         memcpy(pchData, &this.achFrame[3], hwDataLen);
         *phwLen = hwDataLen;
