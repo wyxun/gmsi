@@ -10,6 +10,7 @@
 /*============================ INCLUDES ======================================*/
 #include <stdint.h>
 #include <perf_counter.h>
+#include "../userconfig.h"
 
 /*============================ MACROS ========================================*/
 
@@ -22,8 +23,8 @@
 #define YMODEM_CAN      0x18    // Cancel transfer
 #define YMODEM_C        0x43    // 'C' - CRC mode request
 
-#define YMODEM_DATA_SIZE    128
-#define YMODEM_FRAME_SIZE   133     // SOH + SEQ + ~SEQ + DATA[128] + CRC[2]
+#define YMODEM_DATA_SIZE    1024    /* Max data size (STX) */
+#define YMODEM_FRAME_SIZE   1029    /* SOH/STX + SEQ + ~SEQ + DATA[1024] + CRC[2] */
 
 /*============================ TYPES =========================================*/
 
@@ -58,6 +59,9 @@ typedef struct {
     /* Frame receive state */
     uint8_t achFrame[YMODEM_FRAME_SIZE];
     uint16_t hwFrameIdx;
+    
+    /* Receive timeout tracking */
+    int64_t lRecvStartMs;
     
     /* Result of last receive */
     blm_proto_result_t tResult;

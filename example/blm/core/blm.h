@@ -64,7 +64,7 @@ typedef struct {
     uint32_t wFileSize;
     uint32_t wStartTime;
     uint8_t chPacketNum;
-    uint8_t chRetryCount;
+    uint16_t chRetryCount;
 } blm_cb_t;
 
 /* Alias for GMSI_DECLARE_OBJECT macro compatibility */

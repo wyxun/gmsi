@@ -4,14 +4,14 @@
 
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 16K
-    SHARED (rw)     : ORIGIN = 0x08004000, LENGTH = 1K
+    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 30K
+    SHARED (rw)     : ORIGIN = 0x08007800, LENGTH = 2K
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 96K
 }
 
 ENTRY(Reset_Handler)
 
-_Min_Stack_Size = 0x400;
+_Min_Stack_Size = 0x2000;
 
 SECTIONS
 {
@@ -126,8 +126,9 @@ SECTIONS
         . = ALIGN(8);
         . = . + _Min_Stack_Size;
         . = ALIGN(8);
-        _estack = .;
     } >RAM
+
+    _estack = ORIGIN(RAM) + LENGTH(RAM);
 
     /DISCARD/ :
     {

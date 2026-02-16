@@ -1,21 +1,13 @@
 /**
  * @file blm_port_at32f4.c
- * @brief BLM Port Implementation for AT32F407 Series
- *
- * Uses direct register access for UART, Flash, and GPIO operations.
- * Based on AT32F403A/407 Reference Manual.
- *
- * Key differences from STM32G4:
- *   - USART uses STS/DT registers (STM32F1-style SR/DR)
- *   - Flash uses half-word (16-bit) programming
- *   - GPIO uses CRL/CRH configuration model
- *   - GPIO/USART clocks on APB2 bus
+ * @brief BLM Port Implementation for AT32F407 Series (HEXT 8MHz version)
  */
 
-/*============================ INCLUDES ======================================*/
 #include "../blm_port.h"
 #include "../../cmsis/at32f407xx.h"
+#include "../userconfig.h"
 #include <perf_counter.h>
+#include <string.h>
 
 /*============================ MACROS ========================================*/
 
@@ -28,7 +20,7 @@
 #define BLM_USART_RCC_EN()  CRM->APB2EN |= CRM_APB2EN_USART1EN
 #endif
 
-/* LED pin (optional) - default PD13 */
+/* LED pin - default PD13 */
 #ifndef BLM_LED_GPIO
 #define BLM_LED_GPIO        GPIOD
 #define BLM_LED_PIN         13
@@ -40,26 +32,23 @@
 #define BLM_BTN_PIN         0
 #endif
 
-/* System clock - default 8MHz (HICK) */
-#ifndef BLM_SYSCLK
-#define BLM_SYSCLK          8000000UL
-#endif
+#define BLM_RX_BUF_SIZE         4096
+
+#define CRM_CFG_PLLMULT_H   (1UL << 29)
+#define CRM_CFG_AHBPSC_Pos  4
+#define CRM_CFG_AHBPSC_Msk  (0x0FUL << CRM_CFG_AHBPSC_Pos)
+#define CRM_CFG_APB1PSC_Pos 8
+#define CRM_CFG_APB1PSC_Msk (0x07UL << CRM_CFG_APB1PSC_Pos)
+#define CRM_CFG_APB2PSC_Pos 11
+#define CRM_CFG_APB2PSC_Msk (0x07UL << CRM_CFG_APB2PSC_Pos)
 
 /*============================ IMPLEMENTATION ================================*/
 
-/* Define SystemCoreClock variable (used by perf_counter) */
 uint32_t SystemCoreClock = BLM_SYSCLK;
+#include "utilities/util_queue.h"
+static util_queue_t s_tRxQueue;
+static uint8_t s_achRxBuf[2048];
 
-/*----------------------------------------------------------------------------*
- * GPIO Configuration (AT32F407 CRL/CRH model)
- *----------------------------------------------------------------------------*/
-
-/**
- * @brief Configure GPIO pin mode and configuration
- * @param pGPIO GPIO port
- * @param chPin Pin number (0-15)
- * @param chModeCnf Combined MODE[1:0] | CNF[3:2] value (4 bits per pin)
- */
 static void gpio_set_mode_cnf(GPIO_TypeDef *pGPIO, uint8_t chPin, uint8_t chModeCnf)
 {
     if (chPin < 8) {
@@ -73,10 +62,6 @@ static void gpio_set_mode_cnf(GPIO_TypeDef *pGPIO, uint8_t chPin, uint8_t chMode
     }
 }
 
-/*----------------------------------------------------------------------------*
- * System Functions
- *----------------------------------------------------------------------------*/
-
 uint32_t blm_port_GetTickMs(void)
 {
     return (uint32_t)get_system_ms();
@@ -84,108 +69,113 @@ uint32_t blm_port_GetTickMs(void)
 
 void blm_port_DelayMs(uint32_t wMs)
 {
-    int64_t lStart = get_system_ms();
-    while ((get_system_ms() - lStart) < (int64_t)wMs) {
-        /* Wait */
-    }
+    perfc_delay_ms(wMs);
 }
 
 void blm_port_SystemReset(void)
 {
-    __DSB();
     SCB->AIRCR = SCB_AIRCR_VECTKEY | SCB_AIRCR_SYSRESETREQ;
-    __DSB();
-    while (1) {
-        __NOP();
-    }
+    while (1);
 }
 
-void blm_port_JumpToApp(uint32_t wAppAddr)
+static void SystemClock_Config(void)
 {
-    typedef void (*pFunction)(void);
+    /* Ensure HICK is on and switch to it first */
+    CRM->CTRL |= CRM_CTRL_HICKEN;
+    while (!(CRM->CTRL & CRM_CTRL_HICKSTBL));
+    
+    /* Switch to HICK */
+    CRM->CFG &= ~0x03UL;
+    
+    /* Turn off PLL and HEXT to allow configuration */
+    CRM->CTRL &= ~(CRM_CTRL_PLLEN | CRM_CTRL_HEXTEN);
+    
+    /* Enable HEXT (8MHz crystal) */
+    CRM->CTRL |= CRM_CTRL_HEXTEN;
+    while (!(CRM->CTRL & CRM_CTRL_HEXTSTBL));
 
-    uint32_t wStackPtr = *(volatile uint32_t *)wAppAddr;
-    uint32_t wResetHandler = *(volatile uint32_t *)(wAppAddr + 4);
+    /* Config Flash Latency = 3 for 120MHz */
+    FLASH_REG->PSR &= ~0x07UL;
+    FLASH_REG->PSR |= 0x03UL;
 
-    __disable_irq();
+    /* Config PLL: SOURCE=HEXT(8MHz), MULT=15 (8*15=120MHz) */
+    /* MULT[3:0] = (15-2) & 0xF = 13 (0x0D) */
+    /* MULT[4]   = 0 */
+    CRM->CFG &= ~((0x0FUL << 18) | (1UL << 17) | (1UL << 16) | CRM_CFG_PLLMULT_H);
+    CRM->CFG |= (1UL << 16);               /* Source = HEXT */
+    CRM->CFG |= (0x0DUL << 18);            /* MULT[3:0] = 0x0D */
+    /* CRM_CFG_PLLMULT_H is left 0 */
+    /* PLLHSCFG (bit 17) is left 0 (HEXT directly) */
+    
+    CRM->CTRL |= CRM_CTRL_PLLEN;
+    while (!(CRM->CTRL & CRM_CTRL_PLLSTBL));
+    
+    /* Config APB1 = 60MHz, APB2 = 120MHz, AHB = 120MHz */
+    CRM->CFG &= ~(CRM_CFG_APB1PSC_Msk | CRM_CFG_APB2PSC_Msk);
+    CRM->CFG |= (0x04UL << CRM_CFG_APB1PSC_Pos); /* APB1 = DIV2 */
 
-    SCB->VTOR = wAppAddr;
-
-    __set_MSP(wStackPtr);
-
-    pFunction JumpToApplication = (pFunction)wResetHandler;
-    JumpToApplication();
+    /* Select PLL as system clock */
+    CRM->CFG &= ~0x03UL;
+    CRM->CFG |= 0x02UL;
+    while ((CRM->CFG & 0x0CUL) != 0x08UL);
 }
-
-int blm_port_IsUpgradeButtonPressed(void)
-{
-    /* Enable GPIOA clock */
-    CRM->APB2EN |= CRM_APB2EN_GPIOAEN;
-
-    /* Configure button pin as input with pull-up */
-    gpio_set_mode_cnf(BLM_BTN_GPIO, BLM_BTN_PIN,
-                      GPIO_MODE_INPUT | GPIO_CNF_PULL);
-
-    /* Enable pull-up via ODR */
-    BLM_BTN_GPIO->ODT |= (1UL << BLM_BTN_PIN);
-
-    /* Button pressed when low (active low) */
-    return (BLM_BTN_GPIO->IDT & (1UL << BLM_BTN_PIN)) == 0;
-}
-
-/*----------------------------------------------------------------------------*
- * UART Functions (AT32F407 STS/DT model)
- *----------------------------------------------------------------------------*/
 
 int blm_port_UartInit(uint32_t wBaudrate)
 {
-    /* Enable GPIO clock */
-    CRM->APB2EN |= CRM_APB2EN_GPIOAEN;
+    SystemClock_Config();
+    SystemCoreClock = BLM_SYSCLK;
 
-    /* Enable USART clock */
+    queue_init(&s_tRxQueue, s_achRxBuf, sizeof(s_achRxBuf));
+
+    CRM->APB2EN |= CRM_APB2EN_GPIOAEN | CRM_APB2EN_IOMUXEN;
     BLM_USART_RCC_EN();
 
-    /* Configure TX pin: AF push-pull, 50MHz */
+    /* TX: AF push-pull, 10MHz */
     gpio_set_mode_cnf(BLM_USART_GPIO, BLM_USART_TX_PIN,
-                      GPIO_MODE_OUT_50M | GPIO_CNF_AF_PP);
+                      GPIO_MODE_OUT_10M | GPIO_CNF_AF_PP);
 
-    /* Configure RX pin: input with pull-up */
+    /* RX: input with pull-up */
     gpio_set_mode_cnf(BLM_USART_GPIO, BLM_USART_RX_PIN,
                       GPIO_MODE_INPUT | GPIO_CNF_PULL);
-    /* Enable pull-up via ODR */
     BLM_USART_GPIO->ODT |= (1UL << BLM_USART_RX_PIN);
 
-    /* Disable USART before configuration */
     BLM_USART->CTRL1 = 0;
-
-    /* Set baud rate: BAUDR = fCK / baud */
-    BLM_USART->BAUDR = BLM_SYSCLK / wBaudrate;
-
-    /* Configure: 8N1, no parity */
-    BLM_USART->CTRL2 = USART_CTRL2_STOPBN_1;   /* 1 stop bit */
+    BLM_USART->BAUDR = (SystemCoreClock) / wBaudrate;
+    BLM_USART->CTRL2 = USART_CTRL2_STOPBN_1; /* 1 Stop Bit */
     BLM_USART->CTRL3 = 0;
 
-    /* Enable USART, TX, RX */
-    BLM_USART->CTRL1 = USART_CTRL1_UEN | USART_CTRL1_TEN | USART_CTRL1_REN;
+    BLM_USART->CTRL1 = USART_CTRL1_UEN | USART_CTRL1_TEN | USART_CTRL1_REN | USART_CTRL1_RDBFIEN;
+
+    /* NVIC settings */
+    NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_SetPriority(USART1_IRQn, 0);
 
     return 0;
+}
+
+void USART1_IRQHandler(void)
+{
+    uint32_t wStatus = BLM_USART->STS;
+    if (wStatus & USART_STS_RDBF) {
+        uint8_t chByte = (uint8_t)BLM_USART->DT;
+        if (!queue_isFull(&s_tRxQueue)) {
+            queue_write(&s_tRxQueue, chByte);
+        }
+    }
+    if (wStatus & (USART_STS_ROERR | USART_STS_FERR | USART_STS_NERR)) {
+        volatile uint32_t tmpreg = BLM_USART->STS;
+        tmpreg = BLM_USART->DT;
+        (void)tmpreg;
+    }
 }
 
 int blm_port_UartSend(const uint8_t *pchData, uint16_t hwLen)
 {
     for (uint16_t i = 0; i < hwLen; i++) {
-        /* Wait until TDBE (TX buffer empty) */
-        while (!(BLM_USART->STS & USART_STS_TDBE)) {
-            /* Wait */
-        }
+        while (!(BLM_USART->STS & USART_STS_TDBE));
         BLM_USART->DT = pchData[i];
     }
-
-    /* Wait for transmission complete */
-    while (!(BLM_USART->STS & USART_STS_TDC)) {
-        /* Wait */
-    }
-
+    while (!(BLM_USART->STS & USART_STS_TDC));
     return hwLen;
 }
 
@@ -194,199 +184,107 @@ int blm_port_UartRecv(uint8_t *pchData, uint16_t hwLen, uint32_t wTimeoutMs)
     int64_t lStart = get_system_ms();
     uint16_t hwReceived = 0;
 
+    /* Force clear hardware status to recover from early errors */
+    if (BLM_USART->STS & (USART_STS_ROERR | USART_STS_FERR | USART_STS_NERR)) {
+        volatile uint32_t tmp = BLM_USART->STS;
+        tmp = BLM_USART->DT;
+        (void)tmp;
+    }
+    
     while (hwReceived < hwLen) {
-        if ((get_system_ms() - lStart) >= (int64_t)wTimeoutMs) {
-            break;
+        if ((get_system_ms() - lStart) >= (int64_t)wTimeoutMs) break;
+        
+        uint32_t wStatus = BLM_USART->STS;
+        if (wStatus & (USART_STS_ROERR | USART_STS_FERR | USART_STS_NERR)) {
+            volatile uint8_t ch = (uint8_t)BLM_USART->DT; (void)ch;
         }
 
-        /* Check for errors and clear them (read STS then DT) */
-        if (BLM_USART->STS & (USART_STS_ROERR | USART_STS_FERR | USART_STS_NERR)) {
-            (void)BLM_USART->STS;
-            (void)BLM_USART->DT;
+        uint8_t chByte;
+        /* ISR Queue Read */
+        if (queue_read(&s_tRxQueue, &chByte) == QUEUE_OK) {
+            pchData[hwReceived++] = chByte;
+            lStart = get_system_ms();
+            continue;
         }
-
-        /* Check if data available */
-        if (BLM_USART->STS & USART_STS_RDBF) {
-            pchData[hwReceived++] = (uint8_t)BLM_USART->DT;
+        
+        /* Polling Fallback: Check hardware directly in case ISR is not firing */
+        if (wStatus & USART_STS_RDBF) {
+            chByte = (uint8_t)BLM_USART->DT;
+            pchData[hwReceived++] = chByte;
             lStart = get_system_ms();
         }
     }
-
     return hwReceived;
 }
 
-int blm_port_UartAvailable(void)
-{
-    return (BLM_USART->STS & USART_STS_RDBF) ? 1 : 0;
-}
+int blm_port_UartAvailable(void) { return !queue_isEmpty(&s_tRxQueue); }
 
 void blm_port_UartFlush(void)
 {
-    /* Clear by reading STS then DT */
-    (void)BLM_USART->STS;
-    (void)BLM_USART->DT;
+    __disable_irq();
+    s_tRxQueue.addr_rd = s_tRxQueue.addr_wr;
+    __enable_irq();
 }
 
-/*----------------------------------------------------------------------------*
- * Flash Functions (AT32F407 half-word programming)
- *----------------------------------------------------------------------------*/
-
-static int flash_wait_done(uint32_t wTimeoutMs)
+int blm_port_IsUpgradeButtonPressed(void)
 {
-    int64_t lStart = get_system_ms();
-
-    while (FLASH_REG->STS & FLASH_STS_OBF) {
-        if ((get_system_ms() - lStart) >= (int64_t)wTimeoutMs) {
-            return -1;
-        }
-    }
-
-    return 0;
+    CRM->APB2EN |= CRM_APB2EN_GPIOAEN;
+    gpio_set_mode_cnf(BLM_BTN_GPIO, BLM_BTN_PIN, GPIO_MODE_INPUT | GPIO_CNF_PULL);
+    BLM_BTN_GPIO->ODT |= (1UL << BLM_BTN_PIN);
+    return (BLM_BTN_GPIO->IDT & (1UL << BLM_BTN_PIN)) == 0;
 }
 
-static void flash_clear_errors(void)
+void blm_port_JumpToApp(uint32_t wAppAddr)
 {
-    /* Write 1 to clear error flags */
-    FLASH_REG->STS = FLASH_STS_PRGMERR | FLASH_STS_EPPERR | FLASH_STS_ODF;
+    typedef void (*pFunction)(void);
+    uint32_t wStackPtr = *(volatile uint32_t *)wAppAddr;
+    uint32_t wResetHandler = *(volatile uint32_t *)(wAppAddr + 4);
+    __disable_irq();
+    SCB->VTOR = wAppAddr;
+    __set_MSP(wStackPtr);
+    ((pFunction)wResetHandler)();
 }
 
-int blm_port_FlashInit(void)
-{
-    flash_clear_errors();
-    return 0;
-}
-
-int blm_port_FlashUnlock(void)
-{
+int blm_port_FlashInit(void) { FLASH_REG->STS = 0x34; return 0; }
+int blm_port_FlashUnlock(void) {
     if (FLASH_REG->CTRL & FLASH_CTRL_OPLK) {
-        FLASH_REG->UNLOCK = FLASH_KEY1;
-        FLASH_REG->UNLOCK = FLASH_KEY2;
+        FLASH_REG->UNLOCK = FLASH_KEY1; FLASH_REG->UNLOCK = FLASH_KEY2;
     }
-
-    flash_clear_errors();
-
     return (FLASH_REG->CTRL & FLASH_CTRL_OPLK) ? -1 : 0;
 }
-
-int blm_port_FlashLock(void)
-{
-    FLASH_REG->CTRL |= FLASH_CTRL_OPLK;
-    return 0;
-}
-
-int blm_port_FlashErase(uint32_t wAddr, uint32_t wLen)
-{
-    uint32_t wEndAddr = wAddr + wLen;
-
-    /* Erase page by page */
-    for (uint32_t wPageAddr = wAddr; wPageAddr < wEndAddr; wPageAddr += FLASH_PAGE_SIZE) {
-        if (flash_wait_done(1000) != 0) {
-            return -1;
-        }
-
-        flash_clear_errors();
-
-        /* Set sector erase mode */
+int blm_port_FlashLock(void) { FLASH_REG->CTRL |= FLASH_CTRL_OPLK; return 0; }
+int blm_port_FlashErase(uint32_t wAddr, uint32_t wLen) {
+    uint32_t wEnd = wAddr + wLen;
+    for (uint32_t wP = wAddr; wP < wEnd; wP += FLASH_PAGE_SIZE) {
+        while (FLASH_REG->STS & FLASH_STS_OBF);
         FLASH_REG->CTRL |= FLASH_CTRL_SECERS;
-
-        /* Set page address */
-        FLASH_REG->ADDR = wPageAddr;
-
-        /* Start erase */
+        FLASH_REG->ADDR = wP;
         FLASH_REG->CTRL |= FLASH_CTRL_ERSTR;
-
-        /* Wait for completion */
-        if (flash_wait_done(1000) != 0) {
-            return -1;
-        }
-
-        /* Clear sector erase bit */
+        while (FLASH_REG->STS & FLASH_STS_OBF);
         FLASH_REG->CTRL &= ~FLASH_CTRL_SECERS;
     }
-
     return 0;
 }
-
-int blm_port_FlashWrite(uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
-{
-    /* AT32F407 uses half-word (16-bit) programming */
-    uint32_t wWriteAddr = wAddr;
-    uint32_t wIdx = 0;
-
-    while (wIdx < wLen) {
-        if (flash_wait_done(100) != 0) {
-            return -1;
-        }
-
-        flash_clear_errors();
-
-        /* Enable programming */
+int blm_port_FlashWrite(uint32_t wAddr, const uint8_t *pchData, uint32_t wLen) {
+    uint32_t wW = wAddr; uint32_t wI = 0;
+    while (wI < wLen) {
+        while (FLASH_REG->STS & FLASH_STS_OBF);
         FLASH_REG->CTRL |= FLASH_CTRL_FPRGM;
-
-        /* Prepare half-word (little-endian: low byte first) */
-        uint16_t hwData;
-        hwData = pchData[wIdx++];
-        if (wIdx < wLen) {
-            hwData |= (uint16_t)pchData[wIdx++] << 8;
-        } else {
-            hwData |= 0xFF00;  /* Pad with 0xFF for odd length */
-        }
-
-        /* Write half-word */
-        *(volatile uint16_t *)wWriteAddr = hwData;
-
-        /* Wait for completion */
-        if (flash_wait_done(100) != 0) {
-            return -1;
-        }
-
-        /* Check for errors */
-        if (FLASH_REG->STS & (FLASH_STS_PRGMERR | FLASH_STS_EPPERR)) {
-            return -1;
-        }
-
-        /* Clear programming bit */
+        uint16_t hw = pchData[wI++];
+        if (wI < wLen) hw |= (uint16_t)pchData[wI++] << 8; else hw |= 0xFF00;
+        *(volatile uint16_t *)wW = hw;
+        while (FLASH_REG->STS & FLASH_STS_OBF);
         FLASH_REG->CTRL &= ~FLASH_CTRL_FPRGM;
-
-        wWriteAddr += 2;
+        wW += 2;
     }
-
     return wLen;
 }
-
-int blm_port_FlashRead(uint32_t wAddr, uint8_t *pchData, uint32_t wLen)
-{
-    const uint8_t *pchSrc = (const uint8_t *)wAddr;
-
-    for (uint32_t i = 0; i < wLen; i++) {
-        pchData[i] = pchSrc[i];
-    }
-
-    return wLen;
+int blm_port_FlashRead(uint32_t wAddr, uint8_t *pchData, uint32_t wLen) {
+    memcpy(pchData, (void*)wAddr, wLen); return wLen;
 }
-
-uint32_t blm_port_FlashGetPageSize(uint32_t wAddr)
-{
-    (void)wAddr;
-    return FLASH_PAGE_SIZE;
-}
-
-/*----------------------------------------------------------------------------*
- * LED Functions (optional)
- *----------------------------------------------------------------------------*/
-
-void blm_port_LedSet(int nState)
-{
-    /* Enable GPIOD clock */
+uint32_t blm_port_FlashGetPageSize(uint32_t wAddr) { return FLASH_PAGE_SIZE; }
+void blm_port_LedSet(int n) {
     CRM->APB2EN |= CRM_APB2EN_GPIODEN;
-
-    /* Configure LED pin as output push-pull, 2MHz */
-    gpio_set_mode_cnf(BLM_LED_GPIO, BLM_LED_PIN,
-                      GPIO_MODE_OUT_2M | GPIO_CNF_GP_PP);
-
-    if (nState) {
-        BLM_LED_GPIO->SCR = (1UL << BLM_LED_PIN);  /* Set */
-    } else {
-        BLM_LED_GPIO->CLR = (1UL << BLM_LED_PIN);  /* Reset */
-    }
+    gpio_set_mode_cnf(BLM_LED_GPIO, BLM_LED_PIN, GPIO_MODE_OUT_2M | GPIO_CNF_GP_PP);
+    if (n) BLM_LED_GPIO->SCR = (1UL << BLM_LED_PIN); else BLM_LED_GPIO->CLR = (1UL << BLM_LED_PIN);
 }

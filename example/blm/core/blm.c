@@ -11,6 +11,11 @@
 #include "../port/blm_port.h"
 #include "../cmsis/cmsis_compiler.h"
 #include "gblinfo.h"
+#include "cmsis/at32f407xx.h"
+#include "utilities/util_debug.h"
+#ifndef LOG_OUT
+#define LOG_OUT(...)         TRACE_TOSTR(__VA_ARGS__)
+#endif
 #include <string.h>
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
@@ -22,6 +27,7 @@
 #define this    (*ptThis)
 
 /*============================ GLOBAL VARIABLES ==============================*/
+extern uint32_t SystemCoreClock;
 static gmsi_base_t s_tBlmBase;
 static blm_protocol_cb_t s_tProtocol;
 
@@ -116,18 +122,31 @@ PERFC_PT_BEGIN(this.chState)
         /* ============ STATE: IDLE ============ */
         if (blm_ShouldEnterUpgrade(ptThis)) {
             /* Enter upgrade mode */
+            LOG_OUT("BLM Bootloader Started\r\n");
+            LOG_OUT("Clock: ");
+            LOG_OUT((uint32_t)SystemCoreClock);
+            LOG_OUT("\r\nCRM CTRL: ");
+            LOG_OUT((uint32_t)CRM->CTRL);
+            LOG_OUT("\r\nCRM CFG: ");
+            LOG_OUT((uint32_t)CRM->CFG);
+            LOG_OUT("\r\n");
+            
             this.tMainState = BLM_STATE_WAIT_CONNECT;
             this.wStartTime = blm_port_GetTickMs();
             this.chRetryCount = 0;
+            label_start:
             blm_protocol_Init(&s_tProtocol, this.pchRxBuffer, this.hwRxBufferSize);
         } else if (blm_IsAppValid(ptThis)) {
             /* Jump to application */
+            LOG_OUT("ValidApp Jump\r\n");
             this.tMainState = BLM_STATE_JUMP_APP;
             goto label_jump_app;
         } else {
             /* No valid app, wait for upgrade */
+            LOG_OUT("NoApp Wait\r\n");
             this.tMainState = BLM_STATE_WAIT_CONNECT;
             this.wStartTime = blm_port_GetTickMs();
+            this.chRetryCount = 0;
             blm_protocol_Init(&s_tProtocol, this.pchRxBuffer, this.hwRxBufferSize);
         }
 
@@ -160,15 +179,19 @@ PERFC_PT_BEGIN(this.chState)
                     goto label_error;
                 } else {
                     /* Start receiving */
+                    LOG_OUT("A0\r\n");
                     blm_protocol_SendAck();
+                    
+                    /* Erase app region */
+                    LOG_OUT("Er...\r\n");
+                    blm_port_FlashUnlock();
+                    blm_port_FlashErase(this.wAppAddr, s_tProtocol.wFileSize);
+                    LOG_OUT("ED\r\n");
                     
                 PERFC_PT_DELAY_MS(10);
                     
+                    LOG_OUT("C1\r\n");
                     blm_protocol_SendC();  /* Request first data packet */
-                    
-                    /* Erase app region */
-                    blm_port_FlashUnlock();
-                    blm_port_FlashErase(this.wAppAddr, s_tProtocol.wFileSize);
                     
                     this.wReceivedSize = 0;
                     this.wFileSize = s_tProtocol.wFileSize;
@@ -178,17 +201,15 @@ PERFC_PT_BEGIN(this.chState)
                 }
             } else if (s_tProtocol.tResult == PROTO_TIMEOUT) {
                 this.chRetryCount++;
+                LOG_OUT("C");
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
-                    if (blm_IsAppValid(ptThis)) {
-                        this.tMainState = BLM_STATE_JUMP_APP;
-                        goto label_jump_app;
-                    } else {
-                        this.tMainState = BLM_STATE_ERROR;
-                        goto label_error;
-                    }
+                    /* If no connection, stay in bootloader for debug */
+                    this.chRetryCount = 0; 
+                    LOG_OUT("Retry Wrap\r\n");
+                    goto label_start;
                 }
-            PERFC_PT_DELAY_MS(500);
             } else if (s_tProtocol.tResult == PROTO_CANCEL) {
+                LOG_OUT("Cancel\r\n");
                 this.tMainState = BLM_STATE_IDLE;
                 break;
             } else {
@@ -212,77 +233,73 @@ PERFC_PT_BEGIN(this.chState)
             tResult = blm_protocol_ReceivePacket(&s_tProtocol, s_achRecvData, &s_hwRecvLen);
         )
             
-            switch (s_tProtocol.tResult) {
-                case PROTO_OK:
-                    /* Write data to flash */
-                    {
-                        uint32_t wWriteLen = s_hwRecvLen;
-                        if (this.wReceivedSize + wWriteLen > this.wFileSize) {
-                            wWriteLen = this.wFileSize - this.wReceivedSize;
-                        }
-                        if (wWriteLen > 0) {
-                            blm_port_FlashWrite(this.wAppAddr + this.wReceivedSize, 
-                                                s_achRecvData, wWriteLen);
-                            this.wReceivedSize += wWriteLen;
-                        }
+            if (s_tProtocol.tResult == PROTO_OK) {
+                /* Write data to flash */
+                {
+                    uint32_t wWriteLen = s_hwRecvLen;
+                    if (this.wReceivedSize + wWriteLen > this.wFileSize) {
+                        wWriteLen = this.wFileSize - this.wReceivedSize;
                     }
-                    blm_protocol_SendAck();
-                    this.chRetryCount = 0;
-                    break;
-                    
-                case PROTO_EOT:
-                    /* First EOT - NAK it */
-                    blm_protocol_SendNak();
-                    
-                    /* Wait for second EOT */
+                    if (wWriteLen > 0) {
+                        blm_port_FlashWrite(this.wAppAddr + this.wReceivedSize, 
+                                            s_achRecvData, wWriteLen);
+                        this.wReceivedSize += wWriteLen;
+                    }
+                }
+                blm_protocol_SendAck();
+                this.chRetryCount = 0;
+            } else if (s_tProtocol.tResult == PROTO_EOT) {
+                /* First EOT - NAK it */
+                blm_protocol_SendNak();
+                
+                /* Wait for second EOT - MUST reset PT state for next call */
+                s_tProtocol.chState = 0; 
                 PERFC_PT_WAIT_UNTIL(
                     (tResult == fsm_rt_cpl),
                     tResult = blm_protocol_ReceivePacket(&s_tProtocol, s_achRecvData, &s_hwRecvLen);
                 )
+                
+                if (s_tProtocol.tResult == PROTO_EOT) {
+                    blm_protocol_SendAck();
+                    blm_port_FlashLock();
                     
-                    if (s_tProtocol.tResult == PROTO_EOT) {
-                        blm_protocol_SendAck();
-                        blm_port_FlashLock();
-                        
                     PERFC_PT_DELAY_MS(10);
-                        
-                        /* Wait for empty packet 0 */
-                        blm_protocol_SendC();
-                        
+                    
+                    /* Send 'C' to request the EMPTY packet 0 that ends Ymodem */
+                    blm_protocol_SendC();
+                    
+                    s_tProtocol.chState = 0;
+                    s_tProtocol.chExpectedSeq = 0;
                     PERFC_PT_WAIT_UNTIL(
                         (tResult == fsm_rt_cpl),
                         tResult = blm_protocol_ReceivePacket(&s_tProtocol, s_achRecvData, &s_hwRecvLen);
                     )
-                        
-                        if (s_tProtocol.tResult == PROTO_OK) {
-                            blm_protocol_SendAck();
-                        }
-                        
-                        this.tMainState = BLM_STATE_VERIFY;
-                    }
-                    break;
                     
-                case PROTO_TIMEOUT:
-                case PROTO_CRC_ERROR:
-                case PROTO_SEQ_ERROR:
+                    if (s_tProtocol.tResult == PROTO_OK) {
+                        blm_protocol_SendAck();
+                    }
+                    
+                    this.tMainState = BLM_STATE_VERIFY;
+                }
+            } else if (s_tProtocol.tResult == PROTO_CANCEL) {
+                blm_port_FlashLock();
+                this.tMainState = BLM_STATE_IDLE;
+            } else {
+                /* TIMEOUT, CRC_ERROR, SEQ_ERROR */
+                if (s_tProtocol.chExpectedSeq == 1) {
+                    /* If error on first packet, retry 'C' to keep CRC mode */
+                    LOG_OUT("Err1->C\r\n");
+                    blm_protocol_SendC();
+                } else {
                     blm_protocol_SendNak();
-                    this.chRetryCount++;
-                    if (this.chRetryCount >= BLM_MAX_RETRY) {
-                        blm_protocol_SendCancel();
-                        blm_port_FlashLock();
-                        this.tMainState = BLM_STATE_ERROR;
-                    }
-                PERFC_PT_DELAY_MS(50);
-                    break;
-                    
-                case PROTO_CANCEL:
+                }
+                this.chRetryCount++;
+                if (this.chRetryCount >= BLM_MAX_RETRY) {
+                    blm_protocol_SendCancel();
                     blm_port_FlashLock();
-                    this.tMainState = BLM_STATE_IDLE;
-                    break;
-                    
-                default:
-                    blm_protocol_SendNak();
-                    break;
+                    this.tMainState = BLM_STATE_ERROR;
+                }
+                PERFC_PT_DELAY_MS(50);
             }
         } while (this.tMainState == BLM_STATE_RECEIVING);
 
@@ -307,12 +324,14 @@ PERFC_PT_BEGIN(this.chState)
 label_jump_app:
         /* ============ STATE: JUMP_APP ============ */
         if (this.tMainState == BLM_STATE_JUMP_APP) {
+            LOG_OUT("JumpApp\r\n");
             blm_JumpToApp(ptThis);
             /* Should not return */
         }
 
 label_error:
         /* ============ STATE: ERROR ============ */
+        LOG_OUT("ERR Reset\r\n");
         /* Stay in error, wait for reset */
     PERFC_PT_DELAY_MS(1000);
         

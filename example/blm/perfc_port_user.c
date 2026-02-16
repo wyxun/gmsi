@@ -15,6 +15,13 @@
 
 #define __IMPLEMENT_PERF_COUNTER
 #include "perf_counter.h"
+
+#if defined(AT32F407xx)
+#   include "cmsis/at32f407xx.h"
+#elif defined(STM32G431xx)
+#   include "cmsis/stm32g431xx.h"
+#endif
+
 #include "cmsis/core_cm4.h"
 
 #if defined(__IS_COMPILER_GCC__) || defined(__clang__)

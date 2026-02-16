@@ -5,6 +5,9 @@
 #ifndef __USERCONFIG_H__
 #define __USERCONFIG_H__
 
+/* System clock - set to 120MHz (8MHz HEXT * 15) */
+#define BLM_SYSCLK          120000000UL
+
 #include "gmsi.h"
 
 /* Module ID */
@@ -12,10 +15,10 @@
 
 /* Flash Layout */
 #define BLM_BOOTLOADER_ADDR     0x08000000
-#define BLM_BOOTLOADER_SIZE     0x4000      // 16KB
-#define BLM_SHARED_INFO_ADDR    GBLINFO_SHARED_ADDR
-#define BLM_SHARED_INFO_SIZE    GBLINFO_SHARED_SIZE
-#define BLM_APP_ADDR            0x08004400
+#define BLM_BOOTLOADER_SIZE     0x7800      // 30KB
+#define BLM_SHARED_INFO_ADDR    0x08007800
+#define BLM_SHARED_INFO_SIZE    0x0800      // 2KB
+#define BLM_APP_ADDR            0x08008000
 
 #if defined(AT32F407xx)
 #define BLM_APP_MAX_SIZE        0xFDC00     // ~1015KB (for 1MB flash)
@@ -24,12 +27,13 @@
 #endif
 
 /* UART Configuration */
+#ifndef BLM_UART_BAUDRATE
 #define BLM_UART_BAUDRATE       115200
-
+#endif
 /* Timing */
-#define BLM_WAIT_TIMEOUT_MS     3000        // Wait for connection
+#define BLM_WAIT_TIMEOUT_MS     5000        // Wait for connection
 #define BLM_PACKET_TIMEOUT_MS   1000        // Packet receive timeout
-#define BLM_MAX_RETRY           10          // Max retry count
+#define BLM_MAX_RETRY           1000        // Max retry count (very long for debug)
 
 /* Version */
 #define BLM_VERSION_MAJOR       1
@@ -37,7 +41,8 @@
 
 /* Protocol */
 #define BLM_PACKET_SIZE         128         // SOH packet size
-#define BLM_FRAME_SIZE          133         // SOH + SEQ + ~SEQ + DATA[128] + CRC[2]
+#define BLM_PACKET_1K_SIZE      1024        // STX packet size
+#define BLM_FRAME_SIZE          1029        // STX + SEQ + ~SEQ + DATA[1024] + CRC[2]
 
 /* Events */
 typedef enum {

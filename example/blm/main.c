@@ -38,7 +38,7 @@ typedef struct {
 /*============================ GLOBAL VARIABLES ==============================*/
 
 /* Receive Buffer */
-#define BLM_RX_BUFFER_SIZE  256
+#define BLM_RX_BUFFER_SIZE  2048
 static uint8_t s_achBlmRxBuffer[BLM_RX_BUFFER_SIZE];
 
 /* LED blink control block */
@@ -92,7 +92,7 @@ PERFC_PT_BEGIN(this.chState)
         blm_port_LedSet(0);
         
     PERFC_PT_DELAY_MS(500);
-        
+
     } while (1);
 
 PERFC_PT_END()
@@ -111,12 +111,13 @@ static void System_Init(void)
     /* Ensure VTOR points to Flash */
     SCB->VTOR = FLASH_BASE;
     
-    /* Initialize perf_counter with SysTick */
-    perfc_init(false);  /* We manage SysTick ourselves */
-    
-    /* Initialize Hardware */
+    /* Initialize Hardware first (targets 240MHz) */
     blm_port_UartInit(115200);
     blm_port_FlashInit();
+
+    /* Initialize perf_counter AFTER clock is stable at 240MHz */
+    SystemCoreClock = BLM_SYSCLK;
+    perfc_init(false);  /* We manage SysTick ourselves */
 }
 
 /*============================ GMSI CONFIG ===================================*/
@@ -168,6 +169,8 @@ int main(void)
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
     
+    __enable_irq();
+
     /* Main loop */
     while (1) {
         /* Run GMSI (includes BLM state machine) */

@@ -39,6 +39,7 @@ C_SOURCES = \
     $(GMSI_DIR)/glog.c \
     $(GMSI_DIR)/gstorage.c \
     $(GMSI_DIR)/utilities/list.c \
+    $(GMSI_DIR)/utilities/util_queue.c \
     $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
     $(LIB_DIR)/perf_counter/perf_counter.c
 

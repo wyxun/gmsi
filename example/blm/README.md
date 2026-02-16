@@ -1,272 +1,201 @@
 # BLM (Bootloader Manager)
 
-BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader 示例。它实现了通过 Ymodem 协议进行串口固件升级的功能，并且代码体积极小（< 16KB）。
+BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader。它实现了通过 **Ymodem** 协议进行串口固件升级的功能，代码体积极小（< 16KB）。
+
+> 💡 **开发者注意**：关于环境搭建、编译烧录、调试及芯片移植的详细指南，请移步 [开发与移植指南](doc/porting_guide.md)。
 
 ## 🔥 特性
 
-- **多芯片支持**: 目前支持 **STM32G431** 和 **AT32F407**。
 - **极简设计**: 核心代码量少，依赖清晰。
-- **高性能**: 集成 `perf_counter` 提供高精度计时与状态机调度。
-- **协议支持**: 标准 Ymodem 协议，支持常见的串口工具（SecureCRT, TeraTerm, Xshell）。
-- **共享机制**: 通过 `gblinfo` (Flash 固定区域) 与 APP 共享版本信息和升级标志。
-- **工具链友善**: 支持 LLVM Embedded Toolchain for Arm (Clang) 和 Arm GNU Toolchain (GCC)。
-- **调试友好**: 提供完整的 Makefile 调试目标和 GDB 脚本支持。
-- **资源占用**: Flash < 8KB (Release -Oz), RAM < 2KB.
+- **协议支持**: 标准 Ymodem 协议 (128字节包)，支持常见的串口工具 (SecureCRT, TeraTerm, Xshell 等)。
+- **安全可靠**: 包含 CRC16 校验，支持超时重传与错误处理。
+- **共享机制**: 通过 Flash 固定区域与 APP 共享版本信息和升级标志。
 
-## 📂 目录结构
+## � Flash 分区布局
 
 ```
-example/blm/
-├── core/               # 核心逻辑 (MCU无关)
-│   ├── blm.c           # 主状态机 (App 跳转/升级流程)
-│   └── blm_protocol.c  # Ymodem 协议解析
-├── port/               # 移植层 (MCU相关)
-│   ├── stm32g4/        # STM32G4 系列移植 (C文件, Linker, Startup)
-│   └── at32f4/         # AT32F4 系列移植
-├── cmsis/              # CMSIS 头文件 (重构版)
-│   ├── core_cm4.h      # Cortex-M4 通用内核定义
-│   ├── stm32g431xx.h   # STM32G431 外设定义
-│   └── at32f407xx.h    # AT32F407 外设定义
-├── main.c              # 入口函数
-├── makefile            # 多芯片支持编译脚本
-└── debug.gdb           # GDB 自动调试脚本
++-------------------+ 0x08000000
+|   Bootloader      |  16KB (0x4000)
++-------------------+ 0x08004000
+|   Shared Info     |  1KB  (gblinfo)
++-------------------+ 0x08004400
+|   Application     |  剩余空间
+|                   |
++-------------------+ Flash End
 ```
 
-## 🛠️ 环境搭建 (Environment Setup)
+| 区域 | 起始地址 | 大小 | 说明 |
+|:-----|:---------|:-----|:-----|
+| Bootloader | `0x08000000` | 16KB | BLM 固件 |
+| Shared Info | `0x08004000` | 1KB | 版本信息 / 升级标志 (gblinfo) |
+| Application | `0x08004400` | 视芯片而定 | 用户应用固件 |
 
-### 2. OpenOCD (ArteryTek 分支)
+> ⚠️ **APP 固件编译时，链接脚本的 FLASH 起始地址必须设为 `0x08004400`**，否则 Bootloader 无法正确跳转。
 
-由于 AT32F4 系列需要特定的 OpenOCD 支持，推荐编译安装 ArteryTek 官方分支。
+## 📖 固件升级教程
 
-**源码仓库**: [https://github.com/ArteryTek/openocd](https://github.com/ArteryTek/openocd)
+### 1. 进入 Bootloader 升级模式
 
-#### 编译步骤 (Linux / WSL2)
+Bootloader 启动后按以下优先级决定行为：
+
+```
+复位
+ ├─ 升级按键按下？ ──────── YES ──→ 进入升级模式
+ ├─ APP 设置了升级标志？ ── YES ──→ 进入升级模式（自动清除标志）
+ ├─ APP 区域有效？ ──────── YES ──→ 直接跳转 APP
+ └─ APP 区域无效 ─────────────────→ 进入升级模式（等待烧写）
+```
+
+**三种触发方式**：
+
+| 方式 | 操作 | 适用场景 |
+|:-----|:-----|:---------|
+| **按键触发** | 按住升级按键（默认 PA0，低电平触发），然后复位 | 手动升级、开发调试 |
+| **APP 请求** | APP 中设置 `ptShared->chUpgradeFlag = 1` 并执行 `NVIC_SystemReset()` | 远程 OTA、菜单触发 |
+| **无有效固件** | 首次烧写 Bootloader 后，APP 区域为空白 | 初始化烧写 |
+
+**进入升级模式的标志**：串口持续输出字符 **`C`**（约每 1.5 秒一次）。
+
+### 2. 准备固件文件
+
+- 固件必须是 **`.bin` 格式**（原始二进制），不是 `.hex` 或 `.elf`。
+- APP 链接脚本中 `FLASH` 起始地址必须设为 `0x08004400`。
+- 文件大小不得超过 `BLM_APP_MAX_SIZE`（STM32G431: ~247KB，AT32F407: ~1015KB）。
+
+**生成 .bin 文件示例**（以 LLVM 工具链为例）：
+```bash
+llvm-objcopy -O binary your_app.elf your_app.bin
+```
+
+### 3. 使用串口工具发送固件
+
+#### SecureCRT
+
+1. 连接串口：波特率 **115200**，8N1（8 数据位，无校验，1 停止位）。
+2. 等待终端持续显示 `C` 字符。
+3. 点击菜单 `Transfer` → `Send Ymodem...`，选择 `.bin` 文件。
+4. 等待进度条完成，Bootloader 自动校验并跳转。
+
+#### TeraTerm
+
+1. 连接串口，配置同上。
+2. `File` → `Transfer` → `YMODEM` → `Send...`，选择文件。
+
+#### Xshell
+
+1. 连接串口后，等待 `C` 字符出现。
+2. 在终端右键 → `传输` → `用 YMODEM 发送...`，选择文件。
+
+#### 命令行 (lrzsz)
 
 ```bash
-# 1. 安装依赖
-sudo apt update
-sudo apt install build-essential pkg-config autoconf automake libtool libusb-1.0-0-dev libgpiod-dev texinfo
+# 安装 lrzsz
+sudo apt install lrzsz
 
-# 2. 克隆仓库
-git clone https://github.com/ArteryTek/openocd.git
-cd openocd
-
-# 3. 生成配置
-./bootstrap
-
-# 4. 配置 (确保启用 cmsis-dap)
-./configure --enable-cmsis-dap
-
-# 5. 编译与安装
-make -j4
-sudo make install
+# 通过串口发送 (需要在看到 'C' 字符后执行)
+sb --ymodem your_app.bin > /dev/ttyUSB0 < /dev/ttyUSB0
 ```
 
-#### 💡 常见问题与处理 (Troubleshooting)
+### 4. 升级过程状态指示
 
-**问题 1: `configure: error: libusb-1.x is required`**
-- **原因**: 缺少 libusb 开发包。
-- **解决**: `sudo apt install libusb-1.0-0-dev`
+| 阶段 | 串口输出 | LED 状态 | 说明 |
+|:-----|:---------|:---------|:-----|
+| 等待连接 | 持续打印 `C` | 闪烁 (0.5s/0.5s) | 等待上位机发送固件 |
+| 接收数据 | (无输出) | 闪烁 | 正在接收并写入 Flash |
+| 校验成功 | (无输出) | - | 自动跳转 APP |
+| 超时 | | 闪烁 | 重试 10 次后进入错误状态 |
+| 错误 | | - | 等待复位后重试 |
 
-**问题 2: `Makefile: No such file or directory` (make 失败)**
-- **原因**: `./configure` 这一步出错或未执行。
-- **解决**: 检查 `./configure` 的输出，确保没有 Error。通常是缺少依赖工具 (如 `pkg-config` 或 `libtool`)。
+### 5. APP 端触发升级 (代码示例)
 
-**问题 3: WSL2 下 `Error: CMSIS-DAP command mismatch` / `unable to open CMSIS-DAP device`**
-- **原因**: WSL2 的 USBPassthrough (usbipd) 对 CMSIS-DAP v2 的 Bulk 接口支持不稳定，或者被 Windows 侧驱动占用。
-- **解决**:
-  1.  确保使用了 `usbipd attach --wsl --busid <X-X>` 挂载设备。
-  2.  **强制使用 HID 后端**: 在 OpenOCD 启动参数中添加 `-c "cmsis_dap_backend hid"`。本项目 Makefile 默认已包含此配置。
-
-**问题 4: `Error: dsp563xx.c: ... variable ‘move_cmd’ set but not used`**
-- **原因**: 某些新版 GCC/Clang 检查严格，导致将 Warning 视为 Error。
-- **解决**: 在 Configure 时禁用 Werror: `./configure --enable-cmsis-dap --disable-werror`
-
-### 3. 工具链 (Compiler)
-
-推荐使用 **LLVM Embedded Toolchain for Arm** (Clang) 或 **Arm GNU Toolchain** (GCC)。
-请确保编译器路径已添加到系统 PATH，或者修改 `makefile` 中的 `LLVM_PATH` 变量。
-
-### 2. OpenOCD & 调试器
-
-本项目使用 OpenOCD 连接 CMSIS-DAP 调试器。
-
-#### Windows / Linux (Native)
-直接安装 OpenOCD 即可。
-
-#### WSL2 (Windows Subsystem for Linux) ⚠️ 注意
-在 WSL2 中使用 USB 调试器需要特殊配置：
-
-1.  **安装 usbipd-win**: 在 Windows 主机安装 `usbipd-win` (>= 4.0.0)。
-2.  **连接设备**:
-    ```powershell
-    # Windows PowerShell (管理员)
-    usbipd list
-    usbipd bind --busid <BUSID>
-    usbipd attach --wsl --busid <BUSID>
-    ```
-3.  **配置 OpenOCD (HID Backend)**:
-    Linux 默认的 `libusb` 在 WSL2 下可能无法识别某些 CMSIS-DAP适配器的 Bulk 接口。**必须强制使用 HID 后端**。
-    
-    本项目 Makefile 已内置支持：
-    ```makefile
-    OPENOCD_CMD = openocd -f interface/cmsis-dap.cfg -c "cmsis_dap_backend hid" ...
-    ```
-
-## 🚀 编译与烧录 (Build & Flash)
-
-使用 `CHIP` 变量选择目标芯片。默认为 `stm32g4`。
-
-### 命令列表
-
-| 目标 (Target) | 命令 | 说明 |
-| :--- | :--- | :--- |
-| **STM32G431** | `make` / `make CHIP=stm32g4` | 编译 STM32G4 版 |
-| **AT32F407** | `make CHIP=at32f4` | 编译 AT32F4 版 |
-| **清理** | `make clean` | 清理编译产物 |
-| **烧录** | `make CHIP=... flash` | 编译并烧录到芯片 |
-| **检查大小** | `make CHIP=... check-size` | 检查是否超过 Flash 限制 |
-
-### 编译选项 (Build Options)
-
-Makefile 会根据目标自动调整优化等级：
-
-- **Release (默认)**: `make` ->使用 `-Oz` (最小体积优化)。
-- **Debug**: `make debug` -> 使用 `-O0` (无优化) + `-g` (调试符号)。
-
-## 🐛 调试指南 (Debugging)
-
-本项目提供了便捷的 GDB 调试工作流，无需 VSCode 插件也可轻松调试。
-(Debug 模式下代码体积会膨胀至 ~12KB，请确保 Flash 空间足够)
-
-### 方法：双终端调试 (Two-Terminal Workflow)
-
-**终端 1: 启动 OpenOCD Server**
-此命令会启动 OpenOCD 并监听 3333 端口。它会一直运行直到你手动结束 (Ctrl+C)。
-```bash
-make CHIP=at32f4 debug-server
-```
-
-**终端 2: 启动 GDB Client**
-此命令会自动连接到 localhost:3333，复位芯片，加载符号，并停在 `main` 函数。
-```bash
-make CHIP=at32f4 debug
-```
-
-### 调试命令速查 (GDB)
-
-进入 GDB 界面后，你可以使用以下命令：
-
-- `c` (continue): 继续运行
-- `n` (next): 单步执行 (不进入函数)
-- `s` (step): 单步执行 (进入函数)
-- `b <func>`: 设置断点 (例: `b led_blink_task`)
-- `p <var>`: 打印变量 (例: `p s_tLedBlink`)
-- `x/10w 0x...`: 查看内存
-- `Ctrl + C`: 暂停运行
-- `q`: 退出 GDB
-
-### 编写自动化调试脚本
-
-你可以编写 `.gdb` 脚本来自动化测试流程。例如 `verify_led.gdb`:
-
-```gdb
-# 连接并复位
-target remote :3333
-monitor reset halt
-load
-
-# 设置断点
-break led_blink_task
-break blm_port_LedSet
-
-# 运行并观察
-continue
-# (Hit led_blink_task)
-info registers pc
-
-continue
-# (Hit blm_port_LedSet)
-print/x $r0  # 查看 LED 状态参数
-
-quit
-```
-
-运行脚本：
-```bash
-gdb-multiarch -batch -x verify_led.gdb build/at32f4/blm.elf
-```
-
-## � RTT 虚拟串口 (SEGGER RTT)
-
-本项目集成了 [SEGGER RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/)，通过 SWD 调试接口实现高速日志输出，**无需额外串口线**。
-
-### 原理
-
-RTT 在 RAM 中维护一个环形缓冲区（控制块 `_SEGGER_RTT`），固件通过 `LOG_OUT()` 宏写入数据，OpenOCD 通过调试接口读取并转发到 TCP 端口。
-
-```
-LOG_OUT(...) → snprintf → SEGGER_RTT_WriteString() → RAM 环形缓冲区
-                                                          ↓
-                                            OpenOCD RTT → TCP:9090 → nc / telnet
-```
-
-### 使用方法（三终端工作流）
-
-**终端 1：启动 OpenOCD + RTT Server**
-```bash
-make rtt                  # 自动提取 RTT 地址，启动 RTT server (端口 9090)
-```
-
-**终端 2：查看 RTT 输出**
-```bash
-nc localhost 9090         # 持续显示 RTT 打印
-```
-
-**终端 3：编译 + 烧录（每次修改代码后）**
-```bash
-make CHIP=at32f4          # 编译
-make flash-rtt            # 通过已运行的 OpenOCD 烧录，自动重启 RTT
-```
-
-### Makefile 命令
-
-| 命令 | 说明 |
-| :--- | :--- |
-| `make rtt` | 启动 OpenOCD + RTT server（端口 9090），自动从 map 文件提取控制块地址 |
-| `make flash-rtt` | 通过已运行的 OpenOCD 烧录固件并自动重启 RTT 轮询 |
-| `make rtt-addr` | 仅打印当前 RTT 控制块地址（调试用） |
-
-### 代码中使用
+在应用程序中通过写入升级标志来触发 Bootloader 升级：
 
 ```c
-#include "utilities/util_debug.h"
+#include "gblinfo.h"
 
-// 初始化（main 函数中调用一次）
-TRACE.Init(NULL);
-
-// 日志输出
-LOG_OUT("Hello RTT!\r\n");
-
-// 支持多种类型
-uint32_t val = 42;
-LOG_OUT("value = ");
-LOG_OUT(val);
-LOG_OUT("\r\n");
+void app_request_upgrade(void)
+{
+    /* 获取共享信息区指针 */
+    gblinfo_shared_t *ptShared = (gblinfo_shared_t *)GBLINFO_SHARED_ADDR;
+    
+    /* 设置升级标志 */
+    ptShared->chUpgradeFlag = 1;
+    
+    /* 复位，Bootloader 启动后会检测到此标志 */
+    NVIC_SystemReset();
+}
 ```
 
-### ⚠️ 注意事项
+> Bootloader 检测到标志后会自动清除 `chUpgradeFlag`，无需 APP 额外处理。
 
-1. **每次 `make flash-rtt` 后**，RTT 会自动重启。如果手动烧录（`make flash`），需要重启 OpenOCD。
-2. **RTT 控制块地址会随编译变化**，`make rtt` 每次自动提取最新地址，无需手动查找。
-3. **WSL2 环境**需先通过 `usbipd attach --wsl` 将调试器透传到 WSL。
+### 6. 注意事项与故障排查
 
-## 📖 移植指南 (Porting)
+| 问题 | 可能原因 | 解决方法 |
+|:-----|:---------|:---------|
+| 看不到 `C` 字符 | 串口未连接 / 波特率不对 / 已跳转 APP | 检查串口配置；按住按键复位强制进入 |
+| `C` 只打印一次就停了 | Bootloader 版本过旧，ReceivePacket 缺少超时 | 更新 Bootloader 固件 |
+| 传输开始后中断 | 串口线松动 / 电源不稳 | 检查硬件连接 |
+| 传输完成但 APP 未运行 | APP 链接地址不是 `0x08004400` | 检查 APP 链接脚本 FLASH 起始地址 |
+| 文件太大被拒绝 | 固件超过 `BLM_APP_MAX_SIZE` | 优化 APP 体积或检查 Flash 布局 |
+| 按键无法进入升级模式 | 引脚配置不匹配 | 确认按键引脚和有效电平与 port 实现一致 |
 
-若要支持新芯片：
+## 📡 协议规范 (Protocol Specifications)
 
-1.  在 `port/` 下新建目录 `port/your_chip/`。
-2.  实现 `blm_port_your_chip.c` (参考 `port/blm_port_template.c`)。
-3.  提供 `startup_your_chip.c` 和 `linker.ld`。
-4.  在 `cmsis/` 下添加外设头文件 `your_chip.h`。
-5.  修改 `makefile` 添加新的 `CHIP` 分支。
+本 Bootloader 实现 Ymodem 协议的一个子集，专为嵌入式环境优化。
+
+### 帧格式 (Frame Format)
+
+仅支持 **128字节** 数据帧 (SOH)，不支持 1024字节 扩展帧 (STX)。
+
+```
++-----+-----+-------+------------+---------+
+| SOH | SEQ | ~SEQ  | DATA (128) | CRC (2) |
++-----+-----+-------+------------+---------+
+```
+- **SOH**: 0x01
+- **SEQ**: 包序号，从 0x00 (文件信息帧) 开始，数据帧从 0x01 开始。
+- **~SEQ**: 包序号按位取反。
+- **DATA**: 128字节载荷。不足处填充 0x1A (CPMEOF)。
+- **CRC**: 16位 CRC-CCITT (Poly: 0x1021)，大端序。
+
+### 通信流程 (Interaction)
+
+```
+Bootloader                          Host (PC)
+    |                                   |
+    |------- 'C' (0x43) -------------->|  握手：请求 CRC 模式
+    |                                   |
+    |<------ SOH + Packet0 ------------|  文件信息：文件名 + 大小
+    |------- ACK --------------------->|
+    |------- 'C' --------------------->|  请求数据
+    |                                   |
+    |<------ SOH + Packet1 ------------|  数据帧 #1
+    |------- ACK --------------------->|
+    |<------ SOH + Packet2 ------------|  数据帧 #2
+    |------- ACK --------------------->|
+    |         ...                       |
+    |                                   |
+    |<------ EOT ----------------------|  第一次 EOT
+    |------- NAK --------------------->|
+    |<------ EOT ----------------------|  第二次 EOT
+    |------- ACK --------------------->|
+    |------- 'C' --------------------->|  请求结束包
+    |<------ SOH + Packet0 (empty) ----|  空包，结束传输
+    |------- ACK --------------------->|
+    |                                   |
+    |  [校验 → 跳转 APP]                |
+```
+
+### 参数配置 (Configuration)
+
+所有参数在 `userconfig.h` 中定义：
+
+| 参数 | 宏名 | 默认值 | 描述 |
+|:-----|:-----|:-------|:-----|
+| 波特率 | `BLM_UART_BAUDRATE` | 115200 | 通信波特率 |
+| 包大小 | `BLM_PACKET_SIZE` | 128 Bytes | 固定支持 SOH 帧 |
+| 包接收超时 | `BLM_PACKET_TIMEOUT_MS` | 1000 ms | 单包接收超时 |
+| 连接等待超时 | `BLM_WAIT_TIMEOUT_MS` | 3000 ms | 整体连接等待 |
+| 最大重试 | `BLM_MAX_RETRY` | 10 | 错误/超时重试次数 |
+| APP 起始地址 | `BLM_APP_ADDR` | 0x08004400 | 应用程序起始地址 |
+| APP 最大体积 | `BLM_APP_MAX_SIZE` | 视芯片而定 | 最大可烧写固件大小 |
