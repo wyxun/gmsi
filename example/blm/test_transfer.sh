@@ -11,7 +11,7 @@ RTT_PID=$!
 
 echo "Starting Ymodem Transfer..."
 # Run sb with timeout 30s
-timeout 30s sb --ymodem -vv test.bin < /dev/ttyUSB0 > /dev/ttyUSB0 2> sb_output.log
+timeout 30s sb --ymodem -vv test_app_0x08008000.bin < /dev/ttyUSB0 > /dev/ttyUSB0 2> sb_output.log
 
 SB_EXIT=$?
 echo "sb exit code: $SB_EXIT"
