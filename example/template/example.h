@@ -1,22 +1,30 @@
 #ifndef __EXAMPLE_H__
 #define __EXAMPLE_H__
 
-// Include necessary libraries
+/*============================ INCLUDES ======================================*/
 #include "gmsi.h"
 
-// The configuration structure for the example object.
-typedef struct{
-    uint8_t *pchRingBuffer;
-    uint16_t hwRingSize;
-}example_cfg_t;
+/*============================ MACROS ========================================*/
+/*============================ MACROFIED FUNCTIONS ===========================*/
+/*============================ TYPES =========================================*/
 
-// The structure for the example object.
-typedef struct{
+/* configuration structure for the example object */
+typedef struct {
+    uint8_t  *pchRingBuffer;
+    uint16_t  hwRingSize;
+} example_cfg_t;
+
+/* example object */
+typedef struct {
     gmsi_base_t *ptBase;
+} example_t;
 
-}example_t;
+/*============================ GLOBAL VARIABLES ==============================*/
+/*============================ LOCAL VARIABLES ===============================*/
+/*============================ PROTOTYPES ====================================*/
 
-// Function prototypes
 int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 
-#endif // __EXAMPLE_H__
+/*============================ IMPLEMENTATION ================================*/
+
+#endif /* __EXAMPLE_H__ */
