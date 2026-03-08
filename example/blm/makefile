@@ -117,7 +117,7 @@ CFLAGS += -Wall -Wextra
 CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -fno-exceptions -fno-rtti
 CFLAGS += -std=gnu11
-CFLAGS += -Wno-compare-distinct-pointer-types -Wno-unused-variable -Wno-sign-compare -Wno-unused-command-line-argument
+CFLAGS += -Wno-compare-distinct-pointer-types -Wno-unused-variable -Wno-sign-compare -Wno-unused-command-line-argument -Wno-implicit-function-declaration
 
 # Assembler flags
 ASFLAGS = $(TARGET_TRIPLE) $(CPU_FLAGS) -g

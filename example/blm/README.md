@@ -56,8 +56,59 @@ Bootloader 启动后按以下优先级决定行为：
 
 **进入升级模式的标志**：串口持续输出字符 **`C`**（约每 1.5 秒一次）。
 
-### 2. 准备固件文件
+### 2. WSL 环境下的 USB 设备绑定 (Windows 用户必读)
 
+如果您在 WSL (Windows Subsystem for Linux) 下进行开发，虚拟机默认无法直接访问主机的 USB 物理外设（如下载器）。您需要在 Windows 主机端的 **PowerShell（管理员模式）** 下，通过 `usbipd` 工具将烧录器挂接到 WSL 中。
+
+**绑定流程：**
+
+1. **列出可用设备**：
+   在 PowerShell 中运行以下命令，找到您的下载器 (如 AT-Link 或 CMSIS-DAP)：
+   ```powershell
+   usbipd list
+   ```
+   > *输出示例*：
+   > ```text
+   > BUSID  VID:PID    DEVICE                                                        STATE
+   > 3-4    2e3c:f000  ATLink-USART (COM14), USB 输入设备, AT-Link-EZ(WinUSB)...     Not attached
+   > ```
+   > 这里记下游离的对应设备的 **BUSID**（这里是 `3-4`）。
+
+2. **绑定并挂载设备**：
+   继续在 PowerShell 中运行下面两条指令（请将 `<设备ID>` 替换为您查到的实际 BUSID, 比如 `3-4`）：
+   ```powershell
+   # 绑定设备 (第一次使用时需要执行，后续可能不需要)
+   usbipd bind --busid <设备ID>
+
+   # 挂载设备到默认的 WSL 发行版中
+   usbipd attach --wsl --busid <设备ID>
+   ```
+   > 挂载成功后，原来状态会变成 `Attached`。此时在您的 WSL Linux 终端中执行 `lsusb` 命令即可看到该对应的调试器设备，随后便可畅跑 `make flash` 与 `make rtt` 了。
+
+### 3. 编译与调试 (Make 快捷命令)
+
+本工程的 `makefile` 中内置了用于烧录和 RTT 调试的快捷命令：
+
+- **烧录 Bootloader**：
+  ```bash
+  make flash
+  ```
+  该命令会通过 OpenOCD 和 CMSIS-DAP 将编译好的 `blm.hex` 烧录进芯片。
+
+- **开启 RTT 调试服务**：
+  若想通过 SEGGER RTT 查看 Bootloader 运行日志（例如 `BLM Bootloader Started`）：
+  1. 在终端中运行：
+     ```bash
+     make rtt
+     ```
+     此时 OpenOCD 会查找到 `_SEGGER_RTT` 控制块地址，并开启 RTT Server（默认监听 **9090** 端口）。
+  2. **新开一个终端容器/窗口**，使用 `nc` (netcat) 或 `telnet` 命令连接以实时查看日志：
+     ```bash
+     nc localhost 9090
+     # 或者使用: telnet localhost 9090
+     ```
+
+### 3. 准备应用固件文件
 - 固件必须是 **`.bin` 格式**（原始二进制），不是 `.hex` 或 `.elf`。
 - APP 链接脚本中 `FLASH` 起始地址必须设为 `0x08004400`。
 - 文件大小不得超过 `BLM_APP_MAX_SIZE`（STM32G431: ~247KB，AT32F407: ~1015KB）。

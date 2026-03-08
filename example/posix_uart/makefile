@@ -8,7 +8,7 @@ TARGET := $(BUILD_DIR)/demo
 CC := clang
 CXX := clang++
 
-DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX
+DEFS := -D_XOPEN_SOURCE=700 -DLINUX_POSIX -DTRACE_USE_LIBC_PRINTF=1
 
 # -lrt:timer
 # Link with rt and pthread (pthread provides pthread_sigmask)
