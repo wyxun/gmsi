@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Copyrig;ht(C)2009-2019 by GorgonMeducer<embedded_zhuoran@hotmail.com>    *
+ *   Copyright(C)2009-2019 by GorgonMeducer<embedded_zhuoran@hotmail.com>    *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -19,7 +19,25 @@
 #include "trace.h"
 #include <string.h>
 #include <stdint.h>
-#include <stdio.h>
+
+/*============================ PLATFORM DETECTION ============================*/
+#ifndef TRACE_USE_LIBC_PRINTF
+#   if defined(_MSC_VER) || defined(_WIN32) || defined(__linux__) || defined(__APPLE__)
+#       define TRACE_USE_LIBC_PRINTF    1
+#   else
+#       define TRACE_USE_LIBC_PRINTF    0
+#   endif
+#endif
+
+#if TRACE_USE_LIBC_PRINTF
+#   include <stdio.h>
+#else
+#   include "trace_fmt.h"
+#   ifndef TRACE_MCU_WRITE_STRING
+#       error "MCU mode requires TRACE_MCU_WRITE_STRING(str) macro, e.g. -DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,s)"
+#   endif
+#endif
+
 /*============================ MACROS ========================================*/
 #ifndef TRACE_DISPLAY_WIDTH
 #   define TRACE_DISPLAY_WIDTH          16
@@ -33,6 +51,17 @@
 #   define ASSERT(...)
 #endif
 
+/*============================ HELPER MACROS =================================*/
+#if TRACE_USE_LIBC_PRINTF
+#   define TRACE_OUTPUT(buf)            printf("%s", (buf))
+#   define TRACE_OUTPUT_CHAR(c)         printf("%c", (c))
+#else
+#   define TRACE_OUTPUT(buf)            TRACE_MCU_WRITE_STRING(buf)
+#   define TRACE_OUTPUT_CHAR(c)         do {        \
+        char __chTmp[2] = {(c), '\0'};              \
+        TRACE_MCU_WRITE_STRING(__chTmp);             \
+    } while(0)
+#endif
 
 /*============================ TYPES =========================================*/
 /*============================ LOCAL VARIABLES ===============================*/
@@ -74,53 +103,109 @@ const i_trace_t TRACE = {
 
 static void __trace_init(trace_cfg_t *ptCFG)
 {
-    
+    (void)ptCFG;
 }
 
 static void __trace_string(const char * pchString)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%s", pchString);
+#else
+    TRACE_MCU_WRITE_STRING(pchString);
+#endif
 }
 
 static void __trace_uint32_to_string(uint32_t wValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("0x%08x", wValue);
+#else
+    char buf[12];
+    trace_fmt_hex32(wValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_int32_to_string(int32_t nValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%d", nValue);
+#else
+    char buf[12];
+    trace_fmt_int32(nValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_uint16_to_string(uint16_t hwValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("0x%04x", hwValue);
+#else
+    char buf[8];
+    trace_fmt_hex16(hwValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_int16_to_string(int16_t iValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%d", iValue);
+#else
+    char buf[8];
+    trace_fmt_int32((int32_t)iValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_uint8_to_string(uint8_t chValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("0x%02x", chValue);
+#else
+    char buf[6];
+    trace_fmt_hex8(chValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_int8_to_string(int8_t cValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%d", cValue);
+#else
+    char buf[6];
+    trace_fmt_int32((int32_t)cValue, buf);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_float_to_string(float fValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%f", fValue);
+#else
+    char buf[24];
+    trace_fmt_float((double)fValue, buf, 4);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
 
 static void __trace_double_to_string(double dfValue)
 {
+#if TRACE_USE_LIBC_PRINTF
     printf("%f", dfValue);
+#else
+    char buf[24];
+    trace_fmt_float(dfValue, buf, 4);
+    TRACE_MCU_WRITE_STRING(buf);
+#endif
 }
+
+/*============================ STREAM OUTPUT =================================*/
+
+#if TRACE_USE_LIBC_PRINTF
 
 #define __OUTPUT_STREAM(__TYPE, __ADDR, __SIZE, __FORMAT_STR, __BLANK)          \
     do {                                                                        \
@@ -173,19 +258,48 @@ static void __trace_double_to_string(double dfValue)
         }                                                                       \
     } while(0)
 
+#else /* MCU lightweight path */
+
+#define __OUTPUT_STREAM_MCU(__TYPE, __ADDR, __SIZE, __FMT_FN)                  \
+    do {                                                                        \
+        uint_fast16_t __Size = (__SIZE);                                        \
+        __TYPE *pSrc = (__TYPE *)(__ADDR);                                      \
+        char buf[12];                                                           \
+        for (uint_fast16_t i = 0; i < __Size; i++) {                           \
+            __FMT_FN(pSrc[i], buf);                                            \
+            TRACE_MCU_WRITE_STRING(buf);                                       \
+            TRACE_MCU_WRITE_STRING(" ");                                       \
+        }                                                                       \
+        TRACE_MCU_WRITE_STRING("\r\n");                                        \
+    } while(0)
+
+#endif /* TRACE_USE_LIBC_PRINTF */
+
 static void __trace_word_stream(uint32_t *pwStream, uint_fast16_t hwSize)
 {
+#if TRACE_USE_LIBC_PRINTF
     __OUTPUT_STREAM(uint32_t, pwStream, hwSize, "%08X ", "         ");
+#else
+    __OUTPUT_STREAM_MCU(uint32_t, pwStream, hwSize, trace_fmt_hex32);
+#endif
 }
 
 static void __trace_hword_stream(uint16_t *phwStream, uint_fast16_t hwSize)
 {
+#if TRACE_USE_LIBC_PRINTF
     __OUTPUT_STREAM(uint16_t, phwStream, hwSize, "%04X ", "     ");
+#else
+    __OUTPUT_STREAM_MCU(uint16_t, phwStream, hwSize, trace_fmt_hex16);
+#endif
 }
 
 static void __trace_byte_stream(uint8_t *pchStream, uint_fast16_t hwSize)
 {
+#if TRACE_USE_LIBC_PRINTF
     __OUTPUT_STREAM(uint8_t, pchStream, hwSize, "%02X ", "   ");
+#else
+    __OUTPUT_STREAM_MCU(uint8_t, pchStream, hwSize, trace_fmt_hex8);
+#endif
 }
 
 /* EOF */

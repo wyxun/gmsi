@@ -31,7 +31,8 @@ C_SOURCES = \
     perfc_port_user.c \
     core/blm.c \
     core/blm_protocol.c \
-    core/trace_stub.c \
+    $(GMSI_DIR)/utilities/trace.c \
+    $(GMSI_DIR)/utilities/trace_fmt.c \
     $(GMSI_DIR)/gmsi.c \
     $(GMSI_DIR)/gbase.c \
     $(GMSI_DIR)/gblinfo.c \
@@ -96,7 +97,9 @@ C_DEFS = \
     -D__PERFC_USE_USER_CUSTOM_PORTING__=1 \
     -D__C_LANGUAGE_EXTENSIONS_PERFC_PT__=1 \
     -D__PERFC_CFG_PORTING_INCLUDE__=\"perfc_port_user.h\" \
-    -D__COMPILER_HAS_GNU_EXTENSIONS__=1
+    -D__COMPILER_HAS_GNU_EXTENSIONS__=1 \
+    -DTRACE_USE_LIBC_PRINTF=0 \
+    '-DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))'
 
 # Include paths
 C_INCLUDES = \
