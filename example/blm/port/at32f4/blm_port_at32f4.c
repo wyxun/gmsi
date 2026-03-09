@@ -8,6 +8,7 @@
 #include "../userconfig.h"
 #include <perf_counter.h>
 #include <string.h>
+#include "../gdi_hw.h"
 
 /*============================ MACROS ========================================*/
 
@@ -288,3 +289,118 @@ void blm_port_LedSet(int n) {
     gpio_set_mode_cnf(BLM_LED_GPIO, BLM_LED_PIN, GPIO_MODE_OUT_2M | GPIO_CNF_GP_PP);
     if (n) BLM_LED_GPIO->SCR = (1UL << BLM_LED_PIN); else BLM_LED_GPIO->CLR = (1UL << BLM_LED_PIN);
 }
+
+/*============================================================================
+ * GDI 适配层
+ *===========================================================================*/
+
+/* ---- GPIO (LED) ---- */
+
+static int32_t gdi_led_Set(void *pPriv, gdi_gpio_level_t eLevel)
+{
+    (void)pPriv;
+    blm_port_LedSet((int)eLevel);
+    return 0;
+}
+
+static int32_t gdi_led_Get(void *pPriv)
+{
+    (void)pPriv;
+    return (BLM_LED_GPIO->ODT & (1UL << BLM_LED_PIN)) ? GDI_GPIO_HIGH : GDI_GPIO_LOW;
+}
+
+static int32_t gdi_led_Toggle(void *pPriv)
+{
+    (void)pPriv;
+    BLM_LED_GPIO->ODT ^= (1UL << BLM_LED_PIN);
+    return 0;
+}
+
+static gdi_gpio_t s_tLedGpio = {
+    .pPriv    = NULL,
+    .fnSet    = gdi_led_Set,
+    .fnGet    = gdi_led_Get,
+    .fnToggle = gdi_led_Toggle,
+};
+
+/* ---- Stream (UART) ---- */
+
+static int32_t gdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_UartSend(pchData, (uint16_t)wLen);
+}
+
+/**
+ * @brief GDI UART Read — 固定 3ms timeout
+ *
+ * 协议层通过 PERFC_PT_WAIT_UNTIL 外层循环处理宏观超时，
+ * 此处只需短暂尝试读取即可。
+ */
+static int32_t gdi_uart_Read(void *pPriv, uint8_t *pchBuf, uint32_t wLen)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_UartRecv(pchBuf, (uint16_t)wLen, 3);
+}
+
+static int32_t gdi_uart_IsBusy(void *pPriv)
+{
+    (void)pPriv;
+    return (BLM_USART->STS & USART_STS_TDC) ? 0 : 1;
+}
+
+static gdi_stream_t s_tUartDebug = {
+    .pPriv    = NULL,
+    .fnWrite  = gdi_uart_Write,
+    .fnRead   = gdi_uart_Read,
+    .fnIsBusy = gdi_uart_IsBusy,
+};
+
+/* ---- Flash ---- */
+
+static int32_t gdi_flash_Erase_wrapper(void *pPriv, uint32_t wAddr, uint32_t wSize)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_FlashErase(wAddr, wSize);
+}
+
+static int32_t gdi_flash_Write_wrapper(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_FlashWrite(wAddr, pchData, wLen);
+}
+
+static int32_t gdi_flash_Read_wrapper(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_FlashRead(wAddr, pchBuf, wLen);
+}
+
+static int32_t gdi_flash_Unlock_wrapper(void *pPriv)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_FlashUnlock();
+}
+
+static int32_t gdi_flash_Lock_wrapper(void *pPriv)
+{
+    (void)pPriv;
+    return (int32_t)blm_port_FlashLock();
+}
+
+static gdi_flash_t s_tFlashApp = {
+    .pPriv    = NULL,
+    .fnErase  = gdi_flash_Erase_wrapper,
+    .fnWrite  = gdi_flash_Write_wrapper,
+    .fnRead   = gdi_flash_Read_wrapper,
+    .fnUnlock = gdi_flash_Unlock_wrapper,
+    .fnLock   = gdi_flash_Lock_wrapper,
+};
+
+/* ---- 全局硬件资源池 ---- */
+
+const gdi_hardware_t HW = {
+    .ptLedStatus   = &s_tLedGpio,
+    .ptSerialDebug = &s_tUartDebug,
+    .ptAppFlash    = &s_tFlashApp,
+};

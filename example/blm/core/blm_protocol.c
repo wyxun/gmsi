@@ -10,6 +10,7 @@
 #include "../port/blm_port.h"
 #include <string.h>
 #include "utilities/util_debug.h"
+#include "../port/gdi_hw.h"
 
 #ifndef LOG_OUT
 #define LOG_OUT(...)         TRACE_TOSTR(__VA_ARGS__)
@@ -50,7 +51,7 @@ blm_protocol_cb_t *blm_protocol_Init(blm_protocol_cb_t *ptThis,
 int blm_protocol_SendC(void)
 {
     uint8_t chC = YMODEM_C;
-    return blm_port_UartSend(&chC, 1);
+    return GDI_Write(HW.ptSerialDebug, &chC, 1);
 }
 
 /**
@@ -59,7 +60,7 @@ int blm_protocol_SendC(void)
 int blm_protocol_SendAck(void)
 {
     uint8_t chAck = YMODEM_ACK;
-    return blm_port_UartSend(&chAck, 1);
+    return GDI_Write(HW.ptSerialDebug, &chAck, 1);
 }
 
 /**
@@ -68,7 +69,7 @@ int blm_protocol_SendAck(void)
 int blm_protocol_SendNak(void)
 {
     uint8_t chNak = YMODEM_NAK;
-    return blm_port_UartSend(&chNak, 1);
+    return GDI_Write(HW.ptSerialDebug, &chNak, 1);
 }
 
 /**
@@ -77,7 +78,7 @@ int blm_protocol_SendNak(void)
 int blm_protocol_SendCancel(void)
 {
     uint8_t achCan[2] = {YMODEM_CAN, YMODEM_CAN};
-    return blm_port_UartSend(achCan, 2);
+    return GDI_Write(HW.ptSerialDebug, achCan, 2);
 }
 
 /**
@@ -127,7 +128,7 @@ PERFC_PT_BEGIN(this.chState)
     /* Wait for packet header byte (with overall timeout) */
 PERFC_PT_WAIT_UNTIL(
     (wRet > 0 || (get_system_ms() - this.lRecvStartMs) >= BLM_PACKET_TIMEOUT_MS),
-    wRet = blm_port_UartRecv(&this.achFrame[0], 1, 10);
+    wRet = GDI_Read(HW.ptSerialDebug, &this.achFrame[0], 1);
 )
     
     /* Check if timed out without data */
@@ -138,16 +139,23 @@ PERFC_PT_WAIT_UNTIL(
 
     /* Check header byte */
     if (this.achFrame[0] == YMODEM_SOH) {
-        /* SOH: 128 byte data only (STX not supported for size optimization) */
-        uint16_t hwDataLen = 128;
-        uint16_t hwFrameLen = 133; /* SOH + SEQ + ~SEQ + DATA[128] + CRC[2] */
+        /* SOH: 128 byte data, frame = SOH + SEQ + ~SEQ + DATA[128] + CRC[2] = 133 */
 
-        /* Use blocking read for remaining bytes */
+        /* Incremental read for remaining bytes with PT loop */
         this.lRecvStartMs = get_system_ms();
+        this.hwFrameIdx = 1;  /* Already have byte [0] */
 
-        wRet = blm_port_UartRecv(&this.achFrame[1], hwFrameLen - 1, BLM_PACKET_TIMEOUT_MS);
+    PERFC_PT_WAIT_UNTIL(
+        (this.hwFrameIdx >= (YMODEM_FRAME_SIZE - 1)
+            || (get_system_ms() - this.lRecvStartMs) >= BLM_PACKET_TIMEOUT_MS),
+        wRet = GDI_Read(HW.ptSerialDebug,
+                        &this.achFrame[this.hwFrameIdx],
+                        YMODEM_FRAME_SIZE - 1 - this.hwFrameIdx);
+        if (wRet > 0) { this.hwFrameIdx += wRet; }
+    )
+        wRet = this.hwFrameIdx;
 
-        if (wRet < (hwFrameLen - 2)) {
+        if (wRet < (YMODEM_FRAME_SIZE - 2)) {
             /* Allow CRC (len-1) or Checksum (len-2) */
             this.tResult = PROTO_TIMEOUT;
             goto label_exit;
@@ -159,7 +167,7 @@ PERFC_PT_WAIT_UNTIL(
         /* Check for second CAN */
         PERFC_PT_WAIT_UNTIL(
             (wRet != 0),
-            wRet = blm_port_UartRecv(&this.achFrame[1], 1, 100);
+            wRet = GDI_Read(HW.ptSerialDebug, &this.achFrame[1], 1);
         )
         if (wRet > 0 && this.achFrame[1] == YMODEM_CAN) {
             this.tResult = PROTO_CANCEL;

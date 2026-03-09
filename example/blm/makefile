@@ -108,6 +108,7 @@ C_INCLUDES = \
     -I./port \
     -I./cmsis \
     -I$(GMSI_DIR) \
+    -I$(GMSI_DIR)/gdi \
     -I$(LIB_DIR)/perf_counter \
     -I$(LIB_DIR)/plooc
 

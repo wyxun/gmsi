@@ -27,6 +27,7 @@ TARGET := $(BUILD_DIR)/example_debug
 endif
 
 CFLAGS += -I$(GMSI_DIR) -I/usr/include \
+-I$(GMSI_DIR)/gdi \
 -I$(GMSI_UTL_DIR) \
 -I$(GMSI_THREEPART_PERF) \
 -I$(GMSI_THREEPART_PLOOC)\

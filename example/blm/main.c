@@ -11,6 +11,7 @@
 #include "gblinfo.h"
 #include <perf_counter.h>
 #include "utilities/util_debug.h"
+#include "port/gdi_hw.h"
 
 #if defined(AT32F407xx)
 #   include "cmsis/at32f407xx.h"
@@ -84,12 +85,12 @@ PERFC_PT_BEGIN(this.chState)
 
     do {
         /* LED ON - Toggle LED or visual indicator */
-        blm_port_LedSet(1); 
+        GDI_Write(HW.ptLedStatus, GDI_GPIO_HIGH);
         
     PERFC_PT_DELAY_MS(500);
         
         /* LED OFF */
-        blm_port_LedSet(0);
+        GDI_Write(HW.ptLedStatus, GDI_GPIO_LOW);
         
     PERFC_PT_DELAY_MS(500);
 

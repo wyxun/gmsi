@@ -12,6 +12,7 @@
 #include "../cmsis/cmsis_compiler.h"
 #include "gblinfo.h"
 #include "cmsis/at32f407xx.h"
+#include "../port/gdi_hw.h"
 #include "utilities/util_debug.h"
 #ifndef LOG_OUT
 #define LOG_OUT(...)         TRACE_TOSTR(__VA_ARGS__)
@@ -184,8 +185,8 @@ PERFC_PT_BEGIN(this.chState)
                     
                     /* Erase app region */
                     LOG_OUT("Er...\r\n");
-                    blm_port_FlashUnlock();
-                    blm_port_FlashErase(this.wAppAddr, s_tProtocol.wFileSize);
+                    gdi_flash_Unlock(HW.ptAppFlash);
+                    gdi_flash_Erase(HW.ptAppFlash, this.wAppAddr, s_tProtocol.wFileSize);
                     LOG_OUT("ED\r\n");
                     
                 PERFC_PT_DELAY_MS(10);
@@ -241,7 +242,7 @@ PERFC_PT_BEGIN(this.chState)
                         wWriteLen = this.wFileSize - this.wReceivedSize;
                     }
                     if (wWriteLen > 0) {
-                        blm_port_FlashWrite(this.wAppAddr + this.wReceivedSize, 
+                        gdi_flash_Write(HW.ptAppFlash, this.wAppAddr + this.wReceivedSize, 
                                             s_achRecvData, wWriteLen);
                         this.wReceivedSize += wWriteLen;
                     }
@@ -261,7 +262,7 @@ PERFC_PT_BEGIN(this.chState)
                 
                 if (s_tProtocol.tResult == PROTO_EOT) {
                     blm_protocol_SendAck();
-                    blm_port_FlashLock();
+                    gdi_flash_Lock(HW.ptAppFlash);
                     
                     PERFC_PT_DELAY_MS(10);
                     
@@ -282,7 +283,7 @@ PERFC_PT_BEGIN(this.chState)
                     this.tMainState = BLM_STATE_VERIFY;
                 }
             } else if (s_tProtocol.tResult == PROTO_CANCEL) {
-                blm_port_FlashLock();
+                gdi_flash_Lock(HW.ptAppFlash);
                 this.tMainState = BLM_STATE_IDLE;
             } else {
                 /* TIMEOUT, CRC_ERROR, SEQ_ERROR */
@@ -296,7 +297,7 @@ PERFC_PT_BEGIN(this.chState)
                 this.chRetryCount++;
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
                     blm_protocol_SendCancel();
-                    blm_port_FlashLock();
+                    gdi_flash_Lock(HW.ptAppFlash);
                     this.tMainState = BLM_STATE_ERROR;
                 }
                 PERFC_PT_DELAY_MS(50);
