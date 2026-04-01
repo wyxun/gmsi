@@ -26,18 +26,6 @@ const struct {
     uint8_t chMinor;            //!< minor version
 } GMSIVersion = GMSI_VERSION;
 
-// // GMSI configuration
-// gstorage_cfg_t tGstorageCfg = {
-//     .ptData = NULL,
-//     .hwStorageTimeOut = 60000,
-// };
-// gstorage_t tGstorage;
-uint8_t g_chSystemData;
-GMSI_DECLARE_OBJECT(gstorage, Gstorage, 
-    .ptData = &g_chSystemData,
-    .hwStorageTimeOut = 60000,
-);
-
 static bool s_bGmsiInit = false;
 
 /* GNU ld style (weak) */
@@ -53,14 +41,8 @@ extern const uint8_t Image$$init_infos$$Limit;
 /**
  * Function: gmsi_Init
  * ----------------------------
- * This function initializes the GMSI framework. It initializes the GMSI storage and coroutine, 
- * and prints the GMSI version.
- *
- * Parameters: 
- * ptGmsi: A pointer to the GMSI structure.
- *
- * Returns: 
- * None
+ * This function initializes the GMSI framework. It initializes the GMSI 
+ * storage and coroutine, and prints the GMSI version.
  */
 void gmsi_Init(gmsi_t *ptGmsi)
 {
@@ -76,19 +58,22 @@ void gmsi_Init(gmsi_t *ptGmsi)
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
 
-    tGstorageCfg.ptData = ptGmsi->ptData;
-
-if ((const void *)__start_init_infos != NULL && (const void *)__stop_init_infos != NULL &&
+if ((const void *)__start_init_infos != NULL && 
+    (const void *)__stop_init_infos != NULL &&
     __start_init_infos < __stop_init_infos) {
     start = __start_init_infos;
     stop  = __stop_init_infos;
 }
 #ifdef __ARMCC_VERSION
 else {
-    /* armlink provides Image$$<sec>$$Base/Limit as addresses — take address & cast */
-    const gmsi_init_info_t *arm_start = (const gmsi_init_info_t *)&Image$$init_infos$$Base;
-    const gmsi_init_info_t *arm_stop  = (const gmsi_init_info_t *)&Image$$init_infos$$Limit;
-    if ((const void *)arm_start != NULL && (const void *)arm_stop != NULL && arm_start < arm_stop) {
+    /* armlink provides Image$$<sec>$$Base/Limit as addresses */
+    const gmsi_init_info_t *arm_start = 
+        (const gmsi_init_info_t *)&Image$$init_infos$$Base;
+    const gmsi_init_info_t *arm_stop  = 
+        (const gmsi_init_info_t *)&Image$$init_infos$$Limit;
+    if ((const void *)arm_start != NULL && 
+        (const void *)arm_stop != NULL && 
+        arm_start < arm_stop) {
         start = arm_start;
         stop  = arm_stop;
     }
@@ -114,14 +99,6 @@ else {
 /**
  * Function: gmsi_Run
  * ----------------------------
- * This function runs the GMSI framework. It traverses the list of objects, and
- * for each object, it calls the object's Run function.
- *
- * Parameters: 
- * None
- *
- * Returns: 
- * None
  */
 void gmsi_Run(void)
 {
@@ -164,15 +141,6 @@ void gmsi_Run(void)
 /**
  * Function: gmsi_Clock
  * ----------------------------
- * This function calls the Clock function of each object in the GMSI framework. 
- * It traverses the list of objects, and for each object, it calls the object's 
- * Clock function.
- * 
- * Parameters: 
- * None
- *
- * Returns: 
- * None
  */
 void gmsi_Clock(void)
 {
@@ -216,15 +184,6 @@ void gmsi_Clock(void)
 /**
  * Function: assert_failed
  * ----------------------------
- * This function is called when an assertion fails. It prints an error message, 
- * including the file where the assertion failed and the line number of the failure.
- *
- * Parameters: 
- * file: The file where the assertion failed.
- * line: The line number of the assertion failure.
- *
- * Returns: 
- * None. This function enters an infinite loop after printing the error message.
  */
 void assert_failed(char *file, uint32_t line)
 {

@@ -1,735 +1,171 @@
-## GMSI¿ò¼Ü
+# GMSI (Generic MCU Software Infrastructure)
 
-**Generic Mcu Software Infrastructure**
-
+GMSI æ˜¯ä¸€ä¸ªè½»é‡çº§ã€é¢å‘å¯¹è±¡ä¸”é«˜åº¦å¯ç§»æ¤çš„åµŒå…¥å¼è½¯ä»¶æ¡†æ¶ã€‚å®ƒè‡´åŠ›äºé€šè¿‡
+æŠ½è±¡ç¡¬ä»¶æ¥å£ï¼ˆGDIï¼‰ä¸ä¸šåŠ¡é€»è¾‘ï¼Œæä¾›ä¸€å¥—ç»Ÿä¸€çš„å¯¹è±¡ç®¡ç†æœºåˆ¶ï¼Œæ”¯æŒä»»åŠ¡
+çš„è‡ªåŠ¨å‘ç°ã€åˆå§‹åŒ–å’Œäº‹ä»¶é©±åŠ¨è¿è¡Œã€‚
 ![framework](.assets/framework.jpg)
 
-### Quick Start
+## æ ¸å¿ƒç‰¹æ€§
+- **é¢å‘å¯¹è±¡è®¾è®¡**ï¼šæ”¯æŒå¤šå®ä¾‹ï¼Œæ¯ä¸ªæ¨¡å—ï¼ˆé©±åŠ¨ã€ä»»åŠ¡ã€åº”ç”¨ï¼‰éƒ½å°è£…ä¸ºç‹¬ç«‹çš„å¯¹è±¡ã€‚
+- **è‡ªåŠ¨åˆå§‹åŒ–æœºåˆ¶**ï¼šå¼•å…¥é“¾æ¥è„šæœ¬æ®µï¼ˆLinker Sectionï¼‰ï¼Œåˆ©ç”¨ `GMSI_DECLARE_OBJECT`
+  å®å®ç°æ¨¡å—çš„é›¶ä¿®æ”¹è‡ªåŠ¨æ³¨å†Œï¼Œæ— éœ€æ‰‹åŠ¨æ›´æ–° `main.c` ä¸­çš„åˆå§‹åŒ–åˆ—è¡¨ã€‚
+- **éé˜»å¡äº‹ä»¶æœºåˆ¶**ï¼šå†…ç½®äº‹ä»¶æŒ‚èµ·ï¼ˆPendï¼‰ä¸å‘å¸ƒï¼ˆPostï¼‰æœºåˆ¶ï¼Œæå¤§ç®€åŒ–äº†å¼‚æ­¥ä»»åŠ¡é€»è¾‘ã€‚
+- **åç¨‹/çŠ¶æ€æœºæ”¯æŒ**ï¼šæ— ç¼é›†æˆ `plooc` (Protected Low-overhead Object-Oriented 
+  Programming in C) ä¸ `perf_counter` çš„åç¨‹èƒ½åŠ›ï¼Œè®©å¤æ‚çš„æ—¶åºé€»è¾‘ç¼–å†™å¦‚åŒé¡ºåºä»£ç ã€‚
+- **è·¨å¹³å°ä¸€è‡´æ€§**ï¼šå®Œç¾é€‚é… **Keil (AC6)**, **LLVM (Clang)**, **GCC**ï¼Œæ”¯æŒåµŒå…¥å¼è£¸æœºä¸ 
+  **POSIX (Linux/WSL)** ç¯å¢ƒã€‚
 
-#### WSL×ÓÏµÍ³
+---
 
-+ Æô¶¯windowsÏµÍ³µÄubuntu×ÓÏµÍ³£¨**¸Ã½Ì³Ì¿´ÍøÉÏ**£©
-+ ¸üĞÂwslÏµÍ³»·¾³
-
-```sh
-# ¸üĞÂÔ´
+## å¿«é€Ÿå¼€å‘
+### 1. POSIX (WSL/Linux) ç¯å¢ƒ
+å»ºè®®åœ¨ Windows ä¸‹å®‰è£… Ubuntu å­ç³»ç»Ÿï¼Œä½¿ç”¨ä»¥ä¸‹æµç¨‹ï¼š
+```bash
+# å®‰è£…åŸºç¡€ç¼–è¯‘ç¯å¢ƒ
 sudo apt-get update
-# ¸üĞÂÈí¼ş
-sudo apt-get upgrade
-# °²×°Ïà¹Ø¹¤¾ßmake clang git
 sudo apt install clang make git
-# ÅäÖÃgit
-git config --global user.name "xxx"
-git config --global user.email "xxx@yyy.com"
-```
 
-+ À­È¡GMSI¿â´úÂë
-
-```sh
-# ÔÚÓÃ»§homeÄ¿Â¼ÏÂ´´½¨¸öÈËÎÄ¼ş¼Ğ£¨¿´¸öÈËÏ²ºÃ£©
-mkdir code_dir
-cd code_dir
-# À­È¡´úÂë
+# è·å–æºç å¹¶è¿è¡Œç¤ºä¾‹
 git clone https://gitee.com/wyxun/gmsi.git
-# ²âÊÔ±àÒëÈ·ÈÏ»·¾³ÊÇ·ñÓĞÈ±Ê§
-cd gmsi/example/posix_uart
+cd gmsi/example/template
 make
-# Õı³£Çé¿ö¿É¿´µ½ÏÂÃæĞÅÏ¢£¬Õı³£Éú³É¿ÉÖ´ĞĞÎÄ¼ş
-# clang -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare -# Wno-compare-distinct-pointer-types -I../../gmsi -I/usr/include -I../../gmsi/utilities -I../../ThirdParty/plooc -#D_XOPEN_SOURCE=700 -DLINUX_POSIX -c main.c -o main.o
-# clang -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare -# Wno-compare-distinct-pointer-types -I../../gmsi -I/usr/include -I../../gmsi/utilities -I../../ThirdParty/plooc -#D_XOPEN_SOURCE=700 -DLINUX_POSIX -c pc_uart.c -o pc_uart.o
-# clang -std=c11 -W -Ofast -Wno-implicit-function-declaration -Wno-unused-parameter -Wno-int-to-pointer-cast -Wno-sign-compare -# Wno-compare-distinct-pointer-types -I../../gmsi -I/usr/include -I../../gmsi/utilities -I../../ThirdParty/plooc -fno-autolink -# Wall -lrt ../../gmsi/glog.o ../../gmsi/gcoroutine.o ../../gmsi/gmsi.o ../../gmsi/gstorage.o ../../gmsi/gbase.o # ../../gmsi/ginput.o ../../gmsi/utilities/trace.o ../../gmsi/utilities/util_queue.o ../../gmsi/utilities/list.o # ../../gmsi/utilities/util_debug.o main.o pc_uart.o pc_clock.o -o demo
-# Ö´ĞĞ³ÌĞò,¿É¿´µ½³ÌĞòÕı³£Ö´ĞĞ
-./demo
+./build/example
 ```
 
-#### keil»·¾³
-
-+ À­È¡¿â´úÂë
-
-```sh
-git clone https://gitee.com/wyxun/gmsi.git
-```
-
-+ ´´½¨ÏîÄ¿
-
-```sh
-cd gmsi
-# ´´½¨projectÎÄ¼ş¼Ğ
-# ÔÚprojectÎÄ¼şÏÂ´´½¨keilÏîÄ¿
-```
-
-+ ÅäÖÃÏîÄ¿
-  + optimization -o0£º·½±ãµ÷ÊÔ£¬ÏîÄ¿ºóÆÚ¿É¸Ä³É**-fast**ÇÒ**¹Ø±Õdebug**£º__NO_USE_LOG__
-  + **GMSI**£º¸ù¾İ½ØÍ¼ÉÏµÄÔ´ÎÄ¼ş½øĞĞ°üº¬
-  + **Device**£º¸ù¾İĞ¾Æ¬Ñ¡Ôñ¶ÔÓ¦µÄ¿âÎÄ¼ş
-  + **Language Extension**£ºÆôÓÃPLOOC£¬À©Õ¹Ê¹ÓÃ**LOG_OUT**µ÷ÊÔ½Ó¿Ú
-  + 
+### 2. Keil ç¯å¢ƒé…ç½®
+- **ä¼˜åŒ–é€‰é¡¹**ï¼šå»ºè®®ä½¿ç”¨ `-Ofast` ä»¥è·å¾—æœ€ä½³æ€§èƒ½ï¼Œé…ç½® `-g` æ”¯æŒè°ƒè¯•ã€‚
+- **ç¼–è¯‘å™¨æ”¯æŒ**ï¼šå¿…é¡»ä½¿ç”¨ **Arm Compiler 6 (AC6)**ï¼Œå¹¶å¼€å¯ `GNU11` ä¸ `C11` æ ‡å‡†ã€‚
+- **é¢„å®šä¹‰å®**ï¼š
+  - `__NO_USE_LOG__`ï¼šç¦ç”¨æ—¥å¿—è¾“å‡ºã€‚
+  - `__NO_USE_ASSERT`ï¼šç¦ç”¨æ–­è¨€æ£€æµ‹ã€‚
+- **è¯­è¨€æ‰©å±•**ï¼šGMSI å¼ºä¾èµ– `plooc` å®ç°å¯¹è±¡å°è£…ï¼Œè¯·ç¡®ä¿åŒ…å«è·¯å¾„ä¸­å«æœ‰ `lib/plooc`ã€‚
 
 ![image-20240514190553036](.assets/image-20240514190553036.png)
 
-+ ±àĞ´object³ÌĞò
+---
 
-  + ²Î¿´**example**ÏÂµÄ**template**Àı×Ó
+## æ¨¡å—å¼€å‘æŒ‡å— (Object Template)
 
-  ```c
-  // ¹ÒÔØ¶ÔÏóµ½gmsiÄÚ²¿µ÷ÓÃ
-  static gmsi_base_t s_tExampleBase;
-  gmsi_base_cfg_t s_tExampleBaseCfg = {
-      .wId = EXAMPLE,
-      .wParent = 0,
-      .FcnInterface = {
-          .Clock = example_Clock,
-          .Run = example_Run,
-      },
-  };
-  
-  int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
-  {
-      int wRet = GMSI_SUCCESS;
-      example_t *ptThis = (example_t *)wObjectAddr;
-      example_cfg_t *ptCfg = (example_cfg_t *)wObjectCfgAddr;
-      GMSI_ASSERT(NULL != ptThis);
-      GMSI_ASSERT(NULL != ptCfg);
-      
-      ptThis->ptBase = &s_tExampleBase;
-      ptThis->chExampleData = ptCfg->chExampleData;
-  
-      if(NULL == ptThis->ptBase)
-          wRet = GMSI_EAGAIN;
-      else
-      {
-          s_tExampleBaseCfg.wParent = wObjectAddr;
-          wRet = gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
-      }
-      return wRet;
-  }
-  ```
+GMSI å°†æ¯ä¸ªåŠŸèƒ½å•å…ƒæŠ½è±¡ä¸ºâ€œå¯¹è±¡â€ã€‚å‚è€ƒ `example/template` ç›®å½•ï¼Œä¸€ä¸ªæ ‡å‡†çš„ 
+GMSI å¯¹è±¡ç”±ä»¥ä¸‹éƒ¨åˆ†ç»„æˆï¼š
 
-  + ¿ìËÙµ÷ÓÃ·½·¨
-
-    + copy example.c  example.hµ½ÏîÄ¿Ä¿Â¼
-
-    ```sh
-    cp ../template/example.c .
-    cp ../template/example.h .
-    ```
-
-    + È«¾ÖÌæ»»exampleÃû×Ö£¬×¢Òâ**´óĞ¡Ğ´Æ¥Åä**
-
-    ```c
-    example  --> object
-    Example  --> Objeect
-    EXAMPLE  --> OBJECT_ID
-    ```
-
-    + ½«object.cÌí¼Óµ½makefileÎÄ¼ş
-
-    ```makefile
-    SOURCES += object.c
-    ```
-
-    + ÔÚmain.cÎÄ¼ş³õÊ¼»¯object
-
-    ```c
-    example_cfg_t tEexampleCfg = {
-        //.chExampleData = 0,
-    };
-    example_t tExample;
-    
-    int main(void)
-    {
-        example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
-        while(1);
-    }
-    ```
-
-    
-
-+ ±àĞ´**main**Ö÷³ÌĞò
-
+### 1. ç»“æ„å®šä¹‰ (`template.h`)
 ```c
-int main(void)
-{
-    system_clock_config();
-    // Ó²¼ş³õÊ¼»¯
-    bsp_Init();
+/* æ¨¡å—é…ç½®å‚æ•° */
+typedef struct {
+    uint8_t  *pchRingBuffer;
+    uint16_t  hwRingSize;
+} template_cfg_t;
 
-    // object³õÊ¼»¯
-    hvcontroler_Init((uintptr_t)&tHvControler, (uintptr_t)&tHvControlerCfg);
-    correspondent_Init((uintptr_t)&tCorrespondent, (uintptr_t)&tCorrespondentCfg);
-    example_Init((uintptr_t)&tExample, (uintptr_t)&tEexampleCfg);
-    // ³õÊ¼»¯gmsiÄÚ²¿Ä£¿é
-    gmsi_Init(&tGmsi);
+/* æ¨¡å—å¯¹è±¡å®ä½“ */
+typedef struct {
+    gmsi_base_t *ptBase;   /* å¿…é¡»åŒ…å« GMSI åŸºç¡€ç±»æŒ‡é’ˆ */
+    int          wFd;      /* æ¨¡å—ç§æœ‰æ•°æ® */
+} template_t;
 
-    while(1)
-    {
-        // gmsiÖ÷³ÌĞò¹ÒÔØ
-        gmsi_Run();
-    }
-    return 0;
-}
-
-// 1msÖĞ¶Ï¶¨Ê±Æ÷
-void timer_handler(int signum)
-{
-    // gmsiÊ±ÖÓ¹ÒÔØ
-    gmsi_Clock();
-}
+int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 ```
 
-
-
-### ÎÄ¼ş·Ö²ã½éÉÜ
-
+### 2. åŠŸèƒ½å®ç° (`template.c`)
+æ¨¡å—ç‰©ç†è¡Œä¸ºé€šè¿‡ `Init`, `Clock`, `Run` ä¸‰ä¸ªé’©å­å‡½æ•°æŒ‚è½½åˆ°æ¡†æ¶ï¼š
 ```c
-// gmsi¿âÊµÏÖÎÄ¼ş
-gmsi
---->>gmsi.c/h
---->>base.c/h
---->>global_define.h
-// gmsi×é¼ş
---->>component/
------------>>gmsi_uart.c/h
---->>utilities/
------------>>utilities.h
------------>>list.c/h
------------>>util_queue.c/h
-// µÚÈı·½¿â
-ThirdParty/
---->>PLOOC/
-// gmsi¿ò¼ÜÍ¼
-image/
--------->>Base.drawio
--------->>framework.drawio
-// ²»Í¬Æ½Ì¨ÏÂÀı×Ó(×¢ÊÍÂú×ãDoxygen)
-example/
-// cortex_mÆ½Ì¨ÏÂÀı×Ó
---->>cortex_m/
-// linuxÆ½Ì¨ÏÂÀı×Ó
---->>posix_uart/
-// gmsiÍ¨ÓÃÄ£°å
---->>template/
-```
-
-### GMSIÀí½âÓëÓ¦ÓÃ
-
-#### objectÏà»¥Í¨ĞÅ»úÖÆ
-
-```c
-/***************************base.hÊµÏÖ******************************/
-// objectÉí·İID
-typedef struct{
-    uint32_t wId;
-    /* ... */
-}gmsi_base_cfg_t;
-/***************************global_define.hÊµÏÖ**********************/
-// object ID »ùÀà»®·Ö
-#define GMSI_ID_UART        1
-#define GMSI_ID_IIC         2
-#define GMSI_ID_SPI         3
-#define GMSI_ID_CAN         4
-#define GMSI_ID_INPUT       5
-#define GMSI_ID_SENSOR      6
-#define GMSI_ID_TIMER       7
-// SOFTWARE
-#define GMSI_ID_CLASS       100
-#define GMSI_ID_MOCK        101
-
-/***************************userconfig.hÊµÏÖ**************************/
-// ¶¨ÒåÒ»¸ö¾ßÌåobject ID
-#define OBJECT     (GMSI_ID_MOCK<<8+1)
-#define OBJECT2    (GMSI_ID_MOCK<<8+2)
-
-/***************************object.cÊµÏÖ******************************/
-// object init id
-gmsi_base_cfg_t tObjectBaseCfg = {
-    .wId = OBJECT,
-    /* ... */
-};
-// gmsi base object init
-int object_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
-{
-    wRet = gbase_Init(ptThis->ptBase, &tObjectBaseCfg);
-    {
-        ptBase->wId = ptCfg->wId;
-    }
-}
-// objectÊÂ¼ş´«µİÊµÏÖ
-int object_Run(uint32_t wObjectAddr)
-{
-    // wObjectAddr×ª»»³ÉobjectÖ¸Õë
-    // µÈ´ı²¶»ñÊÂ¼ş´¦Àí
-    wEvent = gbase_EventPend(ptThis->ptBase);
-    if(wEvent)
-        example_EventHandle(ptThis, wEvent);
-}
-int object_Clock(uint32_t wObjectAddr)
-{
-    // ¶¨Ê±ÏòÆäËûobject·¢ËÍÊÂ¼ş
-    gbase_EventPost(OBJECT2, Gmsi_Event00);
-    {
-        // ±éÀúÁ´±í£¬ÕÒµ½OBJECT2 id
-        if(ptListItemDes->xItemValue == wId)
-        	ptBaseDes = ptListItemDes->pvOwner;
-        // ¶ÔOBJECT2µÄÊÂ¼ş¸³Öµ
-        ptBaseDes->wEvent |= wEvent;
-    }
-}
-```
-
-#### object×Ô¶¯ÔËĞĞÊµÏÖ»úÖÆ
-
-```c
-/***************************object.cÊµÏÖ******************************/
-// gmsi base object init
-gmsi_base_cfg_t s_tExampleBaseCfg = {
-    .wId = EXAMPLE,
-    /* »ñÈ¡¸¸Ö¸Õë */
-    .wParent = 0,
-    /* ½«gmsiµÄ½Ó¿Úº¯ÊıµØÖ·Ğ´Èëµ½base_cfg_t */
+static gmsi_base_t s_tTemplateBase; // é™æ€åˆ†é…åŸºç¡€ç±»å®ä¾‹
+static gmsi_base_cfg_t s_tTemplateBaseCfg = {
+    .wId = TEMPLATE_ID, // å”¯ä¸€æ ‡è¯†ç¬¦
     .FcnInterface = {
-        .Clock = object_Clock,
-        .Run = object_Run,
+        .Clock = template_Clock, // å®šæ—¶è°ƒç”¨ (1ms)
+        .Run   = template_Run,   // ä¸»å¾ªç¯è°ƒç”¨
     },
 };
 
-// object init
-int object_Init(uint32_t wObjectAddr, uint32_t wObjectCfgAddr)
-{
-    // ³õÊ¼»¯Parent addr
-    s_tObjectBaseCfg.wParent = wObjectAddr;
-    wRet = gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
+int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr) {
+    template_t *ptThis = (template_t *)wObjectAddr;
+    template_cfg_t *ptCfg = (template_cfg_t *)wObjectCfgAddr;
+    
+    ptThis->ptBase = &s_tTemplateBase;
+    s_tTemplateBaseCfg.wParent = wObjectAddr; // è®°å½•çˆ¶å¯¹è±¡æŒ‡é’ˆ
+    
+    // åˆå§‹åŒ–ç§æœ‰èµ„æº...
+    
+    return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
 }
 
-/***************************gmsi.cÊµÏÖ******************************/
-void gmsi_Run(void)
-{
-    // ±éÀúÁ´±í£¬Ö´ĞĞ¶ÔÓ¦objectµÄRunº¯Êı
-	ptBaseDes->pFcnInterface->Run(ptBaseDes->wParent);
+int template_Run(uintptr_t wObjectAddr) {
+    template_t *ptThis = (template_t *)wObjectAddr;
+    // è·å–äº‹ä»¶å¹¶å¤„ç†
+    uint32_t wEvent = gbase_EventPend(ptThis->ptBase);
+    if (wEvent) { /* handle event */ }
+    return GMSI_SUCCESS;
 }
-void gmsi_Clock(void)
-{
-	// ±éÀúÁ´±í£¬Ö´ĞĞ¶ÔÓ¦objectµÄClockº¯Êı
-	ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
-}
-
 ```
 
-#### LISTÍ¨ĞÅÊµÏÖ
-##### object²éÕÒ»úÖÆ
+### 3. å¯¹è±¡å£°æ˜ä¸æ³¨å†Œ (`main.c`)
+æ— éœ€åœ¨ä¸»å¾ªç¯ä»£ç ä¸­æ‰‹åŠ¨æ·»åŠ ã€‚åªéœ€ä¸€è¡Œå®å£°æ˜ï¼Œæ¡†æ¶å¯åŠ¨æ—¶å³å¯è‡ªåŠ¨åˆå§‹åŒ–å¹¶å¼€å§‹è°ƒ
+åº¦æ‰€æœ‰å¯¹è±¡ã€‚
 ```c
-/* 
-	1¡¢¸ù¾İÄ¿±êidºÅ±éÀúÁ´±í£¬ÌáÈ¡¶ÔÓ¦µÄbase
-	2¡¢°Ñ¶ÔÓ¦µÄevent»òmessageĞ´Èë¶ÔÓ¦µÄbase
-*/    
-/***************************base.cÊµÏÖ******************************/
-	// ÉèÖÃÁ´±íÍ·²¿
-struct xLIST        tListObject;
+#include "gmsi.h"
+#include "template.h"
 
-/*****************±éÀúÁ´±íº¯Êı¶Î start*****************/
-    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
-    uint8_t chErgodicTime = 1;
-    gmsi_base_t *ptBaseDes;
-    // ±éÀúÁ´±í£¬È·¶¨Ä¿µÄid
-    while(ptListItemDes != &tListObject.xListEnd){
-        if(ptListItemDes->xItemValue == wId)
-            break;
-        // ²»Æ¥Åä¼ÌĞø±éÀú
-        chErgodicTime++;
-        ptListItemDes = ptListItemDes->pxPrevious;
-    }
-    if(chErgodicTime <= tListObject.uxNumberOfItems)
-    {
-        // ÕÒµ½¶ÔÓ¦µÄobject
-        ptBaseDes = ptListItemDes->pvOwner;
-        GMSI_ASSERT(NULL != ptBaseDes);
-        // ²Ù×÷¶ÔÓ¦µÄobject
-        ptBaseDes->tMessage.pchMessage= pchMessage;
-        ptBaseDes->tMessage.hwLength = hwLength;
-        ptBaseDes->wEvent |= Gmsi_Event_Transition;
-    }
-/*****************±éÀúÁ´±íº¯Êı¶Î end*****************/
+/* å£°æ˜å¯¹è±¡åŠåˆå§‹å‚æ•° */
+GMSI_DECLARE_OBJECT(template, MyTemplate, 
+    .hwRingSize = 64,
+    .pchRingBuffer = s_chBuffer
+);
 ```
 
-#### GMSIÍ¨ÓÃ
+---
 
-##### Í¨ÓÃº¯Êı
+## ç¼–ç ä¸å‘½åè§„èŒƒ
+éµå¾ªä»¥ä¸‹å‰ç¼€è§„åˆ™ï¼ˆåŒˆç‰™åˆ©å‘½åæ³•å˜ä½“ï¼‰ï¼Œå¯ç¡®ä¿ä»£ç æ„å›¾ä¸€ç›®äº†ç„¶ï¼š
 
-+ Òì³£´¦Àí»úÖÆ
+| å‰ç¼€ | åŸå§‹å«ä¹‰ | ç¤ºä¾‹ | å¤‡æ³¨ |
+|:---|:---|:---|:---|
+| `ch` | `char / uint8_t` | `chState` | å•å­—èŠ‚çŠ¶æ€æˆ–æ•°æ® |
+| `hw` | `uint16_t` | `hwBufferSize` | åŠå­— (Half-Word), 16ä½é•¿åº¦ |
+| `w` | `uint32_t` | `wEvent` | å­— (Word), 32ä½å˜é‡ |
+| `b` | `bool` | `bIsRunning` | å¸ƒå°”æ ‡å¿— |
+| `pt` | `Pointer to Type`| `ptThis`, `ptMotor`| æŒ‡å‘ç»“æ„ä½“æˆ–è‡ªå®šä¹‰ç±»å‹çš„æŒ‡é’ˆ |
+| `pch`| `uint8_t *` | `pchBuffer` | æŒ‡å‘å­—èŠ‚æµçš„æŒ‡é’ˆ |
+| `pfcn`| `Function Ptr` | `pfcnCallback` | å‡½æ•°æŒ‡é’ˆ |
+| `s_` | `Static` | `s_tGmsiBase` | é™æ€å˜é‡ (æ–‡ä»¶ä½œç”¨åŸŸ) |
+| `g_` | `Global` | `g_hwCount` | å…¨å±€å˜é‡ |
 
+- **è¡Œå®½é™åˆ¶**ï¼šæ‰€æœ‰æºä»£ç è¡Œçš„æœ€å¤§é•¿åº¦ä¸å¾—è¶…è¿‡ **86ä¸ªå­—ç¬¦**ã€‚
+
+---
+
+## ç³»ç»Ÿé›†æˆ (System Integration)
+
+### æ ¸å¿ƒåˆå§‹åŒ–æµ
+`gmsi_Init()` ä¼šè§£æé“¾æ¥å™¨ç”Ÿæˆçš„ `init_infos` æ•°æ®æ®µï¼ŒåŠ¨æ€æ‰§è¡Œæ‰€æœ‰å·²å£°æ˜å¯¹è±¡çš„
+åˆå§‹åŒ–å‡½æ•°ã€‚
 ```c
-// ´íÎó´òÓ¡
-void gmsi_errorlog(int wErrorNum)
-{
-    switch(wErrorNum)
-    {
-        case GMSI_SUCCESS:
-        break;
-        
-        default:
-        break;
+int main(void) {
+    // ç³»ç»Ÿå…¨å±€æ•°æ®ç»“æ„
+    gmsi_t tGmsi = { .ptData = &tSysData };
+    
+    gmsi_Init(&tGmsi); // è‡ªåŠ¨åˆå§‹åŒ–æ‰€æœ‰æ¨¡å—
+    while (1) {
+        gmsi_Run();    // è½®è®­è°ƒåº¦æ‰€æœ‰æ¨¡å—çš„ Run() ä¸åç¨‹
     }
 }
-// ±éÀúËùÓĞ¶ÔÏó
-void gbase_DegugListBase(void)
-{
-    struct xLIST_ITEM *ptListItemDes = tListObject.xListEnd.pxPrevious;
-    LOGOUT("List all object:\n");
-    // ±éÀúÁ´±í
-    while(ptListItemDes != &tListObject.xListEnd){
-        LOGOUT("    itme id: %d\n", ptListItemDes->xItemValue);
-        ptListItemDes = ptListItemDes->pxPrevious;
-    }
+
+// æ»´ç­”å®šæ—¶å™¨ä¸­æ–­å¤„ç†
+void SysTick_Handler(void) {
+    gmsi_Clock();      // é©±åŠ¨å„æ¨¡å—å†…éƒ¨æ—¶é’Ÿï¼ˆ1ms ç²¾åº¦ï¼‰
 }
 ```
 
-##### ·µ»ØÖµ
+---
 
-```c
-// GMSI·µ»ØÖµ£¬»ùÓÚLINUX
-#define GMSI_SUCCESS        0
-#define GMSI_EPERM          -1
-#define GMSI_ENOENT         -2
-#define GMSI_ESRCH          -3  
-#define GMSI_EINTR          -4
+## Git å­æ¨¡å—ç®¡ç† (Git Submodules Configuration)
+ç”±äºå¤–è®¾åº•å±‚ã€æ ¸å¿ƒ CMSISã€GMSI å‡å±äºç‹¬ç«‹å¤–é“¾ä¾èµ–ä»“åº“ã€‚
+**é¦–æ¬¡å…‹éš†æœ¬ä»“åº“æ¶æ„ï¼š**
+åŠ¡å¿…å¸¦ä¸Š `--recursive` å‚æ•°ï¼Œæ‹‰å–æ‰€æœ‰ä¾èµ–ï¼š
+```bash
+git clone --recursive https://your-repo-url/template-project.git
 ```
-
-
-
-## Ê¹ÓÃ·½·¨
-
-**²Î¿¼example/templateÊµÏÖ**
-
-### ÏîÄ¿ÖÆ×÷·½·¨
-
-#### llvm±àÒëÆ÷+cubemxÉú³É
-
-+ ÀûÓÃcubemxÉú³ÉgccÏîÄ¿
-
-+ ĞŞ¸ÄmakefileµÄ±àÒëÆ÷
-
-  ```makefile
-  CC = $(llvm_path)\bin\clang.exe
-  AS = $(llvm_path)\bin\clang.exe
-  OBJCOPY = $(llvm_path)\bin\llvm-objcopy
-  SIZE = $(llvm_path)\bin\llvm-size
-  ```
-
-+ ĞŞ¸ÄCFLAG
-
-  ```makefile
-  CFLAGS = -target armv7em-none-eabi -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-  CFLAGS += -std=gnu11 -Wall -Wextra -Ofast
-  CFLAGS += -fno-builtin -ffunction-sections -fdata-sections -fno-strict-aliasing
-  CFLAGS += -fshort-enums -fomit-frame-pointer -c -fdata-sections -ffunction-sections
-  ```
-
-+ Ö¸¶¨ldÎÄ¼ş
-
-  ```makefile
-  LDSCRIPT = STM32G431.lds
-  ```
-
-#### llvm±àÒëÆ÷+vscode±à¼­
-
-+ ÔÚ¸ùÄ¿Â¼ÏÂ´´½¨projectÎÄ¼ş¼Ğ
-
-  ```sh
-  mkdir project
-  cd project
-  ```
-
-+ ¿½±´example/templateµ½projectÎÄ¼şÏÂ£¬²¢½«templateÖØÃüÃûÎª¹¤³ÌÃû
-
-  ```sh
-  cp -r ../example/template .
-  mv template myproject
-  ```
-
-+ ĞŞ¸ÄmyprojectµÄmakefileÎÄ¼ş
-
-  ```makefile
-  #TARGET := demo
-  TARGET := myproject				# Ãû×Ö×Ô¶¨Òå
-  
-  # Ö¸¶¨ÏîÄ¿Ô´ÎÄ¼ş£¨Ğ¾Æ¬¿â¡¢µÚÈı·½ÎÄ¼ş£©
-  # SOURCES += main.c example.c
-  SOURCES += main.c object.c		# ÁíÍâ²¹ÉÏ¸ÃÏîÄ¿µÄ¶ÔÏóÎÄ¼şOBJECT.c£¬·ºÖ¸ËùÓĞ¶ÔÏóÎÄ¼ş
-  
-  # Ö¸¶¨±àÒëÆ÷£¬¸ù¾İÏîÄ¿Æ½Ì¨¾ö¶¨ Ç¶ÈëÊ½/x86
-  CC = $(llvm_path)\bin\clang.exe
-  ```
-
-#### keil+cubemx
-
-+ ÀûÓÃcubemxÉú³ÉkeilÏîÄ¿
-+ ÔÚkeilÏîÄ¿ÉÏÔö¼Ógmsi¿âÎÄ¼ş
-
-## MAKEFILEËµÃ÷
-
-+ Ö¸¶¨±àÒëÆ÷
-
-```makefile
-// Ê¹ÓÃx86ÏÂµÄllvm
-CC := clang
-CXX := clang++
-// Ê¹ÓÃÇ¶ÈëÊ½Æ½Ì¨µÄllvm
-CC = $(llvm_path)\bin\clang.exe
-AS = $(llvm_path)\bin\clang.exe
-OBJCOPY = $(llvm_path)\bin\llvm-objcopy
-SIZE = $(llvm_path)\bin\llvm-size
+**å¿˜è®°å¸¦å‚çš„è‡ªæ•‘æŒ‡ä»¤ï¼š**
+```bash
+git submodule update --init --recursive
 ```
-
-+ ±àÒëflag
-
-```makefile
-# CFLAG:cÎÄ¼ş±êÖ¾
-CFLAGS := -std=c11 -W -Ofast
-# ASFLAG£º»ã±àÎÄ¼ş±êÖ¾£¬½öÔÚÇ¶ÈëÊ½Æ½Ì¨ĞèÒª
-ASFLAGS = -target armv7em-none-eabi -mthumb
-# DFLAG£ººê±êÖ¾
-DFLAG £º= -D_XOPEN_SOURCE=700 -DLINUX_POSIX
-# LDFLAG:Á´½Ó±êÖ¾
-LDFLAGS += -T $(LDSCRIPT)			# Ç¶ÈëÊ½ĞèÒªldÎÄ¼ş£¬Ö¸¶¨Á´½ÓË³Ğò
-LDFLAGS +=-fno-autolink -Wall -lrt 	# Á´½Ó¾²Ì¬¿ârt
-```
-
-+ Ô´ÎÄ¼şÂ·¾¶
-
-```makefile
-# ½«Ñ¡¶¨µÄÄ¿Â¼ÏÂËùÓĞµÄcÎÄ¼şÌí¼Óµ½SOURCES±äÁ¿
-SOURCES += $(foreach dir, $(GMSI_DIR), $(wildcard $(dir)/*.c))
-SOURCES += $(foreach dir, $(GMSI_UTL_DIR), $(wildcard $(dir)/*.c))
-# Ö¸¶¨Ìí¼ÓcÎÄ¼ş
-SOURCES += main.c pc_uart.c pc_clock.c
-```
-
-+ ±àÒëÒÀÀµ
-
-```makefile
-# ½«ÎÄ¼şÁ´½Ó³É¿ÉÖ´ĞĞÎÄ¼ş
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-# ½«Ô´ÎÄ¼ş±äÒì³É»ã±à.oÎÄ¼ş
-%.o: %.c
-	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
-```
-
-+ ±êºÅ
-
-```makefile
-# É¾³ı±àÒëÀ¬»øÎÄ¼ş
-clean:
-	rm -rf obj/$(COBJS) $(TARGET) $(OBJECTS)
-# ´òÓ¡makefileÎÄ¼şÀïµÄ±äÁ¿Öµ
-printf_value:
-	@echo $(info source files is '$(SOURCES)')
-	@echo $(info CFILENDIR files is '$(CFILENDIR)')
-```
-
-## VS»·¾³×¼±¸
-+ clangd
-+ Ìø×ªÓë²¹È«
-```sh
-sudo apt install bear
-// ÔÚmakefileÄ¿Â¼ÏÂÖ´ĞĞ
-bear make
-```
-
-## ±àÂëÒªÇó
-
-### ±àÂë¸ñÊ½
-
-+ Ê¹ÓÃËÄ¸ö¿Õ¸ñÌæ´úTAB
-
-+ ¹ØÓÚÖ¸Õë
-
-  + Ö¸ÕëÊ¹ÓÃÇ°ÒªÅĞ¶ÏÊÇ·ÇÎª¿Õ£¨NULL£©
-
-+ ¹ØÓÚ²¼¶ûÖµ
-
-  + ¾¡¿ÉÄÜÊ¹ÓÃstdbool.hÌá¹©µÄ²¼¶ûĞÍ
-
-  + ²»ÔÊĞíÖ±½ÓÊ¹ÓÃ0ºÍ1±íÊ¾falseºÍtrue¡£Ó¦¸ÃÖ±½ÓÊ¹ÓÃfalseºÍtrue¡£
-
-  + Èç¹û¶ÔÓ¦µÄCÏµÍ³Î´Ìá¹©stdbool.h¿ÉÒÔ×ÔĞĞ¶¨Òå£¬Í¨³£¶¨ÒåÈçÏÂ
-
-    + ```c
-      typedef enum {
-          false = 0,
-          true = !false
-      } bool;
-      ```
-
-  + **¾ø¶Ô²»ÔÊĞíÔÚÂß¼­±í´ïÊ½ÖĞÓëtrue½øĞĞ±È½Ï**¡£ÒòÎªÔÚ²¼¶ûÁ¿ÖĞÖ»ÓĞfalseÊÇÈ·¶¨µÄÖµ£¨0£©£¬true¿ÉÒÔÓÃÈÎºÎ·ÇÁãÖµ±íÊ¾£¬ÊÇ²»È·¶¨µÄ£¬Òò¶øÒª±ÜÃâºÍtrue½øĞĞ±È½Ï¡£
-
-+ ¹ØÓÚÃüÃû¹æÔò
-
-  + ±äÁ¿
-
-    + ±äÁ¿Ê¹ÓÃÃû´ÊĞÔ¶ÌÓï¹¹³É
-
-    + µ¥´ÊÊ××ÖÄ¸´óĞ´
-
-    + µ¥´ÊÓëµ¥´ÊÖ®¼ä**²»ÔÊĞí**ÓÃÏÂ»®Ïß¸ô¿ª
-
-    + Ê¹ÓÃ¸ÄÁ¼µÄĞÙÑÀÀûÃüÃû·¨
-
-      + Ê¹ÓÃ¸ÄÁ¼µÄĞÙÑÀÀûÃüÃû·¨£»ÓÃÇ°×º±íÊ¾±äÁ¿ÀàĞÍ£»
-
-      | ÀàĞÍ                | Ç°×º | ×¢ÊÍ                  |
-      | ------------------- | ---- | --------------------- |
-      | uint8_t             | ch   | byte£¨ÎŞ·ûºÅ£©        |
-      | int8_t              | c    | byte£¨ÓĞ·ûºÅ£©        |
-      | uint16_t            | hw   | half-word£¨ÎŞ·ûºÅ£©   |
-      | int16_t             | i    | half-word£¨ÓĞ·ûºÅ£©   |
-      | uint32_t            | w    | word£¨ÎŞ·ûºÅ£©        |
-      | int32_t             | n    | word£¨ÓĞ·ûºÅ£©        |
-      | uint64_t            | dw   | double-word£¨ÎŞ·ûºÅ£© |
-      | int64_t             | l    | double-word£¨ÓĞ·ûºÅ£© |
-      | float               | f    |                       |
-      | double              | df   | double-float          |
-      | bool                | b    | boolean               |
-      | º¯ÊıÖ¸Õë            | fcn  |                       |
-      | typedef struct xx_t | tXxx | ×Ô¶¨Òå½á¹¹Ìå          |
-      | typedef enum xx_e   | eXxx | ×Ô¶¨ÒåÃ¶¾Ù±äÁ¿        |
-      |                     |      |                       |
-      
-      + Ö¸ÕëµÄÇ°×ºÊÇ¡°p¡±£¬Ö¸ÏòÖ¸ÕëµÄÖ¸ÕëÊÇ¡°pp¡±£¬ÒÔ´ËÀàÍÆ£¬Ò»°ãÓÃ²»µ½¡°pp¡±ÒÔÉÏµÄ¡£Èç¹ûÊÇº¯ÊıÖ¸Õë£¬ÔòÓÃfcn
-      
-      + ËùÓĞ×Ô¶¨ÒåµÄ±äÁ¿ÀàĞÍÇ°×º¶¼ÊÇ¡°t¡±
-      
-      + ¶ÔÓÚÌØÊâĞŞÊÎµÄ±äÁ¿ÔÙ¼ÓÈë²»Í¬µÄÇ°×º
-      
-        + staticĞÍ±äÁ¿×·¼Ó¡°s_¡±
-      
-        + È«¾Ö±äÁ¿×·¼Ó¡°g_¡±
-      
-        + constĞŞÊÎµÄ±äÁ¿×·¼Ó¡°c_¡±£¬µ±constºÍstaticÍ¬Ê±³öÏÖÊ¹ÓÃ¡°c_¡±
-      
-          ```c
-          bool g_bFlag = false;			//!< È«¾Ö±äÁ¿
-          static uint16_t s_hwValue;		//!< ¾²Ì¬±äÁ¿
-          
-          typedef struct {
-              ¡­
-          }example_t;
-          
-          {
-              example_t tExample ;		//!< ¾Ö²¿±äÁ¿
-          ¡­
-          }
-          ```
-      
-      + ºê£¨Macro£©ÓëÃ¶¾Ù£¨enum£©
-      
-        + ÓÉ¶ÌÓï¹¹³ÉÇÒÒ»ÂÉ**´óĞ´**
-        + µ¥´ÊÓëµ¥´ÊÖ®¼äÓÃÏÂ»®Ïß¸ô¿ª
-        + ÓĞ·µ»ØÖµµÄºê£¬ÇëÊ¹ÓÃÀ¨ºÅ°ü¹üÆğÀ´£¨³£Êı/³£Á¿³ıÍâ£©
-        + Ã»ÓĞ·µ»ØÖµµÄºê£¬ÇëÊ¹ÓÃ do {} while(0) °ü¹üÆğÀ´
-      
-      + º¯Êı£¨Function£©
-      
-        + ÓÉ¶ÌÓï¹¹³ÉÇÒÔ­ÔòÉÏÒ»ÂÉ**Ğ¡Ğ´**
-        + Ä£¿éÃûÓëÃèÊöµ¥´ÊÖ®¼äÓÃÏÂ»®Ïß¸ô¿ª£¬ÆäÖĞÃèÊöµ¥´ÊÊ××ÖÄ¸´óĞ´
-  
-  + ÆäËû
-  
-    + Èç¹ûºÍ³£Á¿½øĞĞ¡°==¡±ÔËËã£¬³£Á¿Ó¦¸Ã·Åµ½±í´ïÊ½µÄ×ó±ß
-
-### ×¢ÊÍÄ£°å
-
-+ ÎÄ¼şÍ·²¿
-
-```c
-/**
-* @file         
-* @brief		This is a brief description.
-* @details	    This is the detail description.
-* @author		author
-* @date		    date
-* @version	    v1.0
-* @par Copyright(c): 	abc corporation
-* @par History:         
-*	version: author, date, desc\n
-*/
-```
-
-+ º¯Êı×¢ÊÍ
-
-```c
-/**
- * Function: gmsi_xxxInit
- * ----------------------------
- * This function initializes a gmsi_base_t structure. It sets the structure's ID and event, 
- * initializes its list item, and inserts the item into a list. If the parent of the configuration 
- * structure is not zero, it sets the parent of the base structure; otherwise, it returns GMSI_EAGAIN.
- *
- * Parameters: 
- * ptBase: A pointer to the gmsi_base_t structure to initialize.
- * ptCfg: A pointer to the configuration structure for the base structure.
- *
- * Returns: 
- * A status code indicating the result of the function. GMSI_SUCCESS if the function succeeds, 
- * GMSI_EINVAL if the parent of the configuration structure is zero.
- */
-int gbase_Init(gmsi_base_t *ptBase, gmsi_base_cfg_t *ptCfg)
-```
-
-+ Êı¾İ½á¹¹
-
-```c
-/** 
- * @brief		This is a brief description.
- * @details	    This is the detail description. 
- */
-typedef struct
-{
-	int wVar1; /*!< Detailed description of the member var1 */
-	int wVar2; /*!< Detailed description of the member var2*/
-	int wVar3; /*!< Detailed description of the member var3 */
-} gmsi_xxx_t;
-
-```
-
-+ ºê×¢ÊÍ
-
-```c
-// ÉÏ·½»òÕßÓÒ·½½Ô¿É
-/** Description of the macro a */
-#define a		0
-
-#define b		0  /*!< Description of the macro b */
-
-```
-
-+ È«¾ÖºÍ¾²Ì¬±äÁ¿×¢ÊÍ
-
-```c
-/**  Description of global variable  */
-int g_qwe = 0;
- 
-int static  s_asd = 0; /*!< Description of static variable */
-```
-
-+ ³£ÓÃ±êÇ©ÃüÁî¹Ø¼ü×Ö
-  + ÎÄ¼şĞÅÏ¢£º
-    + @file--> ÎÄ¼şÉùÃ÷£¬¼´µ±Ç°ÎÄ¼şÃû
-    + @author --> ×÷Õß
-    + @todo --> ¸Ä½ø£¬¿ÉÒÔÖ¸¶¨Õë¶ÔµÄ°æ±¾
-  + Ä£¿éĞÅÏ¢£º
-    + @var --> Ä£¿é±äÁ¿ËµÃ÷
-    + @typedef --> Ä£¿é±äÁ¿ÀàĞÍËµÃ÷
-  + º¯ÊıĞÅÏ¢£º
-    + @param --> ²ÎÊıËµÃ÷
-    + @arg --> ÁĞ±íËµÃ÷²ÎÊıĞÅÏ¢
-    + @return --> ·µ»ØÖµËµÃ÷
-    + @retval --> ·µ»ØÖµÀàĞÍËµÃ÷
-    + @note --> ×¢½â
-  + ÌáĞÑĞÅÏ¢£º
-    + @brief --> ÕªÒª£¬¼´µ±Ç°ÎÄ¼şËµÃ÷
-    + @see --> ²Î¿´
-    + @attention --> ×¢Òâ
-    + @bug --> ÎÊÌâ
-    + @warning --> ¾¯¸æ
-    + @sa --> ²Î¿¼×ÊÁÏ

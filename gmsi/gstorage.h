@@ -6,11 +6,11 @@
 #include "gbase.h"
 
 // Define types
-typedef void (*fcnStorage)(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength);
+typedef int (*fcnStorage)(uint8_t *pchStorageStartAddr, uint16_t hwStorageSize);
 
 // Define structures
 typedef struct{
-    uint16_t *phwStorageStartAddr;
+    uint8_t *pchStorageStartAddr;
     uint16_t hwStorageLength;
     uint16_t hwCrcFlag;
 
@@ -19,15 +19,17 @@ typedef struct{
 }gstorage_data_t;
 
 typedef struct{
-    gstorage_data_t *ptData;
+    gstorage_data_t *ptStorageObject;
     uint16_t hwStorageTimeOut;
 }gstorage_cfg_t;
 
 typedef struct{
     gmsi_base_t *ptBase;
 
-    gstorage_data_t *ptData;
+    gstorage_data_t *ptStorageObject;
+    uint32_t wTimer;
     uint16_t hwStorageTimeOut;
+    uint16_t hwLastCrc;
 
     uint8_t chStorageFlag;
 }gstorage_t;

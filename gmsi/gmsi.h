@@ -14,7 +14,7 @@
 
 // Define types
 typedef struct {
-    gstorage_data_t *ptData;
+    gstorage_data_t *ptStorageObject;
 }gmsi_t;
 
 #if defined(__clang__) || defined(__ARMCOMPILER_VERSION) || defined(__ARMCC_VERSION)

@@ -7,8 +7,29 @@
 # Chip selection (default: stm32g4)
 CHIP ?= at32f4
 
-# Toolchain path
-LLVM_PATH = ~/llvm_for_arm/bin/
+# OS sensing
+ifeq ($(OS),Windows_NT)
+    SHELL = cmd.exe
+    SW_ROOT ?= D:/0_software
+    LLVM_PATH = $(SW_ROOT)/llvm_for_arm/bin/
+    MKDIR = if not exist $(subst /,\,$(BUILD_DIR)) mkdir $(subst /,\,$(BUILD_DIR))
+    RMDIR = if exist build rd /s /q build
+    # Tools
+    OPENOCD_BIN     = $(SW_ROOT)/msys64/mingw64/bin/openocd.exe
+    OPENOCD_SCRIPTS = $(SW_ROOT)/msys64/mingw64/share/openocd/scripts
+    OPENOCD_CMD = $(OPENOCD_BIN) -s $(OPENOCD_SCRIPTS) \
+                  -f $(OPENOCD_INTERFACE) -c "cmsis_dap_backend hid" \
+                  -f $(OPENOCD_TARGET)
+    NM = $(LLVM_PATH)llvm-nm.exe
+else
+    # Linux/WSL
+    LLVM_PATH = ~/llvm_for_arm/bin/
+    MKDIR = mkdir -p $(BUILD_DIR)
+    RMDIR = rm -rf build
+    OPENOCD_CMD = openocd -f $(OPENOCD_INTERFACE) \
+                  -c "cmsis_dap_backend hid" -f $(OPENOCD_TARGET)
+    NM = $(LLVM_PATH)llvm-nm
+endif
 
 # Toolchain commands
 CC = $(LLVM_PATH)clang
@@ -157,32 +178,38 @@ $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf
 	$(CP) -O binary $< $@
 
 $(BUILD_DIR):
-	mkdir -p $@
+	$(MKDIR)
 
 size: $(BUILD_DIR)/$(TARGET).elf
 	$(SZ) $<
 
 clean:
-	rm -rf build
+	$(RMDIR)
 
 # Check size target
 check-size: $(BUILD_DIR)/$(TARGET).elf
 	@echo "Checking bootloader size (must be < 16KB)..."
 	@$(SZ) $< | awk 'NR==2 {if ($$1 > 16384) {print "ERROR: Code size exceeds 16KB!"; exit 1} else {print "OK: Code size is " $$1 " bytes"}}'
 
-# OpenOCD
-# Use "cmsis_dap_backend hid" for WSL2 compatibility (bulk interface blocked by cdc_acm)
-OPENOCD_CMD = openocd -f $(OPENOCD_INTERFACE) -c "cmsis_dap_backend hid" -f $(OPENOCD_TARGET)
-
 flash: $(BUILD_DIR)/$(TARGET).hex
 	$(OPENOCD_CMD) -c "program $< verify reset exit"
 
 # Flash via already-running OpenOCD (e.g. RTT session), then restart RTT
 flash-rtt: $(BUILD_DIR)/$(TARGET).hex
+ifeq ($(OS),Windows_NT)
+	@powershell -NoProfile -Command \
+	    "$$hex = (Resolve-Path '$<').Path; \
+	     $$c = New-Object System.Net.Sockets.TcpClient('localhost', 4444); \
+	     $$s = $$c.GetStream(); \
+	     $$w = New-Object System.IO.StreamWriter($$s); \
+	     $$w.WriteLine(\"program $$hex verify reset\"); $$w.WriteLine('exit'); \
+	     $$w.Flush(); Start-Sleep 2; $$c.Close()"
+else
 	@ABS=$$(realpath $<); \
 	printf "program $$ABS verify reset\nexit\n" | nc -w 10 localhost 4444; \
 	sleep 1; \
 	printf "rtt stop\nrtt start\n" | nc -w 3 localhost 4444
+endif
 
 debug-server:
 	$(OPENOCD_CMD)
@@ -190,8 +217,13 @@ debug-server:
 debug: $(BUILD_DIR)/$(TARGET).elf
 	gdb-multiarch -x debug.gdb $<
 
-# RTT address from map file
-RTT_ADDR = $(shell grep ' _SEGGER_RTT$$' $(BUILD_DIR)/$(TARGET).map 2>/dev/null | awk '{print "0x"$$1}')
+# RTT address from nm
+ifeq ($(OS),Windows_NT)
+    RTT_ADDR = $(shell $(NM) $(BUILD_DIR)/$(TARGET).elf 2>nul | \
+        powershell -NoProfile -Command "$$input | Select-String '_SEGGER_RTT$$' | ForEach-Object { '0x' + ($$_ -split ' ')[0] } | Select-Object -First 1")
+else
+    RTT_ADDR = $(shell $(NM) $(BUILD_DIR)/$(TARGET).elf 2>/dev/null | awk '/_SEGGER_RTT$$/ {print "0x"$$1}')
+endif
 
 # Print RTT address
 rtt-addr: $(BUILD_DIR)/$(TARGET).elf
