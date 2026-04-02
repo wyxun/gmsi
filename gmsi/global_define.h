@@ -84,10 +84,11 @@ typedef enum {
 
 // Define GMSI IDs
 #define GMSI_STORAGE        ((GMSI_ID_STORAGE<<8)+1)
-typedef enum{
-    Event_Storage = Gmsi_Event00,
-    Event_GetData = Gmsi_Event01,
-}GMSI_STORAGE_Event;
+typedef enum {
+    Event_Storage      = Gmsi_Event00,  /**< 保存：把当前 RAM 数据写入 Flash              */
+    Event_GetData      = Gmsi_Event01,  /**< 加载：从 Flash 读回数据到 RAM                */
+    Event_ResetDefault = Gmsi_Event02,  /**< 重置：只清空 Flash，不动 RAM，重启后生效默认值 */
+} GMSI_STORAGE_Event;
 #define GMSI_INPUT          ((GMSI_ID_IO<<8)+1)
 
 #define GET_OBJECT_POINT(OBJECT, ADDR)    (OBJECT *)(ADDR)

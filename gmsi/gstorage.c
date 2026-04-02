@@ -26,15 +26,21 @@ static uint16_t gstorage_CalculateCrc16(uint8_t *pchData, uint16_t hwLen)
 static gmsi_base_t s_tStorageBase;
 // Define and initialize a global storage base configuration of type gmsi_base_cfg_t
 gmsi_base_cfg_t s_tStorageBaseCfg = {
-    // Set the ID to GMSI_STORAGE
     .wId = GMSI_STORAGE,
     .wParent = 0,
-    // Set the interface functions
     .FcnInterface = {
         .Clock = gstorage_Clock,
-        .Run = gstorage_Run,
+        .Run   = gstorage_Run,
     },
 };
+
+/** @brief 模块级默认 Flash 设备，由 gmsi_Init 通过 gstorage_SetDefaultFlash() 注入 */
+static gdi_flash_t *s_ptDefaultFlash = NULL;
+
+void gstorage_SetDefaultFlash(void *ptFlash)
+{
+    s_ptDefaultFlash = (gdi_flash_t *)ptFlash;
+}
 
 /**
  * @brief Handle storage events.
@@ -46,52 +52,64 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
         return;
     }
 
+    gstorage_data_t *ptObj  = ptThis->ptStorageObject;
+    gdi_flash_t     *ptFlash = ptObj->ptFlash;
+    uint32_t         wAddr   = ptObj->wFlashAddr;
+    uint16_t         len     = ptObj->hwStorageLength;
+
     if (wEvent & Event_Storage)
     {
-        uint16_t hwCrc = gstorage_CalculateCrc16(
-            ptThis->ptStorageObject->pchStorageStartAddr, 
-            ptThis->ptStorageObject->hwStorageLength
-        );
-        
-        // Append CRC at the end (2 bytes)
-        uint16_t len = ptThis->ptStorageObject->hwStorageLength;
-        ptThis->ptStorageObject->pchStorageStartAddr[len] = 
-            (uint8_t)(hwCrc & 0xFF);
-        ptThis->ptStorageObject->pchStorageStartAddr[len + 1] = 
-            (uint8_t)((hwCrc >> 8) & 0xFF);
-        
+        uint16_t hwCrc = gstorage_CalculateCrc16(ptObj->pchStorageStartAddr, len);
+
+        /* Append CRC at the end (2 bytes, little-endian) */
+        ptObj->pchStorageStartAddr[len]     = (uint8_t)(hwCrc & 0xFF);
+        ptObj->pchStorageStartAddr[len + 1] = (uint8_t)((hwCrc >> 8) & 0xFF);
+
         LOG_OUT("GStorage: Saving data, CRC: ");
         LOG_OUT(hwCrc);
         LOG_OUT("\n");
 
-        if (GMSI_SUCCESS == ptThis->ptStorageObject->fcnWrite(
-                ptThis->ptStorageObject->pchStorageStartAddr, 
-                len + 2)) {
+        gdi_flash_Unlock(ptFlash);
+        gdi_flash_Erase(ptFlash, wAddr, (uint32_t)(len + 2));
+        int32_t nRet = gdi_flash_Write(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+        gdi_flash_Lock(ptFlash);
+
+        if (nRet >= 0) {
             ptThis->hwLastCrc = hwCrc;
         } else {
             LOG_OUT("GStorage: Write Failed!\n");
         }
     }
-    
+
+    if (wEvent & Event_ResetDefault)
+    {
+        LOG_OUT("GStorage: Blanking Flash (RAM untouched)...\n");
+        /* 只清空 Flash，不修改 RAM。
+         * 系统继续以当前 RAM 数据运行，硬件行为不受影响。
+         * 下次上电时 gstorage_Init 检测到 Flash 全 FF，
+         * 会将编译期静态默认值保存到 Flash 并恢复。 */
+        gdi_flash_Unlock(ptFlash);
+        gdi_flash_Erase(ptFlash, wAddr, (uint32_t)(len + 2));
+        gdi_flash_Lock(ptFlash);
+
+        /* 同步 hwLastCrc 到当前 RAM 的 CRC，
+         * 防止 Clock 检测到"CRC 变化"立即把当前 RAM 重写回 Flash。 */
+        ptThis->hwLastCrc = gstorage_CalculateCrc16(
+            ptObj->pchStorageStartAddr, len);
+        LOG_OUT("GStorage: Flash blanked. Reboot to apply defaults.\n");
+    }
+
     if (wEvent & Event_GetData)
     {
         LOG_OUT("GStorage: Loading data...\n");
-        uint16_t len = ptThis->ptStorageObject->hwStorageLength;
-        if (GMSI_SUCCESS == ptThis->ptStorageObject->fcnRead(
-                ptThis->ptStorageObject->pchStorageStartAddr, 
-                len + 2)) {
-            
-            uint16_t hwReadCrc = 
-                ptThis->ptStorageObject->pchStorageStartAddr[len];
-            hwReadCrc |= (uint16_t)(
-                ptThis->ptStorageObject->pchStorageStartAddr[len + 1] 
-                << 8);
-            
-            uint16_t hwCalcCrc = gstorage_CalculateCrc16(
-                ptThis->ptStorageObject->pchStorageStartAddr, 
-                len
-            );
-            
+        int32_t nRet = gdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+
+        if (nRet >= 0) {
+            uint16_t hwReadCrc = ptObj->pchStorageStartAddr[len];
+            hwReadCrc |= (uint16_t)(ptObj->pchStorageStartAddr[len + 1] << 8);
+
+            uint16_t hwCalcCrc = gstorage_CalculateCrc16(ptObj->pchStorageStartAddr, len);
+
             if (hwReadCrc == hwCalcCrc) {
                 ptThis->hwLastCrc = hwReadCrc;
                 LOG_OUT("GStorage: Load Success, CRC Match.\n");
@@ -145,12 +163,12 @@ int gstorage_Clock(uintptr_t wObjectAddr)
         ptThis->wTimer--;
     } else {
         ptThis->wTimer = ptThis->hwStorageTimeOut;
-        
+
         uint16_t hwCurrentCrc = gstorage_CalculateCrc16(
-            ptThis->ptStorageObject->pchStorageStartAddr, 
+            ptThis->ptStorageObject->pchStorageStartAddr,
             ptThis->ptStorageObject->hwStorageLength
         );
-        
+
         if (hwCurrentCrc != ptThis->hwLastCrc) {
             gbase_EventPost(ptThis->ptBase->wId, Event_Storage);
         }
@@ -164,18 +182,18 @@ int gstorage_Clock(uintptr_t wObjectAddr)
  */
 int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
-    gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
-    gstorage_cfg_t *ptCfg = (gstorage_cfg_t *)wObjectCfgAddr;
+    gstorage_t     *ptThis = (gstorage_t *)wObjectAddr;
+    gstorage_cfg_t *ptCfg  = (gstorage_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
         GLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
         return GMSI_EFAIL;
     }
 
-    ptThis->ptStorageObject = ptCfg->ptStorageObject;
-    ptThis->ptBase = &s_tStorageBase;
+    ptThis->ptStorageObject  = ptCfg->ptStorageObject;
+    ptThis->ptBase           = &s_tStorageBase;
     ptThis->hwStorageTimeOut = ptCfg->hwStorageTimeOut;
-    ptThis->wTimer = ptCfg->hwStorageTimeOut;
+    ptThis->wTimer           = ptCfg->hwStorageTimeOut;
 
     s_tStorageBaseCfg.wParent = wObjectAddr;
     int wRet = gbase_Init(ptThis->ptBase, &s_tStorageBaseCfg);
@@ -184,48 +202,53 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         return wRet;
     }
 
-    if (ptThis->ptStorageObject && ptThis->ptStorageObject->fcnRead) {
-        uint16_t len = ptThis->ptStorageObject->hwStorageLength;
-        ptThis->ptStorageObject->fcnRead(
-            ptThis->ptStorageObject->pchStorageStartAddr, 
-            len + 2
-        );
-        
-        bool bIsBlank = true;
-        for (uint16_t i = 0; i < len + 2; i++) {
-            if (ptThis->ptStorageObject->pchStorageStartAddr[i] != 0xFF) {
-                bIsBlank = false;
-                break;
-            }
-        }
+    gstorage_data_t *ptObj  = ptThis->ptStorageObject;
 
-        if (bIsBlank) {
-            LOG_OUT("GStorage: Storage blank. Initializing defaults...\n");
-            gbase_EventPost(ptThis->ptBase->wId, Event_Storage);
+    /* 若配置时 ptFlash 未填，使用 gmsi_Init 注入的全局默认值 */
+    if (ptObj != NULL && ptObj->ptFlash == NULL) {
+        ptObj->ptFlash = s_ptDefaultFlash;
+    }
+
+    gdi_flash_t     *ptFlash = ptObj ? ptObj->ptFlash : NULL;
+
+    if (ptObj == NULL || ptFlash == NULL) {
+        return GMSI_SUCCESS; /* No flash configured, skip init read */
+    }
+
+    uint32_t wAddr = ptObj->wFlashAddr;
+    uint16_t len   = ptObj->hwStorageLength;
+
+    /* Initial read from Flash */
+    gdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+
+    bool bIsBlank = true;
+    for (uint16_t i = 0; i < len + 2; i++) {
+        if (ptObj->pchStorageStartAddr[i] != 0xFF) {
+            bIsBlank = false;
+            break;
+        }
+    }
+
+    if (bIsBlank) {
+        LOG_OUT("GStorage: Storage blank. Initializing defaults...\n");
+        gbase_EventPost(ptThis->ptBase->wId, Event_Storage);
+    } else {
+        uint16_t hwReadCrc = ptObj->pchStorageStartAddr[len];
+        hwReadCrc |= (uint16_t)(ptObj->pchStorageStartAddr[len + 1] << 8);
+
+        uint16_t hwCalcCrc = gstorage_CalculateCrc16(ptObj->pchStorageStartAddr, len);
+
+        if (hwReadCrc == hwCalcCrc) {
+            ptThis->hwLastCrc = hwReadCrc;
+            LOG_OUT("GStorage: Load Success, CRC: ");
+            LOG_OUT(hwReadCrc);
+            LOG_OUT("\n");
         } else {
-            uint16_t hwReadCrc = 
-                ptThis->ptStorageObject->pchStorageStartAddr[len];
-            hwReadCrc |= (uint16_t)(
-                ptThis->ptStorageObject->pchStorageStartAddr[len + 1] 
-                << 8);
-            
-            uint16_t hwCalcCrc = gstorage_CalculateCrc16(
-                ptThis->ptStorageObject->pchStorageStartAddr, 
-                len
-            );
-            
-            if (hwReadCrc == hwCalcCrc) {
-                ptThis->hwLastCrc = hwReadCrc;
-                LOG_OUT("GStorage: Load Success, CRC: ");
-                LOG_OUT(hwReadCrc);
-                LOG_OUT("\n");
-            } else {
-                LOG_OUT("GStorage: CRC Error! Calc: ");
-                LOG_OUT(hwCalcCrc);
-                LOG_OUT(", Stored: ");
-                LOG_OUT(hwReadCrc);
-                LOG_OUT("\n");
-            }
+            LOG_OUT("GStorage: CRC Error! Calc: ");
+            LOG_OUT(hwCalcCrc);
+            LOG_OUT(", Stored: ");
+            LOG_OUT(hwReadCrc);
+            LOG_OUT("\n");
         }
     }
 

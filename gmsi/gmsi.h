@@ -7,15 +7,23 @@
 #include "utilities/util_debug.h"
 #include "gcoroutine.h"
 #include "glog.h"
-#include "gstorage.h"
+/* NOTE: gstorage.h is intentionally NOT included here.
+ * Users who declare gstorage objects must include gstorage.h themselves. */
 
 #undef this
 #define this    (*ptThis)
 
-// Define types
 typedef struct {
-    gstorage_data_t *ptStorageObject;
-}gmsi_t;
+    /**
+     * @brief 默认 Flash 设备，供 gstorage 使用（可选）。
+     *
+     * 赋值 HW.ptAppFlash 后 gmsi_Init 内部自动绑定到所有 gstorage 实例。
+     * 若不使用 gstorage，保持 NULL 即可。
+     * 使用 void* 以避免对 gdi_flash_t 类型的强依赖——
+     * gstorage.c 内部负责转型。
+     */
+    void *ptAppFlash;
+} gmsi_t;
 
 #if defined(__clang__) || defined(__ARMCOMPILER_VERSION) || defined(__ARMCC_VERSION)
   #if defined(__has_attribute)

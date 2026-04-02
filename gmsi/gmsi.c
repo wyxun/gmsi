@@ -1,6 +1,13 @@
 #include <stdint.h>
 #include "gmsi.h"
-#include "gstorage.h"
+
+/* gstorage 可选模块附着点：
+ * 当 gstorage.c 未加入编译时，此 weak 定义生效 —— no-op。
+ * 当 gstorage.c 已加入编译时，其内部的强定义自动覆盖此 stub。 */
+__attribute__((weak)) void gstorage_SetDefaultFlash(void *ptFlash)
+{
+    (void)ptFlash; /* gstorage not included in this build */
+}
 
 #ifdef LINUX_POSIX
 #include <stdio.h>
@@ -41,8 +48,14 @@ extern const uint8_t Image$$init_infos$$Limit;
 /**
  * Function: gmsi_Init
  * ----------------------------
- * This function initializes the GMSI framework. It initializes the GMSI 
- * storage and coroutine, and prints the GMSI version.
+ * This function initializes the GMSI framework. It initializes the GMSI storage and coroutine, 
+ * and prints the GMSI version.
+ *
+ * Parameters: 
+ * ptGmsi: A pointer to the GMSI structure.
+ *
+ * Returns: 
+ * None
  */
 void gmsi_Init(gmsi_t *ptGmsi)
 {
@@ -58,22 +71,22 @@ void gmsi_Init(gmsi_t *ptGmsi)
     LOG_OUT("GMSI VERSION :");
     LOG_OUT((uint8_t *)&GMSIVersion, 4);
 
-if ((const void *)__start_init_infos != NULL && 
-    (const void *)__stop_init_infos != NULL &&
+    /* 将调用方提供的默认 Flash 注入 gstorage 层，
+     * 使 ptFlash == NULL 的 gstorage 实例在 Init 时自动绑定 */
+    gstorage_SetDefaultFlash(ptGmsi->ptAppFlash);
+
+
+if ((const void *)__start_init_infos != NULL && (const void *)__stop_init_infos != NULL &&
     __start_init_infos < __stop_init_infos) {
     start = __start_init_infos;
     stop  = __stop_init_infos;
 }
 #ifdef __ARMCC_VERSION
 else {
-    /* armlink provides Image$$<sec>$$Base/Limit as addresses */
-    const gmsi_init_info_t *arm_start = 
-        (const gmsi_init_info_t *)&Image$$init_infos$$Base;
-    const gmsi_init_info_t *arm_stop  = 
-        (const gmsi_init_info_t *)&Image$$init_infos$$Limit;
-    if ((const void *)arm_start != NULL && 
-        (const void *)arm_stop != NULL && 
-        arm_start < arm_stop) {
+    /* armlink provides Image$$<sec>$$Base/Limit as addresses — take address & cast */
+    const gmsi_init_info_t *arm_start = (const gmsi_init_info_t *)&Image$$init_infos$$Base;
+    const gmsi_init_info_t *arm_stop  = (const gmsi_init_info_t *)&Image$$init_infos$$Limit;
+    if ((const void *)arm_start != NULL && (const void *)arm_stop != NULL && arm_start < arm_stop) {
         start = arm_start;
         stop  = arm_stop;
     }
@@ -99,6 +112,14 @@ else {
 /**
  * Function: gmsi_Run
  * ----------------------------
+ * This function runs the GMSI framework. It traverses the list of objects, and
+ * for each object, it calls the object's Run function.
+ *
+ * Parameters: 
+ * None
+ *
+ * Returns: 
+ * None
  */
 void gmsi_Run(void)
 {
@@ -141,6 +162,15 @@ void gmsi_Run(void)
 /**
  * Function: gmsi_Clock
  * ----------------------------
+ * This function calls the Clock function of each object in the GMSI framework. 
+ * It traverses the list of objects, and for each object, it calls the object's 
+ * Clock function.
+ * 
+ * Parameters: 
+ * None
+ *
+ * Returns: 
+ * None
  */
 void gmsi_Clock(void)
 {
@@ -184,6 +214,15 @@ void gmsi_Clock(void)
 /**
  * Function: assert_failed
  * ----------------------------
+ * This function is called when an assertion fails. It prints an error message, 
+ * including the file where the assertion failed and the line number of the failure.
+ *
+ * Parameters: 
+ * file: The file where the assertion failed.
+ * line: The line number of the assertion failure.
+ *
+ * Returns: 
+ * None. This function enters an infinite loop after printing the error message.
  */
 void assert_failed(char *file, uint32_t line)
 {

@@ -8,6 +8,7 @@
 /*============================ INCLUDES ======================================*/
 #include "core/blm.h"
 #include "port/blm_port.h"
+#include "gstorage.h"
 #include "gblinfo.h"
 #include <perf_counter.h>
 #include "utilities/util_debug.h"
@@ -81,52 +82,20 @@ GMSI_DECLARE_OBJECT(gblinfo, Gblinfo,
     .wSharedInfoAddr = GBLINFO_SHARED_ADDR,
 );
 
-/* Flash Storage Address (Example: Page 31 for STM32G431) */
+/* Flash Storage Address (Page for storing app config) */
 #define GMSI_STORAGE_FLASH_ADDR     0x0800F800
 
-static int AppStorageWrite(uint8_t *pchStorageStartAddr, uint16_t hwStorageSize)
-{
-    int nRet;
-    LOG_OUT("Physical Flash: Erasing and Writing... (bytes): ");
-    LOG_OUT(hwStorageSize);
-    LOG_OUT("\n");
-    
-    blm_port_FlashUnlock();
-    // Erase enough pages (assuming config fits in 1 page)
-    nRet = blm_port_FlashErase(
-        GMSI_STORAGE_FLASH_ADDR, 
-        blm_port_FlashGetPageSize(GMSI_STORAGE_FLASH_ADDR)
-    );
-    
-    if (nRet == 0) {
-        nRet = blm_port_FlashWrite(
-            GMSI_STORAGE_FLASH_ADDR, 
-            pchStorageStartAddr, 
-            hwStorageSize
-        );
-    }
-    blm_port_FlashLock();
-    
-    return nRet;
-}
-
-static int AppStorageRead(uint8_t *pchStorageStartAddr, uint16_t hwStorageSize)
-{
-    return blm_port_FlashRead(
-        GMSI_STORAGE_FLASH_ADDR, 
-        pchStorageStartAddr, 
-        hwStorageSize
-    );
-}
+/* Storage data descriptor — ptFlash filled at runtime before gmsi_Init() */
+static gstorage_data_t s_tStorageData = {
+    .ptFlash             = NULL,
+    .wFlashAddr          = GMSI_STORAGE_FLASH_ADDR,
+    .pchStorageStartAddr = (uint8_t *)&s_tAppData,
+    .hwStorageLength     = sizeof(test_app_data_t) - 2,
+};
 
 GMSI_DECLARE_OBJECT(gstorage, GStorage,
-    .ptStorageObject = &(gstorage_data_t){
-        .pchStorageStartAddr = (uint8_t *)&s_tAppData,
-        .hwStorageLength = sizeof(test_app_data_t) - 2, // Exclude CRC (2 bytes)
-        .fcnWrite = AppStorageWrite,
-        .fcnRead = AppStorageRead,
-    },
-    .hwStorageTimeOut = 5000, // 5 seconds
+    .ptStorageObject = &s_tStorageData,
+    .hwStorageTimeOut = 5000,
 );
 
 /*============================ IMPLEMENTATION ================================*/
@@ -191,17 +160,7 @@ static void System_Init(void)
 
 /*============================ GMSI CONFIG ===================================*/
 
-static gstorage_data_t s_tSysData = {
-    .pchStorageStartAddr = (uint8_t *)&s_tAppData,
-    .hwStorageLength = sizeof(test_app_data_t) - 2,
-    .hwCrcFlag = 0,
-    .fcnWrite = AppStorageWrite,
-    .fcnRead = AppStorageRead,
-};
-
-static gmsi_t s_tGmsi = {
-    .ptStorageObject = &s_tSysData,
-};
+static gmsi_t s_tGmsi;  /* ptAppFlash assigned at runtime before gmsi_Init */
 
 /*============================ MAIN ==========================================*/
 
@@ -217,7 +176,8 @@ int main(void)
     TRACE.Init(NULL);
     LOG_OUT("BLM Bootloader Started\r\n");
     
-    /* Initialize GMSI framework */
+    /* Initialize GMSI framework — ptAppFlash is bound internally */
+    s_tGmsi.ptAppFlash = HW.ptAppFlash;
     gmsi_Init(&s_tGmsi);
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);

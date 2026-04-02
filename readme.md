@@ -134,6 +134,93 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 
 ---
 
+## GStorage — 持久化存储模块
+
+`gstorage` 提供自动 CRC 校验的数据持久化能力：当 RAM 中的数据发生变化时，
+定时检测并将数据写入 Flash；系统启动时自动从 Flash 恢复数据。
+
+### 功能特性
+- **定时自动保存**：以 CRC 变化检测为触发，避免频繁擦写
+- **CRC-16 完整性校验**：读取时自动验证，损坏时打印告警
+- **Erase-before-Write**：写入前自动执行 Unlock → Erase → Write → Lock
+- **GDI 接口解耦**：框架层与芯片无关，芯片端只需实现 `gdi_flash_t`
+
+### Flash 移植步骤
+
+**1. 在 port 文件中实现 `gdi_flash_t`（以 AT32 为例）：**
+```c
+static int32_t my_flash_erase(void *p, uint32_t addr, uint32_t size) {
+    (void)p;
+    return (int32_t)blm_port_FlashErase(addr, size);
+}
+static int32_t my_flash_write(void *p, uint32_t addr,
+                              const uint8_t *data, uint32_t len) {
+    (void)p;
+    return (int32_t)blm_port_FlashWrite(addr, data, len);
+}
+static int32_t my_flash_read(void *p, uint32_t addr,
+                             uint8_t *buf, uint32_t len) {
+    (void)p;
+    return (int32_t)blm_port_FlashRead(addr, buf, len);
+}
+static int32_t my_flash_unlock(void *p) { (void)p; return blm_port_FlashUnlock(); }
+static int32_t my_flash_lock  (void *p) { (void)p; return blm_port_FlashLock(); }
+
+static gdi_flash_t s_tFlashApp = {
+    .pPriv    = NULL,
+    .fnErase  = my_flash_erase,
+    .fnWrite  = my_flash_write,
+    .fnRead   = my_flash_read,
+    .fnUnlock = my_flash_unlock,
+    .fnLock   = my_flash_lock,
+};
+
+const gdi_hardware_t HW = {
+    /* ... 其他外设 ... */
+    .ptAppFlash = &s_tFlashApp,
+};
+```
+
+**2. 在 `gdi_hw.h` 中声明 Flash 资源：**
+```c
+typedef struct {
+    gdi_gpio_t   *ptLedStatus;
+    gdi_flash_t  *ptAppFlash;   /* ← 添加此字段 */
+} gdi_hardware_t;
+```
+
+**3. 在 `main.c` 中注册 GStorage 对象：**
+```c
+/* 存储描述符，ptFlash 留 NULL — 由 gmsi_Init 框架内部自动绑定 */
+static gstorage_data_t s_tStorageData = {
+    .ptFlash             = NULL,
+    .wFlashAddr          = 0x0800F800,     /* Flash 存储地址 */
+    .pchStorageStartAddr = (uint8_t *)&tAppData,
+    .hwStorageLength     = sizeof(tAppData) - 2, /* 末尾 2 字节留给 CRC */
+};
+
+GMSI_DECLARE_OBJECT(gstorage, GStorage,
+    .ptStorageObject  = &s_tStorageData,
+    .hwStorageTimeOut = 5000,              /* 5 秒检测一次变化 */
+);
+
+/* main.c 只需在 gmsi_Init 前一行赋值，框架内部完成绑定 */
+static gmsi_t s_tGmsi;
+
+int main(void) {
+    System_Init();
+    s_tGmsi.ptAppFlash = HW.ptAppFlash;   /* ← 唯一需要的绑定操作 */
+    gmsi_Init(&s_tGmsi);
+    /* ... */
+}
+```
+
+> [!NOTE]
+> `hwStorageLength` 必须比数据结构小 2 字节（CRC 占用末尾 2 字节）。
+> `wFlashAddr` 必须是 Flash 页面对齐地址，Erase 以此为起点擦除覆盖数据所在的页。
+
+---
+
 ## 系统集成 (System Integration)
 
 ### 核心初始化流
@@ -141,8 +228,7 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 初始化函数。
 ```c
 int main(void) {
-    // 系统全局数据结构
-    gmsi_t tGmsi = { .ptData = &tSysData };
+    gmsi_t tGmsi = { 0 };
     
     gmsi_Init(&tGmsi); // 自动初始化所有模块
     while (1) {
