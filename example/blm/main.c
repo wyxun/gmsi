@@ -169,6 +169,7 @@ static gmsi_t s_tGmsi;  /* ptAppFlash assigned at runtime before gmsi_Init */
  */
 int main(void)
 {
+    static char s_achBuffer[128];
     /* System initialization */
     System_Init();
     
@@ -197,6 +198,11 @@ int main(void)
             s_tAppData.chVar1++;
             s_tAppData.wVar3 += 100;
             LOG_OUT("Test: Variables modified. Waiting for GStorage save...\n");
+            // 打印当前值
+            snprintf(s_achBuffer, sizeof(s_achBuffer), "chVar1: %d\n", s_tAppData.chVar1);
+            LOG_OUT(s_achBuffer);
+            snprintf(s_achBuffer, sizeof(s_achBuffer), "wVar3: %d\n", s_tAppData.wVar3);
+            LOG_OUT(s_achBuffer);
         }
     }
     

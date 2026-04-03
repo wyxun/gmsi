@@ -219,8 +219,7 @@ debug: $(BUILD_DIR)/$(TARGET).elf
 
 # RTT address from nm
 ifeq ($(OS),Windows_NT)
-    RTT_ADDR = $(shell $(NM) $(BUILD_DIR)/$(TARGET).elf 2>nul | \
-        powershell -NoProfile -Command "$$input | Select-String '_SEGGER_RTT$$' | ForEach-Object { '0x' + ($$_ -split ' ')[0] } | Select-Object -First 1")
+    RTT_ADDR = $(shell powershell -NoProfile -Command "$$out = & '$(NM)' $(BUILD_DIR)/$(TARGET).elf 2>$$null | Select-String '_SEGGER_RTT$$' | Select-Object -First 1; if ($$out.Line -match '^([0-9a-fA-F]+)') { '0x' + $$matches[1] }")
 else
     RTT_ADDR = $(shell $(NM) $(BUILD_DIR)/$(TARGET).elf 2>/dev/null | awk '/_SEGGER_RTT$$/ {print "0x"$$1}')
 endif
