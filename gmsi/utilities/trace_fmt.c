@@ -29,33 +29,27 @@ static const char s_chHexDigits[] = "0123456789ABCDEF";
 
 char *trace_fmt_hex32(uint32_t wValue, char *pchBuf)
 {
-    pchBuf[0] = '0';
-    pchBuf[1] = 'x';
     for (int_fast8_t i = 7; i >= 0; i--) {
-        pchBuf[2 + (7 - i)] = s_chHexDigits[(wValue >> (i * 4)) & 0x0F];
+        pchBuf[7 - i] = s_chHexDigits[(wValue >> (i * 4)) & 0x0F];
     }
-    pchBuf[10] = '\0';
+    pchBuf[8] = '\0';
     return pchBuf;
 }
 
 char *trace_fmt_hex16(uint16_t hwValue, char *pchBuf)
 {
-    pchBuf[0] = '0';
-    pchBuf[1] = 'x';
     for (int_fast8_t i = 3; i >= 0; i--) {
-        pchBuf[2 + (3 - i)] = s_chHexDigits[(hwValue >> (i * 4)) & 0x0F];
+        pchBuf[3 - i] = s_chHexDigits[(hwValue >> (i * 4)) & 0x0F];
     }
-    pchBuf[6] = '\0';
+    pchBuf[4] = '\0';
     return pchBuf;
 }
 
 char *trace_fmt_hex8(uint8_t chValue, char *pchBuf)
 {
-    pchBuf[0] = '0';
-    pchBuf[1] = 'x';
-    pchBuf[2] = s_chHexDigits[(chValue >> 4) & 0x0F];
-    pchBuf[3] = s_chHexDigits[chValue & 0x0F];
-    pchBuf[4] = '\0';
+    pchBuf[0] = s_chHexDigits[(chValue >> 4) & 0x0F];
+    pchBuf[1] = s_chHexDigits[chValue & 0x0F];
+    pchBuf[2] = '\0';
     return pchBuf;
 }
 

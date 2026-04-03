@@ -44,6 +44,53 @@ make
 
 ---
 
+## GMSI 日志系统 (LOG)
+
+GMSI 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景。
+
+### 1. `GLOG` — 类型自动分发（高效、零缓存）
+通过 `plooc` 变参技术将每个参数的类型自动映射到底层 `TRACE` 接口处理函数。它不需要格式化解析，性能最高，且类型安全。
+
+```c
+#include "utilities/util_debug.h"
+
+// 简单字符串
+GLOG(I, "System startup.\n");
+
+// 混合字符串与变量 (自动按类型分发)
+GLOG(W, "Sensor alert! ID: ", wID, ", Val: ", hwVal, "\n");
+
+// 十六进制输出 (手动带 0x)
+GLOG(D, "Buffer Head: 0x", wHead, "\n");
+```
+
+### 2. `GLOGF` — 格式化输出（标准风格、轻量级）
+内部调用手写格式化解析器（无 `snprintf` 依赖），支持常用的格式符：`%d %u %x %s %c` 以及补零和宽度（如 `%08x`）。
+
+```c
+// 常用整数格式化
+GLOGF(I, "Current tick: %d\n", wTicks);
+
+// 带补零的十六进制
+GLOGF(D, "Address: 0x%08x\n", (uintptr_t)ptThis);
+
+// 组合字符串与字符
+GLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
+```
+
+### 3. 日志级别 (Severity Levels)
+可以通过在 `userconfig.h` 中定义 `GMSI_LOG_LEVEL` 来控制编译期过滤级别：
+- `GMSI_LOG_LEVEL_NONE`  (0)
+- `GMSI_LOG_LEVEL_ERROR` (1) - 简写 `E`
+- `GMSI_LOG_LEVEL_WARN`  (2) - 简写 `W`
+- `GMSI_LOG_LEVEL_INFO`  (3) - 简写 `I` (默认级别)
+- `GMSI_LOG_LEVEL_DEBUG` (4) - 简写 `D`
+
+### 4. 设计详情
+更多关于 LOG 的零缓存设计与实现细节，请参考 [LOG 设计文档](doc/superpowers/LOG_design.md)。
+
+---
+
 ## 模块开发指南 (Object Template)
 
 GMSI 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 

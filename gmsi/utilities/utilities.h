@@ -5,7 +5,13 @@
 
 #define PRIVILEGED_FUNCTION
 
-// freertos相关定义
+#ifndef pdTRUE
+    #define pdTRUE                     1
+#endif
+#ifndef pdFALSE
+    #define pdFALSE                    0
+#endif
+
 typedef uint32_t     TickType_t;
 typedef unsigned long    UBaseType_t;
 
@@ -16,6 +22,11 @@ typedef unsigned long    UBaseType_t;
 #endif
 #ifndef mtCOVERAGE_TEST_MARKER
     #define mtCOVERAGE_TEST_MARKER()
+#endif
+
+#ifndef container_of
+#define container_of(pointer, type, member) \
+    ((type *)((char *)(pointer) - (unsigned long)(&((type *)0)->member)))
 #endif
 
 #endif

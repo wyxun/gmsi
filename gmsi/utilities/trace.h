@@ -109,6 +109,7 @@ def_interface(i_trace_t)
         void (*UInt8)   (uint8_t chValue);
         void (*Int8)    (int8_t cValue);
         void (*String)  (const char * pchString);
+        void (*Buffer)  (const char * pchBuffer, uint_fast16_t hwSize);
    
         void (*Words)   (uint32_t *pwStream,  uint_fast16_t hwSize);
         void (*HWords)  (uint16_t *phwStream, uint_fast16_t hwSize);

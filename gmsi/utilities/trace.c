@@ -68,6 +68,7 @@
 /*============================ PROTOTYPES ====================================*/
 static void __trace_init(trace_cfg_t *ptCFG);
 static void __trace_string(const char * pchString);
+static void __trace_buffer(const char * pchBuffer, uint_fast16_t hwSize);
 static void __trace_uint32_to_string(uint32_t);
 static void __trace_int32_to_string(int32_t);
 static void __trace_uint16_to_string(uint16_t);
@@ -85,6 +86,7 @@ const i_trace_t TRACE = {
     .Init =             &__trace_init,
     .ToString = {
         .String =       &__trace_string,
+        .Buffer =       &__trace_buffer,
         .UInt32 =       &__trace_uint32_to_string,
         .Int32 =        &__trace_int32_to_string,
         .UInt16 =       &__trace_uint16_to_string,
@@ -106,6 +108,29 @@ static void __trace_init(trace_cfg_t *ptCFG)
     (void)ptCFG;
 }
 
+static void __trace_buffer(const char *pchBuffer, uint_fast16_t hwSize)
+{
+    if (NULL == pchBuffer || 0 == hwSize) {
+        return;
+    }
+#if TRACE_USE_LIBC_PRINTF
+    fwrite(pchBuffer, 1, hwSize, stdout);
+#else
+    /* Use a wrapper to print segment since TRACE_MCU_WRITE_STRING typically expects NULL-term */
+    /* However, SEGGER_RTT_Write can take length. 
+       If our platform macro supports length, we should use it. */
+    #ifdef TRACE_MCU_WRITE_BUFFER
+        TRACE_MCU_WRITE_BUFFER(pchBuffer, hwSize);
+    #else
+        /* Fallback: print char by char if no buffer write available */
+        for (uint_fast16_t n = 0; n < hwSize; n++) {
+            char __chTmp[2] = {pchBuffer[n], '\0'};
+            TRACE_MCU_WRITE_STRING(__chTmp);
+        }
+    #endif
+#endif
+}
+
 static void __trace_string(const char * pchString)
 {
 #if TRACE_USE_LIBC_PRINTF
@@ -118,7 +143,7 @@ static void __trace_string(const char * pchString)
 static void __trace_uint32_to_string(uint32_t wValue)
 {
 #if TRACE_USE_LIBC_PRINTF
-    printf("0x%08x", wValue);
+    printf("%08x", wValue);
 #else
     char buf[12];
     trace_fmt_hex32(wValue, buf);
@@ -140,7 +165,7 @@ static void __trace_int32_to_string(int32_t nValue)
 static void __trace_uint16_to_string(uint16_t hwValue)
 {
 #if TRACE_USE_LIBC_PRINTF
-    printf("0x%04x", hwValue);
+    printf("%04x", hwValue);
 #else
     char buf[8];
     trace_fmt_hex16(hwValue, buf);
@@ -162,7 +187,7 @@ static void __trace_int16_to_string(int16_t iValue)
 static void __trace_uint8_to_string(uint8_t chValue)
 {
 #if TRACE_USE_LIBC_PRINTF
-    printf("0x%02x", chValue);
+    printf("%02x", chValue);
 #else
     char buf[6];
     trace_fmt_hex8(chValue, buf);

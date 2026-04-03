@@ -62,6 +62,7 @@ C_SOURCES = \
     $(GMSI_DIR)/gstorage.c \
     $(GMSI_DIR)/utilities/list.c \
     $(GMSI_DIR)/utilities/util_queue.c \
+    $(GMSI_DIR)/utilities/util_debug.c \
     $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
     $(LIB_DIR)/perf_counter/perf_counter.c
 
@@ -120,7 +121,8 @@ C_DEFS = \
     -D__PERFC_CFG_PORTING_INCLUDE__=\"perfc_port_user.h\" \
     -D__COMPILER_HAS_GNU_EXTENSIONS__=1 \
     -DTRACE_USE_LIBC_PRINTF=0 \
-    '-DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))'
+    '-DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))' \
+    '-DTRACE_MCU_WRITE_BUFFER(p,l)=SEGGER_RTT_Write(0,(p),(l))'
 
 # Include paths
 C_INCLUDES = \

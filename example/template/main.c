@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "example.h"
 #include "template.h"
+#include "utilities/util_debug.h"
 
 #define EXAMPLE_RING_BUFFER_SIZE 256
 uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
@@ -39,8 +40,10 @@ gmsi_t tGmsi = {&tSysData};
 int main()
 {   
     // example hardware init
+    GLOG(I, "Starting Template Example...\n");
     
     gmsi_Init(&tGmsi);
+    GLOG(I, "Entering main loop.\n");
     while (1)
     {
         gmsi_Run();
