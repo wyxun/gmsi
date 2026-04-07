@@ -45,11 +45,11 @@ PERFC_PT_BEGIN(this.chState)
         (ptObject != NULL),
         ptObject = (template_t *)pvParam;
     )
-    GLOG_PRINTF("Template Coroutine Running");
+    GLOG(I, "Template Coroutine Running");
     PERFC_PT_DELAY_MS(1000);
-    GLOG_PRINTF("Template Coroutine delay 1s");
+    GLOG(D, "Template Coroutine delay 1s");
     PERFC_PT_DELAY_MS(500);
-    GLOG_PRINTF("Template Coroutine delay 0.5s");
+    GLOG(D, "Template Coroutine delay 0.5s");
     } while(0);
 PERFC_PT_END()
 
@@ -62,19 +62,19 @@ static void template_EventHandle(template_t *ptThis, uint32_t wEvent)
     GMSI_MSG_DECLARE(TemplateTestBuffer, 20);
 
     if (ptThis == NULL) {
-        GLOG_PRINTF("ptThis is NULL.");
+        GLOG(E, "ptThis is NULL.");
         return;
     }
 
     if (wEvent & Event_SyncMissed) {
-        GLOG_PRINTF("get event Event_SyncMissed");
+        GLOG(D, "get event Event_SyncMissed");
     }
 
     if (wEvent & Event_SyncButtonPushed) {
         if (GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle,
                                               (void *)ptThis,
                                               template_gcoroutine)) {
-            GLOG_PRINTF("Error: gcoroutine_Insert failed.");
+            GLOG(E, "Error: gcoroutine_Insert failed.");
         }
     }
 
@@ -96,7 +96,7 @@ int template_Run(uintptr_t wObjectAddr)
 
     template_t *ptThis = (template_t *)wObjectAddr;
     if (ptThis == NULL) {
-        GLOG_PRINTF("ptThis is NULL.");
+        GLOG(E, "ptThis is NULL.");
         return GMSI_EFAIL;
     }
 
@@ -111,12 +111,12 @@ int template_Run(uintptr_t wObjectAddr)
         const example_share_mem_t *ptGetExampleShareData =
             (example_share_mem_t *)ptShareMem->pchBuffer;
         if (ptGetExampleShareData->value2 != 5) {
-            //GLOG_PRINTF("Error: Shared memory values are not as expected.");
+            //GLOG(E, "Error: Shared memory values are not as expected.");
         } else {
-            GLOG_PRINTF("Shared memory values are correct.");
+            GLOG(I, "Shared memory values are correct.");
         }
     } else {
-        GLOG_PRINTF("Error: ptShareMem is NULL.");
+        GLOG(E, "Error: ptShareMem is NULL.");
     }
 
     wEvent = gbase_EventPend(ptThis->ptBase);
@@ -147,7 +147,7 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     template_cfg_t *ptCfg  = (template_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
+        GLOG(E, "Error: ptThis or ptCfg is NULL.");
         return GMSI_EFAIL;
     }
 
@@ -171,7 +171,7 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
 }
 
-// GMSI_DECLARE_OBJECT(template, Template,
-//     .hwRingSize = 0,
-//     .pchRingBuffer = NULL,
-// );
+GMSI_DECLARE_OBJECT(template, Template, 
+    .hwRingSize = 0,
+    .pchRingBuffer = NULL,
+);

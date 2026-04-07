@@ -15,8 +15,8 @@ __attribute__((weak)) void gstorage_SetDefaultFlash(void *ptFlash)
 
 #define GENERAL_PURPOSE                 0               //!< General purpose 
 #define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
-#define GMSI_INTERFACE_VERSION          1               //!< GMSI interface version
-#define GMSI_MAJOR_VERSION              1               //!< GMSI major version
+#define GMSI_INTERFACE_VERSION          2               //!< GMSI interface version
+#define GMSI_MAJOR_VERSION              0               //!< GMSI major version
 #define GMSI_MINOR_VERSION              0               
 
 // GMSI version

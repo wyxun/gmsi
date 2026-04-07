@@ -68,19 +68,19 @@ PERFC_PT_END()
 static void example_EventHandle(example_t *ptThis, uint32_t wEvent)
 {
     if (ptThis == NULL) {
-        GLOG_PRINTF("ptThis is NULL.");
+        GLOG(E, "ptThis is NULL.");
         return;
     }
 
     if (wEvent & Event_SyncMissed) {
-        GLOG_PRINTF("get event Event_SyncMissed");
+        GLOG(D, "get event Event_SyncMissed");
     }
 
     if (wEvent & Event_SyncButtonPushed) {
         if (GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineExampleHandle,
                                               (void *)ptThis,
                                               example_gcoroutine)) {
-            GLOG_PRINTF("Error: gcoroutine_Insert failed.");
+            GLOG(E, "Error: gcoroutine_Insert failed.");
         }
     }
 }
@@ -94,7 +94,7 @@ int example_Run(uintptr_t wObjectAddr)
 
     example_t *ptThis = (example_t *)wObjectAddr;
     if (ptThis == NULL) {
-        GLOG_PRINTF("ptThis is NULL.");
+        GLOG(E, "ptThis is NULL.");
         return GMSI_EFAIL;
     }
 
@@ -107,8 +107,7 @@ int example_Run(uintptr_t wObjectAddr)
                                                   chRingBufferMsg,
                                                   sizeof(chRingBufferMsg));
     if (hwLength > 0) {
-        GLOG_PRINTF("get chRingBufferMsg");
-        GVAL_PRINTF(hwLength);
+        GLOG(I, "get chRingBufferMsg, length: ", hwLength);
         tExampleShareMem.value2 = hwLength;
     }
 
@@ -142,7 +141,7 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     example_cfg_t *ptCfg  = (example_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
+        GLOG(E, "Error: ptThis or ptCfg is NULL.");
         return GMSI_EFAIL;
     }
 
@@ -165,3 +164,11 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
     return gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
 }
+
+#define EXAMPLE_RING_BUFFER_SIZE 256
+uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
+
+GMSI_DECLARE_OBJECT(example, Example, 
+    .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
+    .pchRingBuffer = gchExampleBuffer,
+);

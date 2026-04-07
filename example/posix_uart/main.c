@@ -1,15 +1,15 @@
 #include <stdint.h>
 #include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
 #include "gmsi.h"
+#include "gstorage.h"
 #include "pc_clock.h"
 #include "pc_uart.h"
 #include "utilities/util_debug.h"
 
 #define BUFFER_SIZE 100
-// pcuart_cfg_t tPcUartCfg = {
-//     .pchCom = "/dev/ttyS5",
-//     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
-// };
+
 GMSI_DECLARE_OBJECT(pcuart, PcUart, 
     .pchCom = "/dev/ttyS5",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
@@ -17,41 +17,75 @@ GMSI_DECLARE_OBJECT(pcuart, PcUart,
 
 uint8_t ReceiveData[100];
 
-// pcclock_t tClock;
-// pcclock_cfg_t tClockCfg = {
-//     .chClockbase = 5,
-// };
 GMSI_DECLARE_OBJECT(pcclock, Pcclock, 
     .chClockbase = 5,
 );
 
-void StorageWrite(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
+/*============================ VIRTUAL FLASH FOR PC ==========================*/
+static uint8_t s_chVirtualFlash[2048];
+
+static int32_t pc_flash_erase(void *pPriv, uint32_t wAddr, uint32_t wSize)
 {
-    // Write flash save sys_data programme
-}
-void StorageRead(uint16_t *phwStorageStartAddr, uint16_t hwStorageLength)
-{
-    // Write flash read sys_data programme
+    if (wAddr + wSize > sizeof(s_chVirtualFlash)) return -1;
+    memset(&s_chVirtualFlash[wAddr], 0xFF, wSize);
+    return 0;
 }
 
-// Structures for sys_data access
-uint16_t g_hwSystemDataArrary[16];
-gstorage_data_t tSysData = {
-    .phwStorageStartAddr = g_hwSystemDataArrary,
-    .hwStorageLength = 16,
-    .hwCrcFlag = 0,
-    .fcnWrite = StorageWrite,
-    .fcnRead = StorageRead,
+static int32_t pc_flash_write(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
+{
+    if (wAddr + wLen > sizeof(s_chVirtualFlash)) return -1;
+    memcpy(&s_chVirtualFlash[wAddr], pchData, wLen);
+    return 0;
+}
+
+static int32_t pc_flash_read(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
+{
+    if (wAddr + wLen > sizeof(s_chVirtualFlash)) return -1;
+    memcpy(pchBuf, &s_chVirtualFlash[wAddr], wLen);
+    return 0;
+}
+
+static int32_t pc_flash_unlock(void *pPriv) { return 0; }
+static int32_t pc_flash_lock(void *pPriv)   { return 0; }
+
+static gdi_flash_t s_tFlash = {
+    .pPriv    = NULL,
+    .fnErase  = pc_flash_erase,
+    .fnWrite  = pc_flash_write,
+    .fnRead   = pc_flash_read,
+    .fnUnlock = pc_flash_unlock,
+    .fnLock   = pc_flash_lock,
 };
 
-gmsi_t tGmsi = {&tSysData};
+/*============================ STORAGE OBJECT ================================*/
+/* Note: gstorage appends 2 bytes of CRC at the end of the buffer, 
+   so we need 16 * uint16_t + 2 bytes */
+uint16_t g_hwSystemDataArrary[16 + 1] = {0}; 
+
+gstorage_data_t tSysData = {
+    .ptFlash             = &s_tFlash,
+    .wFlashAddr          = 0,
+    .pchStorageStartAddr = (uint8_t *)g_hwSystemDataArrary,
+    .hwStorageLength     = 16 * sizeof(uint16_t),
+};
+
+GMSI_DECLARE_OBJECT(gstorage, GStorage, 
+    .ptStorageObject  = &tSysData,
+    .hwStorageTimeOut = 100, // 100ms cycle
+);
+
+/* GLOBAL GMSI CONFIGURATION */
+gmsi_t tGmsi = {
+    .ptAppFlash = &s_tFlash,
+};
 
 int main()
 {   
-    int16_t hwLength;
-    
     GLOG(I, "Starting POSIX UART Example...\n");
-    GLOG(D, "System Data Address: ", (uint32_t)g_hwSystemDataArrary, "\n");
+    
+    /* Using (uintptr_t) then (uint32_t) to avoid warning on 64-bit systems */
+    GLOG(D, "System Data Address: 0x", (uint32_t)(uintptr_t)g_hwSystemDataArrary, "\n");
+    
     gmsi_Init(&tGmsi);
 
     GLOG(I, "Entering main loop.\n");
@@ -67,3 +101,4 @@ void timer_handler(int signum)
 {
     gmsi_Clock();
 }
+
