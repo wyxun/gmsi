@@ -183,7 +183,7 @@ int main(void)
     led_blink_init(&s_tLedBlink);
     
     __enable_irq();
-
+    uint32_t wCounter;
     /* Main loop */
     while (1) {
         /* Run GMSI (includes BLM and GStorage) */
@@ -198,6 +198,12 @@ int main(void)
             s_tAppData.wVar3 += 100;
             GLOGF(I, "chVar1: %d\n", s_tAppData.chVar1);
             GLOGF(I, "wVar3: 0x%08x\n", s_tAppData.wVar3);
+        }
+        if (perfc_is_time_out_ms(1000)) {
+            wCounter++;
+            GLOGF(I, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
+                (unsigned long)wCounter,
+                (unsigned long)SystemCoreClock);
         }
     }
     

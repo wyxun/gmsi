@@ -39,6 +39,13 @@ void util_debug_Printf(const char *format, ...)
             }
             if (*p == '\0') break;
             
+            /* Handle length modifiers (e.g. 'l' in '%lu') */
+            if (*p == 'l') {
+                p++;
+                if (*p == 'l') p++; /* skip 'll' as well */
+            }
+            if (*p == '\0') break;
+            
             /* Handle format specifier */
             switch (*p) {
                 case 'd':
