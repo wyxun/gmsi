@@ -3,10 +3,15 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include "trace.h"
+#include "util_debug.h"
 
 #define ABS(__N)    ((__N) < 0 ? -(__N) : (__N))
 #define _BV(__N)    ((uint32_t)1<<(__N))
 #define TOP         (0x0FFF)
+
+/* 运行期日志掩码，初始值由 GLOG_MASK_DEFAULT 决定（默认全开 0x0F）
+ * 可通过 gshell log 命令动态修改，或在 userconfig.h 中覆盖 GLOG_MASK_DEFAULT */
+uint8_t g_chGLogMask = GLOG_MASK_DEFAULT;
 
 void (*pfcnLedSet)(bool bStatus);
 
@@ -71,6 +76,11 @@ void util_debug_Printf(const char *format, ...)
                     TRACE.ToString.Buffer(&ch, 1);
                     break;
                 }
+                case 'f':
+                    TRACE.ToString.Float(
+                        (float)va_arg(args, double)
+                    );
+                    break;
                 case '%':
                     TRACE.ToString.Buffer("%", 1);
                     break;

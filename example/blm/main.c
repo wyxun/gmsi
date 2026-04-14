@@ -13,6 +13,7 @@
 #include <perf_counter.h>
 #include "utilities/util_debug.h"
 #include "port/gdi_hw.h"
+/* blm_shell_test.h 已不再需要，通过 GMSI_SHELL_CMD 自动发现 */
 
 #if defined(AT32F407xx)
 #   include "cmsis/at32f407xx.h"
@@ -95,7 +96,7 @@ static gstorage_data_t s_tStorageData = {
 
 GMSI_DECLARE_OBJECT(gstorage, GStorage,
     .ptStorageObject = &s_tStorageData,
-    .hwStorageTimeOut = 5000,
+    .hwStorageTimeOut = 65000,
 );
 
 /*============================ IMPLEMENTATION ================================*/
@@ -174,7 +175,7 @@ int main(void)
     
     /* Initialize TRACE */
     TRACE.Init(NULL);
-    LOG_OUT("BLM Bootloader Started\r\n");
+    GLOG(I, "BLM Bootloader Started\r\n");
     
     /* Initialize GMSI framework — ptAppFlash is bound internally */
     s_tGmsi.ptAppFlash = HW.ptAppFlash;
@@ -183,7 +184,7 @@ int main(void)
     led_blink_init(&s_tLedBlink);
     
     __enable_irq();
-    uint32_t wCounter;
+    uint32_t wCounter = 0;
     /* Main loop */
     while (1) {
         /* Run GMSI (includes BLM and GStorage) */
@@ -204,6 +205,9 @@ int main(void)
             GLOGF(I, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
                 (unsigned long)wCounter,
                 (unsigned long)SystemCoreClock);
+            /* 验证 %f 浮点支持（v0.2.1.0 新增）*/
+            float fTemp = 36.5f + (float)(wCounter % 10) * 0.1f;
+            GLOGF(I, "Temp: %f C\r\n", fTemp);
         }
     }
     

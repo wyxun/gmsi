@@ -8,7 +8,7 @@
 /* System clock - set to 120MHz (8MHz HEXT * 15) */
 #define BLM_SYSCLK          120000000UL
 
-#include "gmsi.h"
+#include "global_define.h"
 
 /* Module ID */
 #define BLM     ((GMSI_ID_CLASS<<8)+1)
@@ -51,5 +51,7 @@ typedef enum {
     Event_BlmComplete = Gmsi_Event02,
     Event_BlmError = Gmsi_Event03,
 } BLM_Event;
+
+#define GLOG_MASK_DEFAULT   (GLOG_MASK_E | GLOG_MASK_W | GLOG_MASK_I)
 
 #endif  // __USERCONFIG_H__

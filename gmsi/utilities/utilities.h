@@ -29,4 +29,6 @@ typedef unsigned long    UBaseType_t;
     ((type *)((char *)(pointer) - (unsigned long)(&((type *)0)->member)))
 #endif
 
+#include "gshell.h"
+
 #endif

@@ -63,8 +63,10 @@ C_SOURCES = \
     $(GMSI_DIR)/utilities/list.c \
     $(GMSI_DIR)/utilities/util_queue.c \
     $(GMSI_DIR)/utilities/util_debug.c \
+    $(GMSI_DIR)/utilities/gshell.c \
     $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
-    $(LIB_DIR)/perf_counter/perf_counter.c
+    $(LIB_DIR)/perf_counter/perf_counter.c \
+    blm_shell_test.c
 
 # Assembly sources (perf_counter SysTick wrapper)
 ASM_SOURCES = \
@@ -138,6 +140,7 @@ C_INCLUDES = \
 # Compiler flags
 CFLAGS = $(TARGET_TRIPLE) $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) $(OPT) -g
 CFLAGS += -Wall -Wextra
+C_DEFS += -DGMSI_CFG_USER_CONFIG_INCLUSION="\"userconfig.h\""
 CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -fno-exceptions -fno-rtti
 CFLAGS += -std=gnu11

@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include "trace.h"
 
+#ifdef GMSI_CFG_USER_CONFIG_INCLUSION
+#   include GMSI_CFG_USER_CONFIG_INCLUSION
+#endif
+
 //#include "global_define.h"
 
 extern int utildebug_LedBreathe(void *ptVoid);
@@ -27,28 +31,40 @@ extern void utildebug_LedInit(void (*fcnLedSet)(bool bStatus));
 #define _GLOG_LVL_I            GMSI_LOG_LEVEL_INFO
 #define _GLOG_LVL_D            GMSI_LOG_LEVEL_DEBUG
 
-#define __GLOG_ITEM_1(a)       TRACE_TOSTR(a)
-#define __GLOG_ITEM_2(a, b)    __GLOG_ITEM_1(a); __GLOG_ITEM_1(b)
-#define __GLOG_ITEM_3(a, b, c) __GLOG_ITEM_2(a, b); __GLOG_ITEM_1(c)
-#define __GLOG_ITEM_4(a, b, c, d)  __GLOG_ITEM_3(a, b, c); __GLOG_ITEM_1(d)
-#define __GLOG_ITEM_5(a, b, c, d, e) __GLOG_ITEM_4(a, b, c, d); __GLOG_ITEM_1(e)
-#define __GLOG_ITEM_6(a, b, c, d, e, f) __GLOG_ITEM_5(a, b, c, d, e); __GLOG_ITEM_1(f)
-#define __GLOG_ITEM_7(a, b, c, d, e, f, g) __GLOG_ITEM_6(a, b, c, d, e, f); __GLOG_ITEM_1(g)
-#define __GLOG_ITEM_8(a, b, c, d, e, f, g, h) __GLOG_ITEM_7(a, b, c, d, e, f, g); __GLOG_ITEM_1(h)
+/*--- 运行期日志级别掩码 (Runtime Log Mask) --------------------------------*/
+/* 每个 bit 对应一个级别，bit0=E bit1=W bit2=I bit3=D */
+#define GLOG_MASK_E     (1u << 0)
+#define GLOG_MASK_W     (1u << 1)
+#define GLOG_MASK_I     (1u << 2)
+#define GLOG_MASK_D     (1u << 3)
+#define GLOG_MASK_ALL   (0x0Fu)
+
+/* 启动默认掩码，可在 userconfig.h 中覆盖（如仅开 E+W: 0x03u） */
+#ifndef GLOG_MASK_DEFAULT
+#   define GLOG_MASK_DEFAULT     GLOG_MASK_ALL
+#endif
+
+/* 将级别缩写转换为 g_chGLogMask 中的对应 bit */
+#define _GLOG_MASK_BIT(LVL)     (1u << (_GLOG_LVL_##LVL - 1))
+
+/** 运行期掩码变量（定义于 util_debug.c），gshell log 命令可动态修改 */
+extern uint8_t g_chGLogMask;
 
 extern void util_debug_Printf(const char *format, ...);
 
 #define GLOG(LEVEL, ...)                                                        \
     do {                                                                        \
-        if (GMSI_LOG_LEVEL >= _GLOG_LVL_##LEVEL) {                              \
+        if ((GMSI_LOG_LEVEL >= _GLOG_LVL_##LEVEL) &&                           \
+            (g_chGLogMask & _GLOG_MASK_BIT(LEVEL))) {                          \
             TRACE_TOSTR("[" #LEVEL "] ");                                       \
-            __PLOOC_EVAL(__GLOG_ITEM_, ##__VA_ARGS__)(__VA_ARGS__);            \
+            TRACE_TOSTR(__VA_ARGS__);                                           \
         }                                                                       \
     } while(0)
 
 #define GLOGF(LEVEL, fmt, ...)                                                  \
     do {                                                                        \
-        if (GMSI_LOG_LEVEL >= _GLOG_LVL_##LEVEL) {                              \
+        if ((GMSI_LOG_LEVEL >= _GLOG_LVL_##LEVEL) &&                           \
+            (g_chGLogMask & _GLOG_MASK_BIT(LEVEL))) {                          \
             util_debug_Printf("[" #LEVEL "] " fmt, ##__VA_ARGS__);             \
         }                                                                       \
     } while(0)

@@ -48,7 +48,7 @@ void gstorage_SetDefaultFlash(void *ptFlash)
 void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
 {
     if (ptThis == NULL || ptThis->ptStorageObject == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptThis->ptStorageObject is NULL.\n");
+        GLOG(E, "Error: ptThis or ptThis->ptStorageObject is NULL.\n");
         return;
     }
 
@@ -65,9 +65,7 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
         ptObj->pchStorageStartAddr[len]     = (uint8_t)(hwCrc & 0xFF);
         ptObj->pchStorageStartAddr[len + 1] = (uint8_t)((hwCrc >> 8) & 0xFF);
 
-        LOG_OUT("GStorage: Saving data, CRC: ");
-        LOG_OUT(hwCrc);
-        LOG_OUT("\n");
+        GLOGF(I, "GStorage: Saving data, CRC: 0x%04X\n", hwCrc);
 
         gdi_flash_Unlock(ptFlash);
         gdi_flash_Erase(ptFlash, wAddr, (uint32_t)(len + 2));
@@ -77,13 +75,13 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
         if (nRet >= 0) {
             ptThis->hwLastCrc = hwCrc;
         } else {
-            LOG_OUT("GStorage: Write Failed!\n");
+            GLOG(E, "GStorage: Write Failed!\n");
         }
     }
 
     if (wEvent & Event_ResetDefault)
     {
-        LOG_OUT("GStorage: Blanking Flash (RAM untouched)...\n");
+        GLOG(W, "GStorage: Blanking Flash (RAM untouched)...\n");
         /* 只清空 Flash，不修改 RAM。
          * 系统继续以当前 RAM 数据运行，硬件行为不受影响。
          * 下次上电时 gstorage_Init 检测到 Flash 全 FF，
@@ -96,12 +94,12 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
          * 防止 Clock 检测到"CRC 变化"立即把当前 RAM 重写回 Flash。 */
         ptThis->hwLastCrc = gstorage_CalculateCrc16(
             ptObj->pchStorageStartAddr, len);
-        LOG_OUT("GStorage: Flash blanked. Reboot to apply defaults.\n");
+        GLOG(I, "GStorage: Flash blanked. Reboot to apply defaults.\n");
     }
 
     if (wEvent & Event_GetData)
     {
-        LOG_OUT("GStorage: Loading data...\n");
+        GLOG(I, "GStorage: Loading data...\n");
         int32_t nRet = gdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
 
         if (nRet >= 0) {
@@ -112,13 +110,9 @@ void gstorage_EventHandle(gstorage_t *ptThis, uint32_t wEvent)
 
             if (hwReadCrc == hwCalcCrc) {
                 ptThis->hwLastCrc = hwReadCrc;
-                LOG_OUT("GStorage: Load Success, CRC Match.\n");
+                GLOG(I, "GStorage: Load Success, CRC Match.\n");
             } else {
-                LOG_OUT("GStorage: CRC Mismatch! Read: ");
-                LOG_OUT(hwReadCrc);
-                LOG_OUT(", Calc: ");
-                LOG_OUT(hwCalcCrc);
-                LOG_OUT("\n");
+                GLOGF(E, "GStorage: CRC Mismatch! Read: 0x%04X, Calc: 0x%04X\n", hwReadCrc, hwCalcCrc);
             }
         }
     }
@@ -132,7 +126,7 @@ int gstorage_Run(uintptr_t wObjectAddr)
     gstorage_t *ptThis = (gstorage_t *)wObjectAddr;
 
     if (ptThis == NULL || ptThis->ptBase == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptThis->ptBase is NULL.\n");
+        GLOG(E, "Error: ptThis or ptThis->ptBase is NULL.\n");
         return GMSI_EFAIL;
     }
 
@@ -186,7 +180,7 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     gstorage_cfg_t *ptCfg  = (gstorage_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
+        GLOG(E, "Error: ptThis or ptCfg is NULL.\n");
         return GMSI_EFAIL;
     }
 
@@ -198,7 +192,7 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     s_tStorageBaseCfg.wParent = wObjectAddr;
     int wRet = gbase_Init(ptThis->ptBase, &s_tStorageBaseCfg);
     if (wRet < 0) {
-        GERR_PRINTF(wRet);
+        GLOGF(E, "gbase_Init failed: %d\n", wRet);
         return wRet;
     }
 
@@ -230,7 +224,7 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     }
 
     if (bIsBlank) {
-        LOG_OUT("GStorage: Storage blank. Initializing defaults...\n");
+        GLOG(W, "GStorage: Storage blank. Initializing defaults...\n");
         gbase_EventPost(ptThis->ptBase->wId, Event_Storage);
     } else {
         uint16_t hwReadCrc = ptObj->pchStorageStartAddr[len];
@@ -240,15 +234,9 @@ int gstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
         if (hwReadCrc == hwCalcCrc) {
             ptThis->hwLastCrc = hwReadCrc;
-            LOG_OUT("GStorage: Load Success, CRC: ");
-            LOG_OUT(hwReadCrc);
-            LOG_OUT("\n");
+            GLOGF(I, "GStorage: Load Success, CRC: 0x%04X\n", hwReadCrc);
         } else {
-            LOG_OUT("GStorage: CRC Error! Calc: ");
-            LOG_OUT(hwCalcCrc);
-            LOG_OUT(", Stored: ");
-            LOG_OUT(hwReadCrc);
-            LOG_OUT("\n");
+            GLOGF(E, "GStorage: CRC Error! Calc: 0x%04X, Stored: 0x%04X\n", hwCalcCrc, hwReadCrc);
         }
     }
 

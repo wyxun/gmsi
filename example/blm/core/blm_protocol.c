@@ -12,10 +12,6 @@
 #include "utilities/util_debug.h"
 #include "../port/gdi_hw.h"
 
-#ifndef LOG_OUT
-#define LOG_OUT(...)         TRACE_TOSTR(__VA_ARGS__)
-#endif
-
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
 #   pragma diag_suppress 550, 546, 111
 #endif
@@ -235,15 +231,12 @@ int blm_protocol_ParseFileInfo(blm_protocol_cb_t *ptThis, const uint8_t *pchData
     /* Packet 0 format: filename\0filesize\0 */
     const char *pchFileName = (const char *)pchData;
     
-    LOG_OUT("FI");
-    LOG_OUT(pchData[0]);
-    LOG_OUT(pchData[1]);
-    LOG_OUT("\r\n");
+    GLOGF(I, "FI%02X%02X\r\n", (unsigned)pchData[0], (unsigned)pchData[1]);
 
     uint16_t hwNameLen = strlen(pchFileName);
     
     if (hwNameLen == 0) {
-        LOG_OUT("EN\r\n");
+        GLOG(I, "EN\r\n");
         /* Empty filename - end of batch */
         this.wFileSize = 0;
         return 0;
@@ -262,7 +255,7 @@ int blm_protocol_ParseFileInfo(blm_protocol_cb_t *ptThis, const uint8_t *pchData
         pchSizeStr++;
     }
     
-    LOG_OUT("SZ"); LOG_OUT((int)this.wFileSize); LOG_OUT("\r\n");
+    GLOGF(I, "SZ%d\r\n", (int)this.wFileSize);
     
     return 0;
 }

@@ -42,22 +42,11 @@ const char *stringErrorMessage[] = {
  */
 void gerr_Printf(int wErrorNum, char* pFile, int wLine)
 {
-    LOG_OUT("gerr_Printf:");
-    
-    // Get the size of the stringErrorMessage array
     size_t size = sizeof(stringErrorMessage) / sizeof(stringErrorMessage[0]);
+    const char *pErrStr = (wErrorNum >= size || wErrorNum < 0) ? 
+                          "no such error number(n)" : stringErrorMessage[wErrorNum];
 
-    // Check if the error number is within the range of the array
-    if(wErrorNum >= size || wErrorNum < 0)
-        LOG_OUT("no such error number(n)");
-    else
-        LOG_OUT(stringErrorMessage[wErrorNum]);
-    
-    LOG_OUT("; in file: ");
-    LOG_OUT(pFile);
-    LOG_OUT("; in line: ");
-    LOG_OUT(wLine);
-    LOG_OUT(".\n");
+    GLOGF(E, "gerr_Printf: %s; in file: %s; in line: %d\n", pErrStr, pFile, wLine);
 }
 
 /**
@@ -76,13 +65,7 @@ void gerr_Printf(int wErrorNum, char* pFile, int wLine)
  */
 void glog_Printf(const char *pString, char* pFile, int wLine)
 {
-    LOG_OUT("glog_Printf:");
-    LOG_OUT(pString);
-    LOG_OUT("; in file: ");
-    LOG_OUT(pFile);
-    LOG_OUT(", in line: ");
-    LOG_OUT(wLine);
-    LOG_OUT(".\n");
+    GLOGF(I, "glog_Printf: %s; in file: %s, in line: %d\n", pString, pFile, wLine);
 }
 
 /**
@@ -102,14 +85,6 @@ void glog_Printf(const char *pString, char* pFile, int wLine)
  */
 void gval_Printf(const char *pString, int wValue, char* pFile, int wLine)
 {
-    LOG_OUT("gval_Printf:");
-    LOG_OUT(pString);
-    LOG_OUT(": ");
-    LOG_OUT(wValue);
-    LOG_OUT("; in file: ");
-    LOG_OUT(pFile);
-    LOG_OUT(", in line: ");
-    LOG_OUT(wLine);
-    LOG_OUT(".\n");
+    GLOGF(I, "gval_Printf: %s: %d; in file: %s, in line: %d\n", pString, wValue, pFile, wLine);
 }
 

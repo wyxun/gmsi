@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "gmsi.h"
+#include "utilities/gshell.h"
 
 /* gstorage 可选模块附着点：
  * 当 gstorage.c 未加入编译时，此 weak 定义生效 —— no-op。
@@ -16,7 +17,7 @@ __attribute__((weak)) void gstorage_SetDefaultFlash(void *ptFlash)
 #define GENERAL_PURPOSE                 0               //!< General purpose 
 #define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
 #define GMSI_INTERFACE_VERSION          2               //!< GMSI interface version
-#define GMSI_MAJOR_VERSION              0               //!< GMSI major version
+#define GMSI_MAJOR_VERSION              1               //!< GMSI major version
 #define GMSI_MINOR_VERSION              0               
 
 // GMSI version
@@ -64,12 +65,13 @@ void gmsi_Init(gmsi_t *ptGmsi)
 
     // Check if the input parameter is NULL
     if (ptGmsi == NULL) {
-        LOG_OUT("Error: ptGmsi is NULL.\n");
+        GLOG(E, "Error: ptGmsi is NULL.\n");
         return;
     }
 
-    LOG_OUT("GMSI VERSION :");
-    LOG_OUT((uint8_t *)&GMSIVersion, 4);
+    GLOG(I, "GMSI VERSION :");
+    GLOG(I, (uint8_t *)&GMSIVersion, 4);
+    GLOG(I, "\n");
 
     /* 将调用方提供的默认 Flash 注入 gstorage 层，
      * 使 ptFlash == NULL 的 gstorage 实例在 Init 时自动绑定 */
@@ -128,7 +130,7 @@ void gmsi_Run(void)
 
     // Check if the list object is NULL
     if (ptListObject == NULL) {
-        LOG_OUT("Error: ptListObject is NULL.\n");
+        GLOG(E, "Error: ptListObject is NULL.\n");
         return;
     }
 
@@ -143,13 +145,13 @@ void gmsi_Run(void)
 
         // Check if the base descriptor is NULL
         if (NULL == ptBaseDes) {
-            LOG_OUT("Error: ptBaseDes is NULL.\n");
+            GLOG(E, "Error: ptBaseDes is NULL.\n");
             return;
         }
 
         // Check if the function interface is NULL
         if (NULL == ptBaseDes->pFcnInterface) {
-            LOG_OUT("Error: ptBaseDes->pFcnInterface is NULL.\n");
+            GLOG(E, "Error: ptBaseDes->pFcnInterface is NULL.\n");
             return;
         }
 
@@ -157,6 +159,7 @@ void gmsi_Run(void)
     }
 
     gcoroutine_Run();
+    gshell_Poll();          /* 调试 shell 轮询 */
 }
 
 /**
@@ -182,7 +185,7 @@ void gmsi_Clock(void)
     
     // Check if the list object is NULL
     if (NULL == ptListObject) {
-        LOG_OUT("Error: ptListObject is NULL.\n");
+        GLOG(E, "Error: ptListObject is NULL.\n");
         return;
     }
 
@@ -197,13 +200,13 @@ void gmsi_Clock(void)
 
         // Check if the base descriptor is NULL
         if (NULL == ptBaseDes) {
-            LOG_OUT("Error: ptBaseDes is NULL.\n");
+            GLOG(E, "Error: ptBaseDes is NULL.\n");
             return;
         }
 
         // Check if the function interface is NULL
         if (ptBaseDes->pFcnInterface == NULL) {
-            LOG_OUT("Error: ptBaseDes->pFcnInterface is NULL.\n");
+            GLOG(E, "Error: ptBaseDes->pFcnInterface is NULL.\n");
             return;
         }
 
@@ -226,10 +229,6 @@ void gmsi_Clock(void)
  */
 void assert_failed(char *file, uint32_t line)
 {
-    LOG_OUT("assert failed-->");
-    LOG_OUT(file);
-    LOG_OUT(" on line:");
-    LOG_OUT((uint16_t)line);
-    LOG_OUT("\n");
+    GLOGF(E, "assert failed--> %s on line: %u\n", file, (unsigned)line);
     while(1);
 }

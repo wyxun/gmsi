@@ -6,6 +6,39 @@
 #include "gstorage.h"
 #include "utilities/util_debug.h"
 
+/*============================ GSHELL 使用示例 (不影响编译) ===================*/
+/*
+ * gshell 已通过 gmsi_Run() 自动轮询，无需手动调用。
+ * 只需在 gmsi_Init() 之后注册自定义命令：
+ *
+ *   #include "utilities/gshell.h"
+ *
+ *   static void cmd_mytest(const char *args) {
+ *       GLOGF(I, "args: %s\r\n", args);
+ *   }
+ *   static const gshell_cmd_t s_tCmdMyTest = {
+ *       "mytest", cmd_mytest, "Run my test"
+ *   };
+ *
+ *   gmsi_Init(&tGmsi);
+ *   gshell_RegisterCmd(&s_tCmdMyTest);
+ *
+ * 运行期控制日志级别（通过 RTT Viewer 输入）：
+ *   log -I      关闭/恢复 INFO 打印（toggle）
+ *   log -D      关闭/恢复 DEBUG 打印（toggle）
+ *   log -I -D   同时切换多个级别
+ *   log         查看当前各级别开关状态
+ *
+ * g_chGLogMask 启动时默认值由 GLOG_MASK_DEFAULT 决定（默认全开 0x0F）；
+ * 可在 userconfig.h 中覆盖（如仅保留 E+W：#define GLOG_MASK_DEFAULT 0x03u）。
+ *
+ * 替换为 UART 后端（非 RTT）：
+ *   static unsigned uart_read(char *buf, unsigned size) { ... }  // 非阻塞
+ *   static void uart_write(const char *buf, unsigned size) { ... }
+ *   static const gshell_io_t s_tUartIO = { uart_read, uart_write };
+ *   gshell_SetIO(&s_tUartIO);   // 在 gmsi_Init() 前或后均可
+ */
+
 /*============================ VIRTUAL FLASH FOR PC ==========================*/
 static uint8_t s_chVirtualFlash[2048];
 

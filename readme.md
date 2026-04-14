@@ -91,6 +91,42 @@ GLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
 
 ---
 
+## gshell — 极简调试 Shell
+
+GMSI 内置轻量级 RTT 调试 Shell，随 `gmsi_Run()` 自动轮询，**无需修改主循环**，连接
+J-Link RTT Viewer 即用。可通过 `gshell_SetIO()` 将 I/O 后端从默认 RTT 替换为 UART。
+
+### 内置命令
+
+| 命令 | 说明 |
+|------|------|
+| `help` | 列出所有命令 |
+| `ver`  | 打印 GMSI 版本 |
+| `list` | 查看所有注册的 gbase 对象（id、event） |
+| `post <id_hex> <event_hex>` | 向指定对象投递事件 |
+| `log [-E][-W][-I][-D]` | 运行期开关 GLOG 各级别（无参数 = 显示当前状态） |
+
+### 注册自定义命令
+
+```c
+#include "utilities/gshell.h"
+
+static void cmd_burn(const char *args) {
+    GLOGF(I, "Burn-in started\r\n");
+}
+/* 零代码初始化：在 .c 中定义宏即可自动注册 */
+GMSI_SHELL_CMD(burn, cmd_burn, "Burn-in test");
+```
+
+### 运行期 Log 级别控制
+
+`g_chGLogMask` 默认由 `GLOG_MASK_DEFAULT`（全开，0x0F）初始化。
+可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
+
+详细配置、UART 后端替换及注意事项参考 [gshell 使用指南](doc/gshell.md)。
+
+---
+
 ## 模块开发指南 (Object Template)
 
 GMSI 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 

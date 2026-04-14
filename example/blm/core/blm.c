@@ -14,9 +14,6 @@
 #include "cmsis/at32f407xx.h"
 #include "../port/gdi_hw.h"
 #include "utilities/util_debug.h"
-#ifndef LOG_OUT
-#define LOG_OUT(...)         TRACE_TOSTR(__VA_ARGS__)
-#endif
 #include <string.h>
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
@@ -123,14 +120,13 @@ PERFC_PT_BEGIN(this.chState)
         /* ============ STATE: IDLE ============ */
         if (blm_ShouldEnterUpgrade(ptThis)) {
             /* Enter upgrade mode */
-            LOG_OUT("BLM Bootloader Started\r\n");
-            LOG_OUT("Clock: ");
-            LOG_OUT((uint32_t)SystemCoreClock);
-            LOG_OUT("\r\nCRM CTRL: ");
-            LOG_OUT((uint32_t)CRM->CTRL);
-            LOG_OUT("\r\nCRM CFG: ");
-            LOG_OUT((uint32_t)CRM->CFG);
-            LOG_OUT("\r\n");
+            GLOGF(I, "BLM Bootloader Started\r\n"
+                     "Clock: %u\r\n"
+                     "CRM CTRL: 0x%08X\r\n"
+                     "CRM CFG: 0x%08X\r\n",
+                     (unsigned)SystemCoreClock,
+                     (unsigned)CRM->CTRL,
+                     (unsigned)CRM->CFG);
             
             this.tMainState = BLM_STATE_WAIT_CONNECT;
             this.wStartTime = blm_port_GetTickMs();
@@ -139,12 +135,12 @@ PERFC_PT_BEGIN(this.chState)
             blm_protocol_Init(&s_tProtocol, this.pchRxBuffer, this.hwRxBufferSize);
         } else if (blm_IsAppValid(ptThis)) {
             /* Jump to application */
-            LOG_OUT("ValidApp Jump\r\n");
+            GLOG(I, "ValidApp Jump\r\n");
             this.tMainState = BLM_STATE_JUMP_APP;
             goto label_jump_app;
         } else {
             /* No valid app, wait for upgrade */
-            LOG_OUT("NoApp Wait\r\n");
+            GLOG(I, "NoApp Wait\r\n");
             this.tMainState = BLM_STATE_WAIT_CONNECT;
             this.wStartTime = blm_port_GetTickMs();
             this.chRetryCount = 0;
@@ -180,18 +176,18 @@ PERFC_PT_BEGIN(this.chState)
                     goto label_error;
                 } else {
                     /* Start receiving */
-                    LOG_OUT("A0\r\n");
+                    GLOG(I, "A0\r\n");
                     blm_protocol_SendAck();
                     
                     /* Erase app region */
-                    LOG_OUT("Er...\r\n");
+                    GLOG(W, "Er...\r\n");
                     gdi_flash_Unlock(HW.ptAppFlash);
                     gdi_flash_Erase(HW.ptAppFlash, this.wAppAddr, s_tProtocol.wFileSize);
-                    LOG_OUT("ED\r\n");
+                    GLOG(I, "ED\r\n");
                     
                 PERFC_PT_DELAY_MS(10);
                     
-                    LOG_OUT("C1\r\n");
+                    GLOG(I, "C1\r\n");
                     blm_protocol_SendC();  /* Request first data packet */
                     
                     this.wReceivedSize = 0;
@@ -202,15 +198,15 @@ PERFC_PT_BEGIN(this.chState)
                 }
             } else if (s_tProtocol.tResult == PROTO_TIMEOUT) {
                 this.chRetryCount++;
-                LOG_OUT("C");
+                GLOG(I, "C");
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
                     /* If no connection, stay in bootloader for debug */
                     this.chRetryCount = 0; 
-                    LOG_OUT("Retry Wrap\r\n");
+                    GLOG(W, "Retry Wrap\r\n");
                     goto label_start;
                 }
             } else if (s_tProtocol.tResult == PROTO_CANCEL) {
-                LOG_OUT("Cancel\r\n");
+                GLOG(I, "Cancel\r\n");
                 this.tMainState = BLM_STATE_IDLE;
                 break;
             } else {
@@ -289,7 +285,7 @@ PERFC_PT_BEGIN(this.chState)
                 /* TIMEOUT, CRC_ERROR, SEQ_ERROR */
                 if (s_tProtocol.chExpectedSeq == 1) {
                     /* If error on first packet, retry 'C' to keep CRC mode */
-                    LOG_OUT("Err1->C\r\n");
+                    GLOG(E, "Err1->C\r\n");
                     blm_protocol_SendC();
                 } else {
                     blm_protocol_SendNak();
@@ -325,14 +321,14 @@ PERFC_PT_BEGIN(this.chState)
 label_jump_app:
         /* ============ STATE: JUMP_APP ============ */
         if (this.tMainState == BLM_STATE_JUMP_APP) {
-            LOG_OUT("JumpApp\r\n");
+            GLOG(I, "JumpApp\r\n");
             blm_JumpToApp(ptThis);
             /* Should not return */
         }
 
 label_error:
         /* ============ STATE: ERROR ============ */
-        LOG_OUT("ERR Reset\r\n");
+        GLOG(E, "ERR Reset\r\n");
         /* Stay in error, wait for reset */
     PERFC_PT_DELAY_MS(1000);
         
