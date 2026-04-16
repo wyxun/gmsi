@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "gmsi.h"
 #include "utilities/gshell.h"
+#include "utilities/gwaveform.h"
 
 /* gstorage 可选模块附着点：
  * 当 gstorage.c 未加入编译时，此 weak 定义生效 —— no-op。
@@ -160,6 +161,7 @@ void gmsi_Run(void)
 
     gcoroutine_Run();
     gshell_Poll();          /* 调试 shell 轮询 */
+    gwaveform_Poll();       /* 波形采集轮询 */
 }
 
 /**

@@ -127,6 +127,34 @@ GMSI_SHELL_CMD(burn, cmd_burn, "Burn-in test");
 
 ---
 
+## gwaveform — 实时波形采集与可视化
+
+GMSI 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用于 FOC 电机、PID 调试等高频信号可视化场景。
+
+### 核心优势
+- **极致性能**：底层采用 SPSC 无锁环形缓冲区，20kHz 采样下 CPU 占用极低。
+- **上位机支持**：配套 Python 可视化工具，基于 `pyqtgraph` 实现，支持 OpenGL 加速。
+
+### 快速使用
+1. **MCU 侧注册通道**：
+   ```c
+   uint8_t s_chIa = gwaveform_AddChannel("Motor_Ia", 1000.0f);
+   gwaveform_Start();
+   ```
+2. **在中断中推送数据**：
+   ```c
+   gwaveform_Push(s_chIa, fCurrentIa);
+   gwaveform_Commit();
+   ```
+3. **PC 侧启动查看器**：
+   ```bash
+   python tools/gwaveform/viewer.py
+   ```
+
+详细设计、协议格式及性能数据请参考 [gwaveform 完整文档](doc/gwaveform.md)。
+
+---
+
 ## 模块开发指南 (Object Template)
 
 GMSI 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 
