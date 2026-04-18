@@ -81,9 +81,32 @@ void PWM_IRQHandler(void) {
 ## 5. 上位机工具
 
 ### 环境准备
+
+根据您的开发环境选择以下一种方式安装依赖。`viewer.py` 需要 `numpy`, `pyqtgraph` 和一个 Qt 后端（`PySide6` 或 `PyQt6`）。
+
+#### 方法 A: 标准 Python (推荐使用虚拟环境)
+这是最通用的方法，适用于 Windows/Linux/macOS：
 ```bash
 cd tools/gwaveform
+# 创建并激活虚拟环境 (可选但推荐)
+python -m venv venv
+# Windows: venv\Scripts\activate  |  Linux/macOS: source venv/bin/activate
+
+# 安装依赖
 pip install -r requirements.txt
+```
+
+#### 方法 B: MSYS2 MINGW64 (推荐给 MSYS2 用户)
+如果您在 Windows 上使用 MSYS2 并在 MINGW64 环境下工作，使用 `pacman` 安装预编译包最稳定：
+```bash
+pacman -S mingw-w64-x86_64-python-numpy \
+          mingw-w64-x86_64-python-pyqt6 \
+          mingw-w64-x86_64-python-pyqtgraph
+```
+
+#### 方法 C: Anaconda / Miniconda
+```bash
+conda install numpy pyqtgraph pyside6
 ```
 
 ### 运行

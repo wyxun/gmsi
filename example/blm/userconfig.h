@@ -54,4 +54,11 @@ typedef enum {
 
 #define GLOG_MASK_DEFAULT   (GLOG_MASK_E | GLOG_MASK_W | GLOG_MASK_I)
 
+/* GWaveform Configuration */
+#ifndef GWAVEFORM_ENABLE
+#   define GWAVEFORM_ENABLE             1
+#endif
+#define GWAVEFORM_MAX_CHANNELS          8
+#define GWAVEFORM_DECIMATION            10
+
 #endif  // __USERCONFIG_H__

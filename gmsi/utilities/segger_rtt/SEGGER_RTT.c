@@ -302,3 +302,25 @@ unsigned SEGGER_RTT_Read(unsigned BufferIndex, void* pBuffer, unsigned BufferSiz
   *pRdOff = RdOff;
   return NumBytesRead;
 }
+
+/*********************************************************************
+*
+*       SEGGER_RTT_ConfigUpBuffer
+*
+*  Function description
+*    Configures a specific up-buffer.
+*/
+int SEGGER_RTT_ConfigUpBuffer(unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags) {
+  if (BufferIndex < (unsigned)_SEGGER_RTT.MaxNumUpBuffers) {
+    if (BufferIndex > 0) {
+      _SEGGER_RTT.aUp[BufferIndex].sName        = sName;
+      _SEGGER_RTT.aUp[BufferIndex].pBuffer      = (char*)pBuffer;
+      _SEGGER_RTT.aUp[BufferIndex].SizeOfBuffer = BufferSize;
+      _SEGGER_RTT.aUp[BufferIndex].RdOff        = 0u;
+      _SEGGER_RTT.aUp[BufferIndex].WrOff        = 0u;
+    }
+    _SEGGER_RTT.aUp[BufferIndex].Flags          = Flags;
+    return 0;
+  }
+  return -1;
+}

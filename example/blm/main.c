@@ -13,6 +13,7 @@
 #include <perf_counter.h>
 #include "utilities/util_debug.h"
 #include "port/gdi_hw.h"
+#include "blm_waveform_test.h"
 /* blm_shell_test.h 已不再需要，通过 GMSI_SHELL_CMD 自动发现 */
 
 #if defined(AT32F407xx)
@@ -183,6 +184,9 @@ int main(void)
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
     
+    /* Initialize Waveform Test */
+    blm_waveform_test_init();
+    
     __enable_irq();
     uint32_t wCounter = 0;
     /* Main loop */
@@ -223,4 +227,7 @@ void SysTick_Handler(void)
 {
     /* GMSI clock tick (1ms) */
     gmsi_Clock();
+    
+    /* Waveform test step (1ms) */
+    blm_waveform_test_step();
 }

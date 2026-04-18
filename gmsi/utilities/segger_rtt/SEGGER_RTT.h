@@ -114,6 +114,7 @@ unsigned SEGGER_RTT_Write            (unsigned BufferIndex, const void* pBuffer,
 unsigned SEGGER_RTT_WriteString      (unsigned BufferIndex, const char* s);
 unsigned SEGGER_RTT_PutChar          (unsigned BufferIndex, char c);
 unsigned SEGGER_RTT_Read             (unsigned BufferIndex, void* pBuffer, unsigned BufferSize);
+int      SEGGER_RTT_ConfigUpBuffer   (unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags);
 #ifdef __cplusplus
   }
 #endif

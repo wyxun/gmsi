@@ -65,8 +65,11 @@ C_SOURCES = \
     $(GMSI_DIR)/utilities/util_debug.c \
     $(GMSI_DIR)/utilities/gshell.c \
     $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
+    $(GMSI_DIR)/utilities/gwaveform.c \
+    $(GMSI_DIR)/utilities/gringbuf.c \
     $(LIB_DIR)/perf_counter/perf_counter.c \
-    blm_shell_test.c
+    blm_shell_test.c \
+    blm_waveform_test.c
 
 # Assembly sources (perf_counter SysTick wrapper)
 ASM_SOURCES = \
@@ -236,7 +239,7 @@ rtt-addr: $(BUILD_DIR)/$(TARGET).elf
 # Start OpenOCD with RTT server on port 9090
 rtt: $(BUILD_DIR)/$(TARGET).elf
 	@echo "RTT CB address: $(RTT_ADDR)"
-	$(OPENOCD_CMD) -c "init" -c 'rtt setup $(RTT_ADDR) 0xa8 "SEGGER RTT"' -c "rtt start" -c "rtt server start 9090 0"
+	$(OPENOCD_CMD) -c "init" -c 'rtt setup $(RTT_ADDR) 0xa8 "SEGGER RTT"' -c "rtt start" -c "rtt server start 9090 0" -c "rtt server start 9091 1"
 
 # Print current config
 info:
