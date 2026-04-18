@@ -9,7 +9,7 @@
 #include "blm_protocol.h"
 #include "../port/blm_port.h"
 #include <string.h>
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 #include "../port/gdi_hw.h"
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)

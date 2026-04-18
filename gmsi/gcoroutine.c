@@ -1,7 +1,7 @@
 #include "gcoroutine.h"
 #include "global_define.h"
 #include "utilities/list.h"
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 
 #ifdef LINUX_POSIX
 #include <stdio.h>

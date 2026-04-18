@@ -59,6 +59,6 @@ typedef enum {
 #   define GWAVEFORM_ENABLE             1
 #endif
 #define GWAVEFORM_MAX_CHANNELS          8
-#define GWAVEFORM_DECIMATION            10
+#define GWAVEFORM_DECIMATION            2
 
 #endif  // __USERCONFIG_H__

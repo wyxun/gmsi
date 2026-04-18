@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     // Initialize networking
     NetworkMgr::GetInstance().Init();
 
-    GuiLayer gui_layer;
+    GuiLayer* gui_layer = new GuiLayer();
 
     // Main loop
     bool done = false;
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         ImGui::NewFrame();
 
         // Render UI
-        gui_layer.Render();
+        gui_layer->Render();
 
         // Rendering
         ImGui::Render();
@@ -82,6 +82,8 @@ int main(int argc, char** argv) {
 
     // Cleanup
     NetworkMgr::GetInstance().Shutdown();
+
+    delete gui_layer;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();

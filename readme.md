@@ -234,7 +234,23 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 | `ch` | `char / uint8_t` | `chState` | 单字节状态或数据 |
 | `hw` | `uint16_t` | `hwBufferSize` | 半字 (Half-Word), 16位长度 |
 | `w` | `uint32_t` | `wEvent` | 字 (Word), 32位变量 |
+
+## 核心组件与工具
+
+### 🛠️ SuperWaveform 分析工具
+位于 `tools/superwaveform`，这是一个高性能的波形可视化利器：
+*   **实时分析**：支持多通道实时采集，具备波形锁定、时间窗口缩放功能。
+*   **精密测量**：按 `Space` 键开启虚线十字测量，支持频率、时间差、幅值差实时计算。
+*   **数据归档**：一键保存符合年月日时分秒格式的规范 CSV 实验报告。
+*   **离线回放**：专业的多窗口离线查看器，支持对历史数据进行缩放和平移。
+
+### 📦 GMSI 框架核心
+*   **GLOG**: 分级日志系统。
+*   **GWaveform**: 极简的嵌入式波形上传协议。
+*   **GShell**: 交互式 RTT/串口命令行。
+
 | `b` | `bool` | `bIsRunning` | 布尔标志 |
+|:---|:---|:---|:---|
 | `pt` | `Pointer to Type`| `ptThis`, `ptMotor`| 指向结构体或自定义类型的指针 |
 | `pch`| `uint8_t *` | `pchBuffer` | 指向字节流的指针 |
 | `pfcn`| `Function Ptr` | `pfcnCallback` | 函数指针 |

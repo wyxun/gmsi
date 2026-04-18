@@ -6,7 +6,7 @@
 #include "gstorage.h"
 #include "pc_clock.h"
 #include "pc_uart.h"
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 
 #define BUFFER_SIZE 100
 

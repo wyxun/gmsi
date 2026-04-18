@@ -4,14 +4,14 @@
 #include "example.h"
 #include "template.h"
 #include "gstorage.h"
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 
 /*============================ GSHELL 使用示例 (不影响编译) ===================*/
 /*
  * gshell 已通过 gmsi_Run() 自动轮询，无需手动调用。
  * 只需在 gmsi_Init() 之后注册自定义命令：
  *
- *   #include "utilities/gshell.h"
+ *   #include "gdebug/gshell.h"
  *
  *   static void cmd_mytest(const char *args) {
  *       GLOGF(I, "args: %s\r\n", args);

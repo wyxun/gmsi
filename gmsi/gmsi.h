@@ -4,7 +4,7 @@
 // Include necessary libraries
 #include "gbase.h"
 #include "global_define.h"
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 #include "gcoroutine.h"
 #include "glog.h"
 /* NOTE: gstorage.h is intentionally NOT included here.

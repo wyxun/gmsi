@@ -7,9 +7,10 @@
 ## 1. 核心设计原理
 
 ### 分层架构
-1. **`gringbuf` (底层支撑)**：一个基于 SPSC (Single Producer Single Consumer) 的高性能无锁环形缓冲区。它通过 `volatile` 指针和 2^n 长度掩码优化，确保在 ISR (中断服务程序) 中写入时无需关中断，且开销极小。
-2. **`gwaveform` (业务层)**：负责数据帧的打包、多通道掩码管理以及 RTT 搬运。
-3. **`viewer.py` (Host 层)**：Python 编写的可视化工具，使用 `pyqtgraph` 进行高帧率绘图。
+1. **`gringbuf` (底层支撑)**：基于 SPSC (Single Producer Single Consumer) 设计的高性能无锁环形缓冲区。通过 `volatile` 屏障和 2^n 长度掩码优化，确保在 ISR (中断服务程序) 中写入时无需关中断，性能极高且无竞态风险。
+2. **`gwaveform` (业务层)**：负责数据帧打包、多通道掩码管理以及 RTT 搬运。支持动态描述帧发送，方便上位机自动重连与通道识别。
+3. **`SuperWaveform` (Host 层 - 推荐)**：基于 C++/ImGui 开发的高性能可视化工具，支持实时测量、离线分析与数据录制。
+4. **`viewer.py` (Host 层 - 备选)**：基于 Python/PyQtGraph 的轻量级查看器。
 
 ### 二进制协议
 协议采用精简的二进制格式以节省带宽：
@@ -122,3 +123,26 @@ conda install numpy pyqtgraph pyside6
 
 - **同步机制**：`gwaveform_Poll()` 已挂载在 `gmsi_Run()` 中自动运行。
 - **性能优化**：`Push` 操作仅涉及一次乘法和一次内存写入；`Commit` 在达到抽取比前仅执行一次计数自增，性能极高。
+
+---
+
+## 7. 高级分析工具: SuperWaveform (C++)
+
+为了支持高频率、多通道的数据分析，GMSI 配套了基于 C++/ImGui 开发的 `SuperWaveform` 工具。
+
+### 核心特性
+1. **高性能交互**：相比 Python 版本，C++ 版支持更平滑的波形滚动和更低的 CPU 占用。
+2. **Space 测量功能**：
+   - 按下 `Space` 键记录参考点。
+   - 实时显示当前鼠标点与参考点的 **Delta X (时间)**、**Delta Y (幅值)** 及 **Frequency (频率)**。
+   - 虚线十字准心，提供非侵入式的视觉反馈。
+3. **数据录制与回放**：
+   - 录制文件名格式为 `rec_YYYYMMDD_HHMMSS.csv`，方便数据管理。
+   - 支持 **多窗口离线查看器**，不同窗口自动应用独特颜色，方便横向对比。
+4. **自适应同步**：
+   - 内部集成虚拟时钟平滑算法（LPF），有效消除由于网络延迟（RTT）导致的波形抖动。
+
+### 使用方法
+1. 进入 `tools/superwaveform` 目录。
+2. 执行 `make` 编译（需 MinGW64 环境）。
+3. 运行 `./superwaveform.exe`，程序将自动尝试连接到本地 RTT 服务器。

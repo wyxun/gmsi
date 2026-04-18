@@ -11,7 +11,7 @@
 #include "gstorage.h"
 #include "gblinfo.h"
 #include <perf_counter.h>
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 #include "port/gdi_hw.h"
 #include "blm_waveform_test.h"
 /* blm_shell_test.h 已不再需要，通过 GMSI_SHELL_CMD 自动发现 */

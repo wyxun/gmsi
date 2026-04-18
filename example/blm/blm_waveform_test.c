@@ -1,5 +1,6 @@
-#include "blm_waveform_test.h"
-#include "utilities/gwaveform.h"
+#include "gdebug/gwaveform.h"
+#include <stdint.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #if GWAVEFORM_ENABLE
@@ -24,18 +25,18 @@ static const int16_t s_ahwSinTable[256] = {
     -12539, -11792, -11038, -10278, -9511, -8739, -7961, -7179, -6392, -5601, -4807, -4011, -3211, -2410, -1607, -804
 };
 
-static uint8_t s_chIdSine, s_chIdCosine;
+static uint8_t s_chU, s_chV, s_chW;
 static uint32_t s_wPhaseAcc = 0;
-static uint32_t s_wPhaseStep = 21474836; // Default: 5Hz @ 1kHz
+static uint32_t s_wPhaseStep = 42949673; // 10Hz @ 1kHz
 
 void blm_waveform_test_init(void)
 {
-    /* Register channels */
-    s_chIdSine = gwaveform_AddChannel("Sine", 32767.0f);
-    s_chIdCosine = gwaveform_AddChannel("Cosine", 32767.0f);
+    gwaveform.Init(NULL); // Use default protocol
+    s_chU = gwaveform.AddChannel("U_Phase", 10.0f);
+    s_chV = gwaveform.AddChannel("V_Phase", 10.0f);
+    s_chW = gwaveform.AddChannel("W_Phase", 10.0f);
     
-    /* Default start for test */
-    gwaveform_Start();
+    gwaveform.Start();
 }
 
 void blm_waveform_test_step(void)
@@ -47,13 +48,14 @@ void blm_waveform_test_step(void)
     uint8_t chIndex = (uint8_t)(s_wPhaseAcc >> 24);
     
     /* Sine: s_ahwSinTable[chIndex] */
-    gwaveform_PushRaw(s_chIdSine, s_ahwSinTable[chIndex]);
+    float valU = (float)s_ahwSinTable[chIndex];
+    float valV = (float)s_ahwSinTable[(uint8_t)(chIndex + 85)];
+    float valW = (float)s_ahwSinTable[(uint8_t)(chIndex + 170)];
     
-    /* Cosine: s_ahwSinTable[chIndex + 64] (90 degree shift) */
-    gwaveform_PushRaw(s_chIdCosine, s_ahwSinTable[(uint8_t)(chIndex + 64)]);
-    
-    /* Commit frame */
-    gwaveform_Commit();
+    gwaveform.Push(s_chU, valU);
+    gwaveform.Push(s_chV, valV);
+    gwaveform.Push(s_chW, valW);
+    // Note: gwaveform.Step() is called automatically via gmsi_Clock()
 }
 
 #else

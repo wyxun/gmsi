@@ -7,8 +7,8 @@
  */
 
 #include "blm_shell_test.h"
-#include "utilities/gshell.h"
-#include "utilities/util_debug.h"
+#include "gdebug/gshell.h"
+#include "gdebug/util_debug.h"
 #include <stdint.h>
 
 /*============================ PRIVATE FUNCTIONS =============================*/

@@ -52,8 +52,8 @@ C_SOURCES = \
     perfc_port_user.c \
     core/blm.c \
     core/blm_protocol.c \
-    $(GMSI_DIR)/utilities/trace.c \
-    $(GMSI_DIR)/utilities/trace_fmt.c \
+    $(GMSI_DIR)/gdebug/trace.c \
+    $(GMSI_DIR)/gdebug/trace_fmt.c \
     $(GMSI_DIR)/gmsi.c \
     $(GMSI_DIR)/gbase.c \
     $(GMSI_DIR)/gblinfo.c \
@@ -62,10 +62,11 @@ C_SOURCES = \
     $(GMSI_DIR)/gstorage.c \
     $(GMSI_DIR)/utilities/list.c \
     $(GMSI_DIR)/utilities/util_queue.c \
-    $(GMSI_DIR)/utilities/util_debug.c \
-    $(GMSI_DIR)/utilities/gshell.c \
-    $(GMSI_DIR)/utilities/segger_rtt/SEGGER_RTT.c \
-    $(GMSI_DIR)/utilities/gwaveform.c \
+    $(GMSI_DIR)/gdebug/util_debug.c \
+    $(GMSI_DIR)/gdebug/gshell.c \
+    $(GMSI_DIR)/gdebug/segger_rtt/SEGGER_RTT.c \
+    $(GMSI_DIR)/gdebug/gwaveform.c \
+    $(GMSI_DIR)/gdebug/gwaveform_protocol.c \
     $(GMSI_DIR)/utilities/gringbuf.c \
     $(LIB_DIR)/perf_counter/perf_counter.c \
     blm_shell_test.c \
@@ -239,7 +240,7 @@ rtt-addr: $(BUILD_DIR)/$(TARGET).elf
 # Start OpenOCD with RTT server on port 9090
 rtt: $(BUILD_DIR)/$(TARGET).elf
 	@echo "RTT CB address: $(RTT_ADDR)"
-	$(OPENOCD_CMD) -c "init" -c 'rtt setup $(RTT_ADDR) 0xa8 "SEGGER RTT"' -c "rtt start" -c "rtt server start 9090 0" -c "rtt server start 9091 1"
+	$(OPENOCD_CMD) -c "tcl_port disabled" -c "init" -c 'rtt setup $(RTT_ADDR) 0xa8 "SEGGER RTT"' -c "rtt start" -c "rtt server start 9090 0" -c "rtt server start 9091 1"
 
 # Print current config
 info:

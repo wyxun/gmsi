@@ -13,7 +13,7 @@
 #include "gblinfo.h"
 #include "cmsis/at32f407xx.h"
 #include "../port/gdi_hw.h"
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 #include <string.h>
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)

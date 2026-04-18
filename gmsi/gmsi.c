@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "gmsi.h"
-#include "utilities/gshell.h"
-#include "utilities/gwaveform.h"
+#include "gdebug/gshell.h"
+#include "gdebug/gwaveform.h"
 
 /* gstorage 可选模块附着点：
  * 当 gstorage.c 未加入编译时，此 weak 定义生效 —— no-op。
@@ -17,8 +17,8 @@ __attribute__((weak)) void gstorage_SetDefaultFlash(void *ptFlash)
 
 #define GENERAL_PURPOSE                 0               //!< General purpose 
 #define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
-#define GMSI_INTERFACE_VERSION          2               //!< GMSI interface version
-#define GMSI_MAJOR_VERSION              1               //!< GMSI major version
+#define GMSI_INTERFACE_VERSION          3               //!< GMSI interface version
+#define GMSI_MAJOR_VERSION              0               //!< GMSI major version
 #define GMSI_MINOR_VERSION              0               
 
 // GMSI version
@@ -161,7 +161,9 @@ void gmsi_Run(void)
 
     gcoroutine_Run();
     gshell_Poll();          /* 调试 shell 轮询 */
-    gwaveform_Poll();       /* 波形采集轮询 */
+#if GWAVEFORM_ENABLE
+    gwaveform.Poll();       /* 波形采集轮询 */
+#endif
 }
 
 /**
@@ -214,6 +216,9 @@ void gmsi_Clock(void)
 
         ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
     }
+    
+    extern void gwaveform_Default_Step_Callback(void);
+    gwaveform_Default_Step_Callback();
 }
 
 /**

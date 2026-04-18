@@ -4,6 +4,12 @@
 #include "protocol_parser.h"
 #include <vector>
 #include <string>
+#include <map>
+#include "imgui.h"
+
+#include <fstream>
+#include <ctime>
+#include <iomanip>
 
 class GuiLayer {
 public:
@@ -57,16 +63,55 @@ private:
     double time_last_ = 0.0;
     float history_window_ = 10.0f; // View trailing 10 seconds
 
+    // Recording state
+    bool is_recording_ = false;
+    std::ofstream record_file_;
+    std::string recording_filename_;
+
+    // Real-time measurement
+    bool rt_measure_active = false;
+    double rt_measure_x = 0;
+    double rt_measure_y = 0;
+
     // Terminal data
     std::string term_log_;
     char term_input_buf_[256];
     bool auto_scroll_ = true;
+    ImGuiTextFilter term_filter_;
 
     // UI Helpers
     void FetchNetworkData();
     void RenderWaveformWindow();
     void RenderTerminalSidebar();
     void RenderDashboard();
+    
+    // Offline Viewer
+    struct OfflineData {
+        std::vector<double> time;
+        std::map<int, std::vector<double>> channels;
+        std::map<int, std::string> channel_names;
+    };
+    
+    struct OfflineSession {
+        int id;
+        bool open = true;
+        bool first_frame = true;
+        double x_min = 0, x_max = 10; 
+        bool measure_active = false;
+        double measure_x = 0;
+        double measure_y = 0;
+        char filepath[256];
+        OfflineData data;
+    };
+
+    std::vector<OfflineSession> offline_sessions_;
+    int next_session_id_ = 0;
+
+    void RenderOfflineViewer(OfflineSession& session);
+    void LoadCSV(OfflineSession& session);
+    std::string OpenFileDialog();
+
+
 
     // Adaptive Smoothing State
     double m_virtualClock = 0.0;
