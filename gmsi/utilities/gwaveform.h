@@ -16,15 +16,15 @@
 #endif
 
 #ifndef GWAVEFORM_MAX_CHANNELS
-#   define GWAVEFORM_MAX_CHANNELS       8
+#   define GWAVEFORM_MAX_CHANNELS       16
 #endif
 
 #ifndef GWAVEFORM_RING_BUFFER_SIZE
-#   define GWAVEFORM_RING_BUFFER_SIZE   256
+#   define GWAVEFORM_RING_BUFFER_SIZE   8192
 #endif
 
 #ifndef GWAVEFORM_RTT_BUFFER_SIZE
-#   define GWAVEFORM_RTT_BUFFER_SIZE    512
+#   define GWAVEFORM_RTT_BUFFER_SIZE    8192
 #endif
 
 #ifndef GWAVEFORM_RTT_CHANNEL
@@ -32,7 +32,7 @@
 #endif
 
 #ifndef GWAVEFORM_DECIMATION
-#   define GWAVEFORM_DECIMATION         10
+#   define GWAVEFORM_DECIMATION         1
 #endif
 
 /*============================ MACROS ========================================*/

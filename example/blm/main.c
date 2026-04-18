@@ -194,6 +194,8 @@ int main(void)
         /* Run GMSI (includes BLM and GStorage) */
         gmsi_Run();
         
+        /* (Removed manual drive) */
+        
         /* Run LED blink task */
         led_blink_task(&s_tLedBlink);
 

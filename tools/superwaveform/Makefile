@@ -35,7 +35,7 @@ ALL_SRCS = $(SRCS) $(IMGUI_SRCS) $(IMPLOT_SRCS)
 OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(notdir $(ALL_SRCS))))
 
 # Libraries
-LIBS = -lmingw32 -lSDL2main -lSDL2 -lws2_32 -lopengl32 -mwindows
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lws2_32 -lopengl32
 
 TARGET = superwaveform.exe
 

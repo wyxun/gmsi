@@ -1,5 +1,6 @@
 #include "gwaveform.h"
 #include "gringbuf.h"
+#include "gmsi.h"
 #include "segger_rtt/SEGGER_RTT.h"
 #include "utilities/util_debug.h"
 #include <string.h>
@@ -86,9 +87,9 @@ int gwaveform_Init(uintptr_t wAddr, uintptr_t wUnused)
     
     SEGGER_RTT_ConfigUpBuffer(GWAVEFORM_RTT_CHANNEL, "Waveform", 
                              s_tWave.achRTTBuffer, GWAVEFORM_RTT_BUFFER_SIZE, 
-                             SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+                             SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
                              
-    s_tWave.chDecimation = GWAVEFORM_DECIMATION;
+    s_tWave.chDecimation = 1;
     
     return GMSI_SUCCESS;
 }
@@ -181,15 +182,22 @@ void __gwaveform_Commit(void)
 
 void gwaveform_Poll(void)
 {
-    if (s_tWave.bRequestDesc) {
-        s_tWave.bRequestDesc = false;
+    static int64_t s_lLastDescTick = 0;
+    extern int64_t get_system_ms(void);
+    int64_t lNow = get_system_ms();
+
+    /* Periodic descriptor frame (every 1000ms) to ensure host sync */
+    if (s_tWave.bIsRunning && (lNow - s_lLastDescTick >= 1000)) {
+        s_lLastDescTick = lNow;
         send_descriptor_frame();
     }
 
-    uint8_t achTemp[64];
+    uint8_t achTemp[512];
     uint16_t hwLen;
     
-    while ((hwLen = gringbuf_ReadBulk(&s_tWave.tRB, achTemp, sizeof(achTemp))) > 0) {
+    /* SPSC buffer: Consumer doesn't need IRQ lock if index update is atomic */
+    hwLen = gringbuf_ReadBulk(&s_tWave.tRB, achTemp, sizeof(achTemp));
+    if (hwLen > 0) {
         SEGGER_RTT_Write(GWAVEFORM_RTT_CHANNEL, achTemp, hwLen);
     }
 }

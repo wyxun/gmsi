@@ -67,6 +67,12 @@ private:
     void RenderWaveformWindow();
     void RenderTerminalSidebar();
     void RenderDashboard();
+
+    // Adaptive Smoothing State
+    double m_virtualClock = 0.0;
+    double m_smoothedPeriod = 0.001; // Initial guess: 1ms (1kHz)
+    double m_lastWindowTime = 0.0;
+    int m_pointsInWindow = 0;
 };
 
 #endif // GUI_LAYER_H

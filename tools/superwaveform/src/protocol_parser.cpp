@@ -86,7 +86,8 @@ bool ProtocolParser::Feed(const std::vector<uint8_t>& data, std::vector<DataSamp
             }
 
             uint8_t crc = buffer_[frame_len - 1];
-            if (CalcCRC(&buffer_[2], frame_len - 3) == crc) {
+            uint8_t calc_crc = CalcCRC(&buffer_[2], frame_len - 3);
+            if (calc_crc == crc) {
                 DataSample sample;
                 sample.timestamp = GetTimeSeconds();
 
