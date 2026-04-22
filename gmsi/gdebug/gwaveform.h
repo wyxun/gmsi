@@ -20,13 +20,13 @@
 #   define GWAVEFORM_MAX_CHANNELS       16
 #endif
 
-#ifndef GWAVEFORM_RING_BUFFER_SIZE
-#   define GWAVEFORM_RING_BUFFER_SIZE   8192
+#ifndef GWAVEFORM_RTT_BUFFER_SIZE
+#   define GWAVEFORM_RTT_BUFFER_SIZE    512
 #endif
 
-#ifndef GWAVEFORM_RTT_BUFFER_SIZE
-#   define GWAVEFORM_RTT_BUFFER_SIZE    8192
-#endif
+/* Max data frame size: SYNC(2)+SEQ(1)+MASK+DATA+CRC(1) */
+#define GWAVEFORM_FRAME_SIZE \
+    (3 + ((GWAVEFORM_MAX_CHANNELS + 7) / 8) + 2 * GWAVEFORM_MAX_CHANNELS + 1)
 
 #ifndef GWAVEFORM_RTT_CHANNEL
 #   define GWAVEFORM_RTT_CHANNEL        1
@@ -43,14 +43,17 @@
 /*============================ TYPES =========================================*/
 
 typedef struct {
-    int     (*Init)(const gwaveform_protocol_t *ptProtocol);
-    uint8_t (*AddChannel)(const char *pchName, float fScale);
-    void    (*Start)(void);
-    void    (*Stop)(void);
-    void    (*Push)(uint8_t chID, float fValue);
-    void    (*PushRaw)(uint8_t chID, int16_t hwValue);
-    void    (*Step)(void);
-    void    (*Poll)(void);
+    int      (*Init)(const gwaveform_protocol_t *ptProtocol);
+    uint8_t  (*AddChannel)(const char *pchName, float fScale);
+    void     (*Start)(void);
+    void     (*Stop)(void);
+    void     (*Push)(uint8_t chID, float fValue);
+    void     (*PushRaw)(uint8_t chID, int16_t hwValue);
+    void     (*Step)(void);
+    void     (*Poll)(void);
+    void     (*SetRate)(uint32_t wDecimation);  /* 0=external drive, n=every n-th Step call sends */
+    uint32_t (*GetDropCount)(void);             /* cumulative overwritten frames */
+    void     (*ClearDropCount)(void);
 } gwaveform_api_t;
 
 extern const gwaveform_api_t gwaveform;
@@ -60,14 +63,17 @@ extern const gwaveform_api_t gwaveform;
 #else /* GWAVEFORM_ENABLE == 0 */
 
 typedef struct {
-    int     (*Init)(const gwaveform_protocol_t *ptProtocol);
-    uint8_t (*AddChannel)(const char *pchName, float fScale);
-    void    (*Start)(void);
-    void    (*Stop)(void);
-    void    (*Push)(uint8_t chID, float fValue);
-    void    (*PushRaw)(uint8_t chID, int16_t hwValue);
-    void    (*Step)(void);
-    void    (*Poll)(void);
+    int      (*Init)(const gwaveform_protocol_t *ptProtocol);
+    uint8_t  (*AddChannel)(const char *pchName, float fScale);
+    void     (*Start)(void);
+    void     (*Stop)(void);
+    void     (*Push)(uint8_t chID, float fValue);
+    void     (*PushRaw)(uint8_t chID, int16_t hwValue);
+    void     (*Step)(void);
+    void     (*Poll)(void);
+    void     (*SetRate)(uint32_t wDecimation);
+    uint32_t (*GetDropCount)(void);
+    void     (*ClearDropCount)(void);
 } gwaveform_api_t;
 
 extern const gwaveform_api_t gwaveform;

@@ -7,7 +7,7 @@
 ## 1. 核心设计原理
 
 ### 分层架构
-1. **`gringbuf` (底层支撑)**：基于 SPSC (Single Producer Single Consumer) 设计的高性能无锁环形缓冲区。通过 `volatile` 屏障和 2^n 长度掩码优化，确保在 ISR (中断服务程序) 中写入时无需关中断，性能极高且无竞态风险。
+1. **乒乓帧缓冲 (核心架构)**：采用双缓冲区设计，Step (生产方) 与 Poll (消费方) 通过锁无关计数器进行交接。确保在 ISR 中写入时无需关中断，性能极高且内存占用极小。
 2. **`gwaveform` (业务层)**：负责数据帧打包、多通道掩码管理以及 RTT 搬运。支持动态描述帧发送，方便上位机自动重连与通道识别。
 3. **`SuperWaveform` (Host 层 - 推荐)**：基于 C++/ImGui 开发的高性能可视化工具，支持实时测量、离线分析与数据录制。
 4. **`viewer.py` (Host 层 - 备选)**：基于 Python/PyQtGraph 的轻量级查看器。
@@ -26,9 +26,9 @@
 | 宏 | 说明 | 默认值 |
 |:---|:---|:---|
 | `GWAVEFORM_ENABLE` | 总开关 (0/1) | 0 |
-| `GWAVEFORM_MAX_CHANNELS` | 最大支持通道数 | 8 |
-| `GWAVEFORM_RING_BUFFER_SIZE` | 内部缓存大小 (2^n) | 256 |
-| `GWAVEFORM_DECIMATION` | 抽取比 (每 N 次 Commit 发送一次) | 10 |
+| `GWAVEFORM_MAX_CHANNELS` | 最大支持通道数 | 16 |
+| `GWAVEFORM_RTT_BUFFER_SIZE` | RTT 共享内存大小 | 512 |
+| `GWAVEFORM_DECIMATION` | 抽取比 (每 N 次 Step 发送一次) | 1 |
 | `GWAVEFORM_RTT_CHANNEL` | 使用的 RTT 通道号 | 1 |
 
 ---
@@ -58,11 +58,11 @@ void app_init(void) {
 void PWM_IRQHandler(void) {
     // ... 算法计算 ...
     
-    gwaveform_Push(s_chIdU, fValU);
-    gwaveform_Push(s_chIdV, fValV);
+    gwaveform.Push(s_chIdU, fValU);
+    gwaveform.Push(s_chIdV, fValV);
     
-    /* 提交当前帧（内部会进行抽取比计数） */
-    gwaveform_Commit();
+    /* 触发采样（内部会进行抽取比计数） */
+    gwaveform.Step();
 }
 ```
 
@@ -74,7 +74,9 @@ void PWM_IRQHandler(void) {
 
 - `wave start`：开始流式传输并发送描述信息。
 - `wave stop`：停止传输。
-- `wave rate <n>`：运行时修改抽取比（例如 `wave rate 1` 为全速率下载）。
+- `wave rate <n>`：运行时修改抽取比。`0` 表示外部驱动（完全由用户在 ISR 调用 `Step`），`n > 0` 为内部驱动。
+- `wave drop`：显示丢帧统计及丢帧率。
+- `wave drop clear`：清空丢帧计数。
 - `wave list`：列出当前已注册的所有通道。
 
 ---

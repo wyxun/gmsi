@@ -34,11 +34,10 @@ tools/gwaveform/               ← Host 侧工具（不参与 MCU 编译）
 | 宏 | 默认值 | 说明 |
 |----|--------|------|
 | `GWAVEFORM_ENABLE` | `0` | 总开关，0=完全关闭 |
-| `GWAVEFORM_MAX_CHANNELS` | `8` | 最大通道数（影响静态数组大小） |
-| `GWAVEFORM_RING_BUFFER_SIZE` | `256` | 字节，ISR→主循环 ring buffer |
+| `GWAVEFORM_MAX_CHANNELS` | `16` | 最大通道数（影响静态数组大小） |
 | `GWAVEFORM_RTT_BUFFER_SIZE` | `512` | 字节，RTT up-buffer |
 | `GWAVEFORM_RTT_CHANNEL` | `1` | RTT 通道号（0 留给 gshell/terminal） |
-| `GWAVEFORM_DECIMATION` | `10` | 抽取比，ISR 每 N 次 Commit 才实际发送一帧 |
+| `GWAVEFORM_DECIMATION` | `1` | 抽取比，ISR 每 N 次 Step 才实际发送一帧 |
 
 当 `GWAVEFORM_ENABLE=0` 时，所有 API 宏展开为空语句，编译器完全裁剪。
 
@@ -58,33 +57,41 @@ void gwaveform_Init(void);
 void gwaveform_Poll(void);
 
 // 开始/停止流式传输（可由 gshell wave 命令调用，也可由业务代码调用）
-void gwaveform_Start(void);
-void gwaveform_Stop(void);
+void gwaveform.Start(void);
+void gwaveform.Stop(void);
 ```
 
 ### 通道注册
 
 ```c
 // 注册一个波形通道，返回通道 ID（0-based）
-// pchName : 通道名称，最长 7 字节（用于 Host 侧显示）
-// fScale  : 浮点值 × fScale = 存储的 int16，例如电压单位 V，fScale=100 → 精度 0.01V
-uint8_t gwaveform_AddChannel(const char *pchName, float fScale);
+uint8_t gwaveform.AddChannel(const char *pchName, float fScale);
 ```
 
-通道注册应在 `gwaveform_Init()` 之后、第一次 `gwaveform_Commit()` 之前完成。
+通道注册应在初始化之后、第一次 `Step()` 之前完成。
 
 ### ISR 侧采样（在 FOC 中断中调用）
 
 ```c
 // 写入一个浮点采样值（内部自动 × fScale 转为 int16）
-void gwaveform_Push(uint8_t chID, float fValue);
+void gwaveform.Push(uint8_t chID, float fValue);
 
-// 写入原始 int16 值（无缩放，性能最优，适合已量化的数据）
-void gwaveform_PushRaw(uint8_t chID, int16_t hwValue);
+// 写入原始 int16 值
+void gwaveform.PushRaw(uint8_t chID, int16_t hwValue);
 
-// 提交当前帧到 ring buffer（在本 ISR 周期所有 Push 完成后调用一次）
-// 内部执行抽取计数，未到抽取比时直接返回
-void gwaveform_Commit(void);
+// 触发采样（在本 ISR 周期所有 Push 完成后调用一次）
+void gwaveform.Step(void);
+```
+
+### 诊断与控制
+
+```c
+// 设置速率：0=外部驱动，n=内部 1/n kHz 驱动
+void gwaveform.SetRate(uint32_t wHz);
+
+// 获取丢帧统计
+uint32_t gwaveform.GetDropCount(void);
+void gwaveform.ClearDropCount(void);
 ```
 
 ### 典型调用示例（外部 FOC 项目）
@@ -94,27 +101,27 @@ void gwaveform_Commit(void);
 static uint8_t s_chUa, s_chUb, s_chUc, s_chIa, s_chIb, s_chIc, s_chTheta;
 
 void foc_Init(void) {
-    s_chUa    = gwaveform_AddChannel("Ua",    100.0f);  // 单位 0.01V
-    s_chUb    = gwaveform_AddChannel("Ub",    100.0f);
-    s_chUc    = gwaveform_AddChannel("Uc",    100.0f);
-    s_chIa    = gwaveform_AddChannel("Ia",   1000.0f);  // 单位 0.001A
-    s_chIb    = gwaveform_AddChannel("Ib",   1000.0f);
-    s_chIc    = gwaveform_AddChannel("Ic",   1000.0f);
-    s_chTheta = gwaveform_AddChannel("Theta", 100.0f);  // 单位 0.01rad
-    gwaveform_Start();
+    s_chUa    = gwaveform.AddChannel("Ua",    100.0f);  // 单位 0.01V
+    s_chUb    = gwaveform.AddChannel("Ub",    100.0f);
+    s_chUc    = gwaveform.AddChannel("Uc",    100.0f);
+    s_chIa    = gwaveform.AddChannel("Ia",   1000.0f);  // 单位 0.001A
+    s_chIb    = gwaveform.AddChannel("Ib",   1000.0f);
+    s_chIc    = gwaveform.AddChannel("Ic",   1000.0f);
+    s_chTheta = gwaveform.AddChannel("Theta", 100.0f);  // 单位 0.01rad
+    gwaveform.Start();
 }
 
 // FOC PWM/ADC 中断（10~20kHz）
 void PWM_IRQHandler(void) {
     // ... FOC 计算 ...
-    gwaveform_Push(s_chUa, fUa);
-    gwaveform_Push(s_chUb, fUb);
-    gwaveform_Push(s_chUc, fUc);
-    gwaveform_Push(s_chIa, fIa);
-    gwaveform_Push(s_chIb, fIb);
-    gwaveform_Push(s_chIc, fIc);
-    gwaveform_Push(s_chTheta, fTheta);
-    gwaveform_Commit();  // 每 GWAVEFORM_DECIMATION 次才真正写入 ring buffer
+    gwaveform.Push(s_chUa, fUa);
+    gwaveform.Push(s_chUb, fUb);
+    gwaveform.Push(s_chUc, fUc);
+    gwaveform.Push(s_chIa, fIa);
+    gwaveform.Push(s_chIb, fIb);
+    gwaveform.Push(s_chIc, fIc);
+    gwaveform.Push(s_chTheta, fTheta);
+    gwaveform.Step();  
 }
 ```
 
@@ -145,11 +152,10 @@ FOC ISR (10~20kHz)
   tools/gwaveform/viewer.py (Host)
 ```
 
-### Ring Buffer（单生产者单消费者，无锁）
-
-- ISR 为唯一写入方，主循环为唯一读取方，天然 SPSC，无需互斥锁
-- 使用 `volatile` head/tail 索引，写入时先写数据再更新 head（内存屏障由 Cortex-M 架构保证）
-- 大小为 `GWAVEFORM_RING_BUFFER_SIZE`，建议为帧大小的整数倍
+- ISR 为唯一写入方，主循环为唯一读取方
+- 采用 **Ping-Pong 双缓冲** 配合 **wWriteCount / wReadCount** 锁无关计数器进行握手
+- 这种方式比环形缓冲区更节省内存，且天然支持“最新值优先”策略
+- 当 Poll 速度慢于 Step 时，Step 会增加 `wDropCount` 并覆盖旧帧，确保 Poll 读到的是当前最实时的数据
 
 ### 帧格式（二进制，小端）
 
@@ -189,7 +195,9 @@ Host 收到描述帧后即可知道各通道名称和缩放系数，用于坐标
 |------|------|
 | `wave start` | 开始流式传输 |
 | `wave stop` | 停止流式传输 |
-| `wave rate <n>` | 运行时修改抽取比（n=1~255） |
+| `wave rate <n>` | 运行时修改抽取比（0=外部驱动，n=内部 1/n kHz 驱动） |
+| `wave drop` | 显示丢帧数及丢帧率 |
+| `wave drop clear` | 清零统计计数 |
 | `wave list` | 列出已注册通道及 ID |
 
 实现方式：在 `gwaveform.c` 中用 `GMSI_SHELL_CMD()` 宏注册，与 gshell 零耦合。
@@ -235,11 +243,11 @@ python tools/gwaveform/viewer.py --host localhost --port 9091
 
 | 项目 | 大小 |
 |------|------|
-| `gwaveform_t` 结构体（8通道） | ~80 字节 RAM |
-| Ring buffer（默认） | 256 字节 RAM |
+| `gwaveform_cb_t` 结构体（16通道） | ~500 字节 RAM |
+| 乒乓帧缓冲 | ~80 字节 RAM |
 | RTT up-buffer（默认） | 512 字节 RAM |
-| 代码段（估算） | ~400 字节 Flash |
-| **合计** | **~850 字节 RAM + ~400 字节 Flash** |
+| 代码段（估算） | ~600 字节 Flash |
+| **合计** | **~1.1 KB RAM + ~600 字节 Flash** |
 
 `GWAVEFORM_ENABLE=0` 时以上全部为零。
 

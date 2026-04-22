@@ -15,19 +15,7 @@ __attribute__((weak)) void gstorage_SetDefaultFlash(void *ptFlash)
 #include <stdio.h>
 #endif
 
-#define GENERAL_PURPOSE                 0               //!< General purpose 
-#define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
-#define GMSI_INTERFACE_VERSION          3               //!< GMSI interface version
-#define GMSI_MAJOR_VERSION              0               //!< GMSI major version
-#define GMSI_MINOR_VERSION              0               
-
-// GMSI version
-#define GMSI_VERSION                 {                                      \
-                                        GMSI_PURPOSE,                       \
-                                        GMSI_INTERFACE_VERSION,             \
-                                        GMSI_MAJOR_VERSION,                 \
-                                        GMSI_MINOR_VERSION,                 \
-                                    }
+// GMSI version static structure is defined using macros from global_define.h
 const struct {
     uint8_t chPurpose;          //!< software framework purpose
     uint8_t chInterface;        //!< interface version

@@ -1,6 +1,21 @@
 #ifndef __GLOBAL_DEFINE_H__
 #define __GLOBAL_DEFINE_H__
 
+/*============================ GMSI VERSION ==================================*/
+#define GENERAL_PURPOSE                 0               //!< General purpose 
+#define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
+#define GMSI_INTERFACE_VERSION          3               //!< GMSI interface version
+#define GMSI_MAJOR_VERSION              0               //!< GMSI major version
+#define GMSI_MINOR_VERSION              1               
+
+#define GMSI_VERSION                 {                                      \
+                                        GMSI_PURPOSE,                       \
+                                        GMSI_INTERFACE_VERSION,             \
+                                        GMSI_MAJOR_VERSION,                 \
+                                        GMSI_MINOR_VERSION,                 \
+                                    }
+
+
 // Include necessary libraries
 #include <stdbool.h>
 #include <stdint.h>
