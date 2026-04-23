@@ -11,23 +11,15 @@
 /*============================ TYPES =========================================*/
 
 typedef struct {
-    /*
-     * Ping-pong frame buffers.
-     * Step (ISR context) writes to achBuf[chWriteIdx] then toggles chWriteIdx.
-     * Poll (main loop)  reads  from achBuf[chReadIdx] after bFrameReady is set.
-     * On Cortex-M (single-core), a uint8_t/bool write is atomic, so this
-     * lock-free handoff is safe as long as Poll saves chReadIdx before clearing
-     * bFrameReady (see gwaveform_Poll implementation).
+    /* 
+     * Ping-pong frame buffers. 
+     * wWCount (Written Count) is total frames produced. 
+     * wRCount (Read Count) is total frames consumed by Poll. 
      */
     uint8_t             achBuf[2][GWAVEFORM_FRAME_SIZE];
-    uint16_t            ahwBufLen[2];       /* packed byte count for each buf  */
-    volatile uint8_t    chWriteIdx;         /* Step writes here                */
-    volatile uint8_t    chReadIdx;          /* Poll reads from here            */
-    volatile uint32_t   wWriteCount;        /* Incremented on every successful Step */
-    volatile uint32_t   wReadCount;         /* Poll syncs with this to detect new frames */
-
-    /* Diagnostics: count frames overwritten before Poll consumed them */
-    volatile uint32_t   wDropCount;
+    uint16_t            ahwBufLen[2];
+    volatile uint32_t   wWCount;
+    volatile uint32_t   wRCount;
     volatile uint32_t   wTotalCount;        /* Total attempted frames */
 
     /* RTT shared memory (host reads this via SWD) */
@@ -60,7 +52,7 @@ static int gwaveform_Init(const gwaveform_protocol_t *ptProtocol)
 
     SEGGER_RTT_ConfigUpBuffer(GWAVEFORM_RTT_CHANNEL, "Waveform",
                               s_tWave.achRTTBuffer, GWAVEFORM_RTT_BUFFER_SIZE,
-                              SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
+                              SEGGER_RTT_MODE_NO_BLOCK_SKIP);
 
     s_tWave.chDecimation = GWAVEFORM_DECIMATION;
     s_tWave.ptProtocol   = ptProtocol;
@@ -111,17 +103,8 @@ static void gwaveform_PushRaw(uint8_t chID, int16_t hwValue)
 /*
  * gwaveform_Step — ISR-safe, non-blocking.
  *
- * In internal-drive mode (bExternalDrive == false):
- *   Called by gwaveform_Default_Step_Callback at 1kHz. Decimation controls
- *   how many calls are skipped between output frames.
- *
- * In external-drive mode (bExternalDrive == true):
- *   User calls gwaveform.Step() directly from their own ISR (e.g. FOC loop).
- *   Every call produces one output frame — decimation is bypassed.
- *   Use gwaveform.SetRate(0) to enable this mode.
- *
- * If Poll hasn't consumed the previous frame yet, wDropCount is incremented
- * and the new frame overwrites (newest-wins semantics).
+ * Toggles between two buffers. If Poll hasn't consumed the previous frame yet,
+ * the new frame overwrites (newest-wins semantics).
  */
 static void gwaveform_Step(void)
 {
@@ -130,39 +113,16 @@ static void gwaveform_Step(void)
         return;
     }
 
-    /* Decimation gate — only applies in internal-drive mode */
-    if (!s_tWave.bExternalDrive) {
-        if (++s_tWave.chDecimCounter < s_tWave.chDecimation) {
-            return;
-        }
-        s_tWave.chDecimCounter = 0;
-    }
+    /* Index to the current writing buffer */
+    uint8_t chW = s_tWave.wWCount % 2;
 
-    /* Count attempted frames */
-    s_tWave.wTotalCount++;
-
-    /* Count frame overwrite if Poll hasn't consumed the previous one 
-     * (i.e. WriteCount is ahead of ReadCount) */
-    if (s_tWave.wWriteCount != s_tWave.wReadCount) {
-        s_tWave.wDropCount++;
-    }
-
-    /* Pack into current write buffer */
-    uint8_t chW = s_tWave.chWriteIdx;
     s_tWave.ahwBufLen[chW] = s_tWave.ptProtocol->pack_data(
         s_tWave.achBuf[chW],
         s_tWave.ahwSamples, s_tWave.abMask,
         s_tWave.chCount, s_tWave.chSeq++);
 
-    /*
-     * Publish handoff (Lock-free on Cortex-M):
-     * 1. Set chReadIdx so Poll knows which buffer holds the new frame.
-     * 2. Increment wWriteCount (Poll will see this change).
-     * 3. Toggle chWriteIdx so the next Step call writes to the other buffer.
-     */
-    s_tWave.chReadIdx    = chW;
-    s_tWave.wWriteCount++;
-    s_tWave.chWriteIdx  ^= 1;
+    s_tWave.wWCount++;
+    s_tWave.wTotalCount++;
 
     memset(s_tWave.abMask, 0, MASK_BYTES);
 }
@@ -179,8 +139,6 @@ static void send_descriptor_frame(void)
  * gwaveform_Poll — call from main loop (non-ISR context).
  *
  * Drains the ping-pong buffer to RTT and sends periodic descriptor frames.
- * RTT_Write can block here (BLOCK_IF_FIFO_FULL mode) since this runs in the
- * main loop, not an ISR.
  */
 static void gwaveform_Poll(void)
 {
@@ -196,28 +154,22 @@ static void gwaveform_Poll(void)
         send_descriptor_frame();
     }
 
-    /* Claim the frame: save chReadIdx before clearing bFrameReady so that a
-     * preempting Step ISR cannot corrupt our index after we clear the flag. */
-    /* Claim the frame: save chReadIdx before updating wReadCount */
-    uint32_t wWCount = s_tWave.wWriteCount;
-    if (wWCount != s_tWave.wReadCount) {
-        s_tWave.wReadCount = wWCount;      /* Sync with writer */
-        uint8_t chR = s_tWave.chReadIdx;   /* Get newest frame index */
+    uint32_t wWCount = s_tWave.wWCount;
+    uint32_t wRCount = s_tWave.wRCount;
+
+    if (wWCount != wRCount) {
+        /* We have at least one new frame.
+         * Since we only have 2 buffers, we only care about the latest one. */
+        uint8_t chR = (wWCount - 1) % 2;
+        
         SEGGER_RTT_Write(GWAVEFORM_RTT_CHANNEL,
                          s_tWave.achBuf[chR],
                          s_tWave.ahwBufLen[chR]);
+
+        s_tWave.wRCount = wWCount;
     }
 }
 
-/*
- * gwaveform_SetRate
- *
- * wDecimation == 0 : external-drive mode — disable internal tick, user calls
- *                    gwaveform.Step() from their own ISR at any frequency.
- * wDecimation >= 1 : internal-drive mode — framework tick calls Step at 1kHz,
- *                    one frame is emitted every wDecimation calls.
- *                    e.g. wDecimation=1 → 1kHz output, =2 → 500Hz, etc.
- */
 static void gwaveform_SetRate(uint32_t wDecimation)
 {
     if (wDecimation == 0) {
@@ -231,12 +183,15 @@ static void gwaveform_SetRate(uint32_t wDecimation)
 
 static uint32_t gwaveform_GetDropCount(void)
 {
-    return s_tWave.wDropCount;
+    uint32_t wTotal = s_tWave.wTotalCount;
+    uint32_t wSent  = s_tWave.wRCount;
+    return (wTotal > wSent) ? (wTotal - wSent) : 0;
 }
 
 static void gwaveform_ClearDropCount(void)
 {
-    s_tWave.wDropCount = 0;
+    s_tWave.wRCount = 0;
+    s_tWave.wWCount = 0;
     s_tWave.wTotalCount = 0;
 }
 
@@ -253,6 +208,7 @@ const gwaveform_api_t gwaveform = {
     .GetDropCount   = gwaveform_GetDropCount,
     .ClearDropCount = gwaveform_ClearDropCount,
 };
+
 
 /* Weak callback — invoked by the GMSI 1kHz tick.
  * Silenced automatically when user enables external-drive mode via SetRate(0). */

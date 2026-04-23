@@ -32,9 +32,9 @@ static uint32_t s_wPhaseStep = 42949673; // 10Hz @ 1kHz
 void blm_waveform_test_init(void)
 {
     gwaveform.Init(NULL); // Use default protocol
-    s_chU = gwaveform.AddChannel("U_Phase", 10.0f);
-    s_chV = gwaveform.AddChannel("V_Phase", 10.0f);
-    s_chW = gwaveform.AddChannel("W_Phase", 10.0f);
+    s_chU = gwaveform.AddChannel("U_Phase", 1.0f);
+    s_chV = gwaveform.AddChannel("V_Phase", 1.0f);
+    s_chW = gwaveform.AddChannel("W_Phase", 1.0f);
     
     gwaveform.Start();
 }

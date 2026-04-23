@@ -1,7 +1,8 @@
 # SuperWaveform Host Tool Makefile
 # Compiler: mingw-w64-x86_64-clang++
 
-CXX = D:/software/msys64/mingw64/bin/clang++
+MSYS64_PATH = D:/0_software/msys64
+CXX = $(MSYS64_PATH)/mingw64/bin/clang++
 CFLAGS = -Wall -Wextra -O2 -g
 CXXFLAGS = -std=c++17 $(CFLAGS)
 
@@ -16,7 +17,7 @@ INCLUDES = -I$(SRC_DIR) \
            -I$(THIRD_PARTY_DIR)/imgui \
            -I$(THIRD_PARTY_DIR)/imgui/backends \
            -I$(THIRD_PARTY_DIR)/implot \
-           -ID:/software/msys64/mingw64/include/SDL2
+           -I$(MSYS64_PATH)/mingw64/include/SDL2
 
 # Source files (Core)
 SRCS = $(wildcard $(SRC_DIR)/*.cpp) \
@@ -41,11 +42,11 @@ TARGET = superwaveform.exe
 all: check_deps $(TARGET)
 
 check_deps:
-	@if not exist $(THIRD_PARTY_DIR)\imgui\imgui.cpp ( echo [ERROR] ImGui submodule missing. Please run "git submodule update --init" or manually download to thirdparty/imgui && exit 1 )
-	@if not exist $(THIRD_PARTY_DIR)\implot\implot.cpp ( echo [ERROR] ImPlot submodule missing. Please run "git submodule update --init" or manually download to thirdparty/implot && exit 1 )
+	@if [ ! -f $(THIRD_PARTY_DIR)/imgui/imgui.cpp ]; then echo "[ERROR] ImGui submodule missing. Please run 'git submodule update --init' or manually download to thirdparty/imgui"; exit 1; fi
+	@if [ ! -f $(THIRD_PARTY_DIR)/implot/implot.cpp ]; then echo "[ERROR] ImPlot submodule missing. Please run 'git submodule update --init' or manually download to thirdparty/implot"; exit 1; fi
 
 $(TARGET): $(OBJS)
-	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LIBS)
 
 # VPATH tells make where to look for source files
@@ -54,16 +55,16 @@ vpath %.c $(SRC_DIR)/utils
 
 # Build rule for C++ files
 $(BUILD_DIR)/%.cpp.o: %.cpp
-	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Build rule for C files
 $(BUILD_DIR)/%.c.o: %.c
-	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
-	D:/software/msys64/mingw64/bin/clang $(CFLAGS) $(INCLUDES) -c $< -o $@
+	@mkdir -p $(BUILD_DIR)
+	$(MSYS64_PATH)/mingw64/bin/clang $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	@if exist $(BUILD_DIR) rmdir /s /q $(BUILD_DIR)
-	@if exist $(TARGET) del /q $(TARGET)
+	@rm -rf $(BUILD_DIR)
+	@rm -f $(TARGET)
 
 .PHONY: all clean check_deps

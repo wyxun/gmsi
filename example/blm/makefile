@@ -10,7 +10,7 @@ CHIP ?= at32f4
 # OS sensing
 ifeq ($(OS),Windows_NT)
     SHELL = cmd.exe
-    SW_ROOT ?= D:/software
+    SW_ROOT ?= D:/0_software
     LLVM_PATH = $(SW_ROOT)/llvm_for_arm/bin/
     MKDIR = if not exist $(subst /,\,$(BUILD_DIR)) mkdir $(subst /,\,$(BUILD_DIR))
     RMDIR = if exist build rd /s /q build
@@ -19,7 +19,7 @@ ifeq ($(OS),Windows_NT)
     OPENOCD_SCRIPTS = $(SW_ROOT)/msys64/mingw64/share/openocd/scripts
     OPENOCD_CMD = $(OPENOCD_BIN) -s $(OPENOCD_SCRIPTS) \
                   -f $(OPENOCD_INTERFACE) -c "cmsis_dap_backend hid" \
-                  -f $(OPENOCD_TARGET)
+                  -f $(OPENOCD_TARGET) -c "adapter speed 8000"
     NM = $(LLVM_PATH)llvm-nm.exe
 else
     # Linux/WSL

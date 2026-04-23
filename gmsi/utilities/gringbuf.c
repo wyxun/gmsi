@@ -100,6 +100,15 @@ uint16_t gringbuf_WriteBulk(gringbuf_t *ptRB, const uint8_t *pchData, uint16_t h
 
 uint16_t gringbuf_ReadBulk(gringbuf_t *ptRB, uint8_t *pchData, uint16_t hwLen)
 {
+    uint16_t hwRead = gringbuf_PeekBulk(ptRB, pchData, hwLen);
+    if (hwRead > 0) {
+        ptRB->hwTail = (ptRB->hwTail + hwRead) & ptRB->hwSizeMask;
+    }
+    return hwRead;
+}
+
+uint16_t gringbuf_PeekBulk(gringbuf_t *ptRB, uint8_t *pchData, uint16_t hwLen)
+{
     if (0 == hwLen) return 0;
 
     uint16_t hwUsed = gringbuf_GetUsed(ptRB);
@@ -121,8 +130,6 @@ uint16_t gringbuf_ReadBulk(gringbuf_t *ptRB, uint8_t *pchData, uint16_t hwLen)
             memcpy(&pchData[hwFirstPart], ptRB->pchBuffer, hwToRead - hwFirstPart);
         }
     }
-
-    ptRB->hwTail = (hwTail + hwToRead) & ptRB->hwSizeMask;
 
     return hwToRead;
 }

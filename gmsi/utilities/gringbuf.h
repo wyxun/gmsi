@@ -54,6 +54,12 @@ uint16_t gringbuf_WriteBulk(gringbuf_t *ptRB, const uint8_t *pchData, uint16_t h
 uint16_t gringbuf_ReadBulk(gringbuf_t *ptRB, uint8_t *pchData, uint16_t hwLen);
 
 /**
+ * @brief Peek data from ring buffer without moving tail
+ * @return uint16_t Number of bytes successfully peeked
+ */
+uint16_t gringbuf_PeekBulk(gringbuf_t *ptRB, uint8_t *pchData, uint16_t hwLen);
+
+/**
  * @brief Get used space in bytes
  */
 uint16_t gringbuf_GetUsed(gringbuf_t *ptRB);
