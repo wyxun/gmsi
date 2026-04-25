@@ -12,18 +12,27 @@
 
 typedef struct {
     /* 
-     * Ping-pong frame buffers. 
-     * wWCount (Written Count) is total frames produced. 
-     * wRCount (Read Count) is total frames consumed by Poll. 
+     * Multi-level Block FIFO. 
      */
-    uint8_t             achBuf[2][GWAVEFORM_FRAME_SIZE];
-    uint16_t            ahwBufLen[2];
-    volatile uint32_t   wWCount;
-    volatile uint32_t   wRCount;
-    volatile uint32_t   wTotalCount;        /* Total attempted frames */
+
+    uint8_t             achBuf[GWAVEFORM_FIFO_DEPTH][GWAVEFORM_FRAME_SIZE];
+    uint16_t            ahwBufLen[GWAVEFORM_FIFO_DEPTH];
+
+    volatile uint32_t   wWCount;            /* Produced packets */
+    volatile uint32_t   wRCount;            /* Consumed packets */
+    volatile uint32_t   wDropCount;         /* Overrun packets (cumulative) */
+    volatile uint32_t   wIntervalDropCount; /* Overrun packets in current 1s window */
+    volatile uint32_t   wLastIntervalDrops; /* Overrun packets in last 1s window */
+    volatile uint32_t   wTotalCount;        /* Historical total */
+
+
 
     /* RTT shared memory (host reads this via SWD) */
-    uint8_t             achRTTBuffer[GWAVEFORM_RTT_BUFFER_SIZE];
+    uint8_t             achRTTBuffer[GWAVEFORM_RTT_BUFFER_SIZE] __attribute__((aligned(4)));
+
+    /* Cumulative count of RTT buffer full events (diagnostic) */
+    volatile uint32_t   wRTTFullCount; 
+
 
     /* Channel descriptors & latest sample scratch-pad */
     gwaveform_ch_desc_t atChannels[GWAVEFORM_MAX_CHANNELS];
@@ -113,8 +122,25 @@ static void gwaveform_Step(void)
         return;
     }
 
+    if (s_tWave.chDecimation > 1) {
+        if (++s_tWave.chDecimCounter < s_tWave.chDecimation) {
+            return; /* Decimate */
+        }
+        s_tWave.chDecimCounter = 0;
+    }
+
+    /* Overrun protection: Don't write to a slot that hasn't been read yet */
+    if (s_tWave.wWCount - s_tWave.wRCount >= GWAVEFORM_FIFO_DEPTH) {
+        s_tWave.wDropCount++;
+        s_tWave.wIntervalDropCount++;
+        s_tWave.wTotalCount++;
+        memset(s_tWave.abMask, 0, MASK_BYTES);
+        return;
+    }
+
+
     /* Index to the current writing buffer */
-    uint8_t chW = s_tWave.wWCount % 2;
+    uint8_t chW = s_tWave.wWCount % GWAVEFORM_FIFO_DEPTH;
 
     s_tWave.ahwBufLen[chW] = s_tWave.ptProtocol->pack_data(
         s_tWave.achBuf[chW],
@@ -124,8 +150,11 @@ static void gwaveform_Step(void)
     s_tWave.wWCount++;
     s_tWave.wTotalCount++;
 
+
+
     memset(s_tWave.abMask, 0, MASK_BYTES);
 }
+
 
 static void send_descriptor_frame(void)
 {
@@ -143,6 +172,7 @@ static void send_descriptor_frame(void)
 static void gwaveform_Poll(void)
 {
     static int64_t s_lLastDescTick = 0;
+    static int64_t s_lLastDropTick = 0;
     extern int64_t get_system_ms(void);
     int64_t lNow = get_system_ms();
 
@@ -154,21 +184,46 @@ static void gwaveform_Poll(void)
         send_descriptor_frame();
     }
 
+    /* Update interval drop stats every 1000ms */
+    if (lNow - s_lLastDropTick >= 1000) {
+        s_lLastDropTick = lNow;
+        s_tWave.wLastIntervalDrops = s_tWave.wIntervalDropCount;
+        s_tWave.wIntervalDropCount = 0;
+    }
+
+
     uint32_t wWCount = s_tWave.wWCount;
     uint32_t wRCount = s_tWave.wRCount;
 
-    if (wWCount != wRCount) {
-        /* We have at least one new frame.
-         * Since we only have 2 buffers, we only care about the latest one. */
-        uint8_t chR = (wWCount - 1) % 2;
+    /* Continuous polling but throttled: 
+     * Send up to 8 packets per 1ms loop pass to avoid overwhelming the RTT tool/SWD link 
+     * while still maintaining high throughput. 
+     */
+    uint8_t chLimit = 8; 
+    while (wWCount != wRCount && chLimit--) {
+        uint8_t chR = wRCount % GWAVEFORM_FIFO_DEPTH;
         
-        SEGGER_RTT_Write(GWAVEFORM_RTT_CHANNEL,
-                         s_tWave.achBuf[chR],
-                         s_tWave.ahwBufLen[chR]);
+        /* Ensure we have a valid packet there (len > 0) */
+        if (s_tWave.ahwBufLen[chR] > 0) {
+            /* Try to send one full packet */
+            uint32_t wSent = SEGGER_RTT_Write(GWAVEFORM_RTT_CHANNEL,
+                                             s_tWave.achBuf[chR],
+                                             s_tWave.ahwBufLen[chR]);
+            
+            if (wSent < s_tWave.ahwBufLen[chR]) {
+                /* Capture congestion event */
+                s_tWave.wRTTFullCount++;
+                break; 
+            }
 
-        s_tWave.wRCount = wWCount;
+        }
+        
+        wRCount++;
     }
+    s_tWave.wRCount = wRCount;
 }
+
+
 
 static void gwaveform_SetRate(uint32_t wDecimation)
 {
@@ -183,9 +238,12 @@ static void gwaveform_SetRate(uint32_t wDecimation)
 
 static uint32_t gwaveform_GetDropCount(void)
 {
-    uint32_t wTotal = s_tWave.wTotalCount;
-    uint32_t wSent  = s_tWave.wRCount;
-    return (wTotal > wSent) ? (wTotal - wSent) : 0;
+    return s_tWave.wDropCount;
+}
+
+static uint32_t gwaveform_GetLastIntervalDrops(void)
+{
+    return s_tWave.wLastIntervalDrops;
 }
 
 static void gwaveform_ClearDropCount(void)
@@ -193,7 +251,18 @@ static void gwaveform_ClearDropCount(void)
     s_tWave.wRCount = 0;
     s_tWave.wWCount = 0;
     s_tWave.wTotalCount = 0;
+    s_tWave.wDropCount = 0;
+    s_tWave.wIntervalDropCount = 0;
+    s_tWave.wLastIntervalDrops = 0;
+    s_tWave.wRTTFullCount = 0;
 }
+
+uint32_t gwaveform_GetRTTFullCount(void)
+{
+    return s_tWave.wRTTFullCount;
+}
+
+
 
 const gwaveform_api_t gwaveform = {
     .Init           = gwaveform_Init,
@@ -206,8 +275,10 @@ const gwaveform_api_t gwaveform = {
     .Poll           = gwaveform_Poll,
     .SetRate        = gwaveform_SetRate,
     .GetDropCount   = gwaveform_GetDropCount,
+    .GetLastIntervalDrops = gwaveform_GetLastIntervalDrops,
     .ClearDropCount = gwaveform_ClearDropCount,
 };
+
 
 
 /* Weak callback — invoked by the GMSI 1kHz tick.

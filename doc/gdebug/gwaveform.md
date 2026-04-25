@@ -4,53 +4,53 @@
 
 ---
 
-## 1. 核心架构：双缓冲 (Ping-Pong) 模型
+## 1. 核心架构：多级帧 FIFO 模型
 
-为了实现“中断内安全打包”与“主循环外异步传输”的解耦，`gwaveform` 默认采用了 **双缓冲 (Ping-Pong)** 架构。这种设计遵循“最新优先”原则。
+为了解决主循环抖动（Jitter）导致的波形断裂，`gwaveform` 采用了 **保护型多级帧 FIFO (Block FIFO)** 架构。该设计在保证实时性的同时，提供了极强的抖动吸收能力。
 
 ```mermaid
 graph TD
     subgraph "Producer (High Priority / ISR)"
-        A[User Code: Push Data] --> B[ahwSamples Cache]
-        C[Step Event: timer or loop] --> D{Select Buffer}
-        D -- "Write (wWCount % 2)" --> E[achBuf #0 / #1]
+        A["User Code: Push Data"] --> B["ahwSamples Cache"]
+        C["Step Event: 1kHz"] --> D{"Check FIFO Full?"}
+        D -- "No" --> E["Pack to achBuf[wWCount % N]"]
+        D -- "Yes (Drop)" --> F["Increment Drop Count"]
     end
 
     subgraph "Consumer (Low Priority / Main Loop)"
-        G[Poll: wWCount != wRCount?] --> H{Select Latest}
-        H -- "Read (wWCount-1) % 2" --> I[RTT_Write: Channel 1]
-        I --> J[PC Side: SuperWaveform Viewer]
+        G["Poll: Throttled 8 pkts/ms"] --> H{"RTT Space?"}
+        H -- "Space Available" --> I["RTT_Write: Channel 1"]
+        H -- "Full (Congest)" --> J["Retry Same Packet Later"]
     end
+
 ```
 
-### 1.1 关键特性：最新优先 (Newest-Wins)
-`gwaveform` 在高频中断中直接将打包好的数据帧投入双缓冲区之一。其逻辑特点如下：
-1. **零阻塞**：中断（Producer）永远不会等待主循环（Consumer），保证了算法执行的绝对确定性。
-2. **低延迟**：主循环始终拉取并发送**最新的**一帧完整数据包。
-3. **带宽自适应**：如果主循环处理过慢（如总线繁忙），中间的旧样点会被直接覆盖丢失，而不会累积延迟。这确保了在带宽受限时，观察到的波形仍然是当前实时发生的。
+### 1.1 关键特性：写保护与平滑推送
+1. **写保护 (Overrun Protection)**：当 RTT 链路完全堵塞导致 FIFO 填满时，系统会**主动丢弃新采样**。这保证了正在传输的旧数据不会被物理覆盖，从而维护了 PC 端解码的协议完整性。
+2. **平滑推送 (Smoothing)**：主循环每次 `Poll` 限定最多发送 8 个包。这避免了在大规模积压后瞬间爆发出海量数据流冲击物理链路，极大地降低了 RTT 同步丢失的概率。
+3. **确定性延时**：通过增大 FIFO 深度，可以吸收主循环长达数十毫秒的卡顿而不丢样点。
+
 
 ---
 
-## 2. RTT 独立通道配置
+## 2. 内存与带宽配置 (RAM Configuration)
 
-与 `gshell` 复用默认通道不同，`gwaveform` 使用独立的传输路径：
+`gwaveform` 的内存占用主要由 FIFO 深度和 RTT 物理缓冲区决定。用户可以通过在 `userconfig.h` 中定义以下宏进行优化：
 
+| 宏定义 | 默认值 | 建议范围 | 说明 |
+| :--- | :--- | :--- | :--- |
+| **`GWAVEFORM_FIFO_DEPTH`** | 16 | 8 ~ 64 | FIFO 帧数量。由于主循环抖动大时，可调大此值（如64）以吸收延迟。 |
+| **`GWAVEFORM_RTT_BUFFER_SIZE`** | 1024 | 512 ~ 8192 | RTT 物理环形缓冲区大小。1kHz 全速采样建议使用 4096 以上。 |
+| **`GWAVEFORM_MAX_CHANNELS`** | 16 | 1 ~ 32 | 最大支持通道数。减小此值可显著降低每一帧的 RAM 占用。 |
+
+### 2.1 典型 RAM 瘦身方案 (示例)
 ```c
-static int gwaveform_Init(const gwaveform_protocol_t *ptProtocol)
-{
-    memset(&s_tWave, 0, sizeof(s_tWave));
-
-    // 配置通道1
-    SEGGER_RTT_ConfigUpBuffer(GWAVEFORM_RTT_CHANNEL, "Waveform",
-                              s_tWave.achRTTBuffer, GWAVEFORM_RTT_BUFFER_SIZE,
-                              SEGGER_RTT_MODE_NO_BLOCK_SKIP);
-
-    return GMSI_SUCCESS;
-}
+/* 在 userconfig.h 中根据实际需求降低占用 */
+#define GWAVEFORM_MAX_CHANNELS      4       // 仅支持 4 通道
+#define GWAVEFORM_FIFO_DEPTH        8       // 减小 FIFO 深度
+#define GWAVEFORM_RTT_BUFFER_SIZE   512     // 最小化 RTT 占用
 ```
 
-- **Channel 1**：专用波形通道，避免日志打印对二进制数据流的干扰。
-- **RTT Buffer (512B)**：RTT 驱动层的物理缓冲区。建议在极高频率采样时根据需要增大。
 
 ---
 
@@ -152,21 +152,17 @@ void sys_init(void) {
 
 ---
 
-## 7. 进阶探讨：无损 FIFO (gring) 架构 (Future Plan)
+## 7. 性能监控与诊断 (Diagnostics)
 
-> [!NOTE]
-> 该方案目前处于验证/备选阶段。如果你的应用场景**对波形完整性有绝对要求**（不能接受中间丢样点），可以考虑切换至该架构。
+为了确保高频采样下的系统健康，可通过内置命令或 API 观测：
 
-### 5.1 方案思路
-将现有的双缓冲替换为深度更大的 **Ring Buffer (FIFO)**：
-- **ISR 端**：所有生成的帧顺序排队到 2KB 的 FIFO 中。
-- **Poll 端**：主循环以“削峰填谷”的方式批量清空 FIFO。
-- **优势**：可以吸收主循环因复杂业务产生的几十毫秒级抖动，确保波形 100% 连续。
+### 7.1 `wave drop` 命令
+- **Cumulative**: 自运行以来的总丢帧数（由于 PC 取数太慢导致 FIFO 溢出）。
+- **Total**: 历史尝试发送的总帧数。
+- **百分比**: 反映了当前物理链路的承载压力。
 
-### 5.2 挑战与建议
-实验表明，在 RTT 物理带宽不足或 host 软件接收延迟较大时，FIFO 容易溢出（Drop 数急剧上升）。
-- 建议配合 **8MHz 以上的 SWD 速度** 使用。
-- 需要确保 `gringbuf` 实现是单生产者单消费者 (SPSC) 锁无关的。
+### 7.2 `RTT Congest` (拥塞次数)
+反映了 MCU 写入 RTT 时发现缓冲区已满的频率。如果该值极高（每秒上万次），说明物理链路（如 SWD 时钟）已达上限，建议增加 SWD 频率（12MHz+）。
 
 ---
 

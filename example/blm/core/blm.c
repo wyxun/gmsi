@@ -407,6 +407,8 @@ int blm_Run(uintptr_t wObjectAddr)
     return GMSI_SUCCESS;
 }
 
+
+
 /**
  * @brief GMSI Clock function
  */
@@ -447,10 +449,8 @@ int blm_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     /* Update bootloader info in shared region */
     gblinfo_UpdateBlInfo(BLM_VERSION_MAJOR, BLM_VERSION_MINOR, 0);
     
-    /* Initialize perf_counter */
-    perfc_init(true);
-    
     /* Register with GMSI */
+
     this.ptBase = &s_tBlmBase;
     s_tBlmBaseCfg.wParent = wObjectAddr;
     wRet = gbase_Init(this.ptBase, &s_tBlmBaseCfg);

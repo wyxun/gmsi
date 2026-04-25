@@ -79,9 +79,10 @@ void blm_port_SystemReset(void)
     while (1);
 }
 
-static void SystemClock_Config(void)
+void blm_port_SystemClockConfig(void)
 {
     /* Ensure HICK is on and switch to it first */
+
     CRM->CTRL |= CRM_CTRL_HICKEN;
     while (!(CRM->CTRL & CRM_CTRL_HICKSTBL));
     
@@ -123,10 +124,11 @@ static void SystemClock_Config(void)
 
 int blm_port_UartInit(uint32_t wBaudrate)
 {
-    SystemClock_Config();
+    blm_port_SystemClockConfig();
     SystemCoreClock = BLM_SYSCLK;
 
     queue_init(&s_tRxQueue, s_achRxBuf, sizeof(s_achRxBuf));
+
 
     CRM->APB2EN |= CRM_APB2EN_GPIOAEN | CRM_APB2EN_IOMUXEN;
     BLM_USART_RCC_EN();
@@ -149,7 +151,8 @@ int blm_port_UartInit(uint32_t wBaudrate)
 
     /* NVIC settings */
     NVIC_EnableIRQ(USART1_IRQn);
-    NVIC_SetPriority(USART1_IRQn, 0);
+    NVIC_SetPriority(USART1_IRQn, 1);
+
 
     return 0;
 }

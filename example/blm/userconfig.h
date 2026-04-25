@@ -59,6 +59,10 @@ typedef enum {
 #   define GWAVEFORM_ENABLE             1
 #endif
 #define GWAVEFORM_MAX_CHANNELS          8
-#define GWAVEFORM_DECIMATION            2
+#define GWAVEFORM_DECIMATION            1
+#define GWAVEFORM_RTT_BUFFER_SIZE       8192    /* High bandwidth for 1kHz */
+#define GWAVEFORM_FIFO_DEPTH            64      /* High jitter tolerance */
+
+
 
 #endif  // __USERCONFIG_H__

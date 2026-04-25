@@ -5,7 +5,9 @@
 #include "global_define.h"
 #include "glog.h"
 #include "gblinfo.h"
+#include "perf_counter.h"
 #include <string.h>
+
 
 int gblinfo_Run(uintptr_t wObjectAddr);
 int gblinfo_Clock(uintptr_t wObjectAddr);
@@ -257,6 +259,8 @@ int gblinfo_Run(uintptr_t wObjectAddr)
     (void)wObjectAddr;
     return GMSI_SUCCESS;
 }
+
+
 
 /**
  * @brief Clock function (called in timer interrupt)

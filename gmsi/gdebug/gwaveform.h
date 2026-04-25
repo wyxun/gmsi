@@ -21,8 +21,13 @@
 #endif
 
 #ifndef GWAVEFORM_RTT_BUFFER_SIZE
-#   define GWAVEFORM_RTT_BUFFER_SIZE    512
+#   define GWAVEFORM_RTT_BUFFER_SIZE    1024        /* Default RTT buffer size */
 #endif
+
+#ifndef GWAVEFORM_FIFO_DEPTH
+#   define GWAVEFORM_FIFO_DEPTH         16          /* Default FIFO depth */
+#endif
+
 
 /* Max data frame size: SYNC(2)+SEQ(1)+MASK+DATA+CRC(1) */
 #define GWAVEFORM_FRAME_SIZE \
@@ -53,7 +58,9 @@ typedef struct {
     void     (*Poll)(void);
     void     (*SetRate)(uint32_t wDecimation);  /* 0=external drive, n=every n-th Step call sends */
     uint32_t (*GetDropCount)(void);             /* cumulative overwritten frames */
+    uint32_t (*GetLastIntervalDrops)(void);     /* frames dropped in the last 1s window */
     void     (*ClearDropCount)(void);
+
 } gwaveform_api_t;
 
 extern const gwaveform_api_t gwaveform;
