@@ -161,9 +161,9 @@ static void cmd_post(const char *args)
 /*
  * 用法:
  *   log          — 显示各级别当前开关状态
- *   log -E/-W/-I/-D  — 切换对应级别（可组合，空格分隔），例：log -I -D
+ *   log -E/-W/-I/-D/-T  — 切换对应级别（可组合，空格分隔），例：log -I -D
  *
- * g_chGLogMask 各位：bit0=E  bit1=W  bit2=I  bit3=D
+ * g_chGLogMask 各位：bit0=E  bit1=W  bit2=I  bit3=D  bit4=T
  */
 
 static void print_log_status(void)
@@ -173,6 +173,7 @@ static void print_log_status(void)
     shell_puts((g_chGLogMask & GLOG_MASK_W) ? "[W]" : "( )");
     shell_puts((g_chGLogMask & GLOG_MASK_I) ? "[I]" : "( )");
     shell_puts((g_chGLogMask & GLOG_MASK_D) ? "[D]" : "( )");
+    shell_puts((g_chGLogMask & GLOG_MASK_T) ? "[T]" : "( )");
     shell_puts("\r\n");
 }
 
@@ -196,6 +197,7 @@ static void cmd_log(const char *args)
                 case 'W': case 'w': chBit = GLOG_MASK_W; break;
                 case 'I': case 'i': chBit = GLOG_MASK_I; break;
                 case 'D': case 'd': chBit = GLOG_MASK_D; break;
+                case 'T': case 't': chBit = GLOG_MASK_T; break;
                 default: break;
             }
             if (chBit) {
@@ -228,7 +230,7 @@ static const gshell_cmd_t s_tCmdPost = {
 };
 static const gshell_cmd_t s_tCmdLog = {
     "log",  cmd_log,
-    "Toggle log levels: log [-E][-W][-I][-D] | no arg=show status"
+    "Toggle log levels: log [-E][-W][-I][-D][-T] | no arg=show status"
 };
 
 /*============================ DISPATCH ======================================*/

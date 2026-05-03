@@ -3,7 +3,7 @@ setlocal
 
 :: --- Configuration ---
 :: Default SW_ROOT if not already set in environment
-if "%SW_ROOT%"=="" set SW_ROOT=D:\0_software
+if "%SW_ROOT%"=="" set SW_ROOT=D:\software
 
 set MAKE_EXE="%SW_ROOT%\msys64\mingw64\bin\mingw32-make.exe"
 

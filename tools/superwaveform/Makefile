@@ -1,7 +1,7 @@
 # SuperWaveform Host Tool Makefile
 # Compiler: mingw-w64-x86_64-clang++
 
-MSYS64_PATH = D:/0_software/msys64
+MSYS64_PATH = D:/software/msys64
 CXX = $(MSYS64_PATH)/mingw64/bin/clang++
 CFLAGS = -Wall -Wextra -O2 -g
 CXXFLAGS = -std=c++17 $(CFLAGS)

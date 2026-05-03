@@ -30,22 +30,33 @@ extern void utildebug_LedInit(void (*fcnLedSet)(bool bStatus));
 #define _GLOG_LVL_W            GMSI_LOG_LEVEL_WARN
 #define _GLOG_LVL_I            GMSI_LOG_LEVEL_INFO
 #define _GLOG_LVL_D            GMSI_LOG_LEVEL_DEBUG
+/* T is a category, not a severity level.
+ * Use INFO as compile-time gate so T compiles in at the default log level.
+ * Runtime visibility is controlled independently by GLOG_MASK_T (bit4). */
+#define _GLOG_LVL_T            GMSI_LOG_LEVEL_INFO
 
 /*--- 运行期日志级别掩码 (Runtime Log Mask) --------------------------------*/
-/* 每个 bit 对应一个级别，bit0=E bit1=W bit2=I bit3=D */
+/* 每个 bit 对应一个级别，bit0=E bit1=W bit2=I bit3=D bit4=T */
 #define GLOG_MASK_E     (1u << 0)
 #define GLOG_MASK_W     (1u << 1)
 #define GLOG_MASK_I     (1u << 2)
 #define GLOG_MASK_D     (1u << 3)
-#define GLOG_MASK_ALL   (0x0Fu)
+#define GLOG_MASK_T     (1u << 4)
+#define GLOG_MASK_ALL   (0x1Fu)
 
 /* 启动默认掩码，可在 userconfig.h 中覆盖（如仅开 E+W: 0x03u） */
 #ifndef GLOG_MASK_DEFAULT
 #   define GLOG_MASK_DEFAULT     GLOG_MASK_ALL
 #endif
 
-/* 将级别缩写转换为 g_chGLogMask 中的对应 bit */
-#define _GLOG_MASK_BIT(LVL)     (1u << (_GLOG_LVL_##LVL - 1))
+/* Per-level mask bit lookup (decoupled from level numbers).
+ * This allows T to have its own bit(4) independent of its compile-time gate. */
+#define _GLOG_MASK_BIT_E   GLOG_MASK_E
+#define _GLOG_MASK_BIT_W   GLOG_MASK_W
+#define _GLOG_MASK_BIT_I   GLOG_MASK_I
+#define _GLOG_MASK_BIT_D   GLOG_MASK_D
+#define _GLOG_MASK_BIT_T   GLOG_MASK_T
+#define _GLOG_MASK_BIT(LVL)     (_GLOG_MASK_BIT_##LVL)
 
 /** 运行期掩码变量（定义于 util_debug.c），gshell log 命令可动态修改 */
 extern uint8_t g_chGLogMask;

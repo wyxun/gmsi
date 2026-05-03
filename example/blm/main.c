@@ -263,12 +263,17 @@ int main(void)
         /* Maintenance tasks */
         if (perfc_is_time_out_ms(1000)) {
             wCounter++;
-            GLOGF(I, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
+            GLOGF(T, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
                 (unsigned long)wCounter,
                 (unsigned long)SystemCoreClock);
             
             float fTemp = 36.5f + (float)(wCounter % 10) * 0.1f;
-            GLOGF(I, "Temp: %f C\r\n", fTemp);
+
+            /* T-level verification: placed inside timer callback to confirm
+             * periodic trigger. Use 'log -T' in gshell to toggle visibility. */
+            GLOG(T, "[timer] 1s tick reached\r\n");
+            GLOGF(T, "[timer] counter=%lu temp=%.1f\r\n",
+                (unsigned long)wCounter, fTemp);
         }
         int64_t lLogUsed = get_system_ticks() - lSectionStart;
         /* Log maintenance (TICK) always overlaps with tick or takes long, 

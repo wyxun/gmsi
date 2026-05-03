@@ -14,6 +14,7 @@
 
 GuiLayer::GuiLayer() : parser_(8) {
     std::memset(term_input_buf_, 0, sizeof(term_input_buf_));
+    macro_mgr_.RestoreLastSession();
 }
 
 GuiLayer::~GuiLayer() {
@@ -258,11 +259,42 @@ void GuiLayer::RenderDashboard() {
     }
 
     ImGui::Separator();
+
+    // --- Macro Manager UI ---
     ImGui::Text("Quick User Macros (Ch0):");
-    if (ImGui::Button("wave start")) { net.SendToCh0("wave start\n"); } ImGui::SameLine();
-    if (ImGui::Button("wave stop")) { net.SendToCh0("wave stop\n"); } ImGui::SameLine();
-    if (ImGui::Button("log -I (Hide Info)")) { net.SendToCh0("log -I\n"); } ImGui::SameLine();
-    if (ImGui::Button("log -A (Show All)")) { net.SendToCh0("log -A\n"); }
+    ImGui::SameLine();
+    if (ImGui::Button("Load Macros...")) {
+        std::string path = OpenIniFileDialog();
+        if (!path.empty()) {
+            if (macro_mgr_.LoadFromFile(path)) {
+                macro_mgr_.PersistCurrentPath();
+            }
+        }
+    }
+    ImGui::SameLine();
+    const std::string& cur_path = macro_mgr_.GetCurrentPath();
+    if (cur_path.empty()) {
+        ImGui::TextDisabled("(No macros loaded)");
+    } else {
+        size_t slash = cur_path.find_last_of("/\\");
+        std::string fname = (slash != std::string::npos) ? cur_path.substr(slash + 1) : cur_path;
+        ImGui::TextDisabled("%s", fname.c_str());
+    }
+
+    // Render dynamic macro buttons
+    const auto& macros = macro_mgr_.GetMacros();
+    if (!macros.empty()) {
+        ImGui::Separator();
+        for (size_t i = 0; i < macros.size(); ++i) {
+            char btn_id[128];
+            snprintf(btn_id, sizeof(btn_id), "%s##macro%zu", macros[i].label.c_str(), i);
+            if (ImGui::Button(btn_id)) {
+                net.SendToCh0(macros[i].command + "\n");
+            }
+            if (i + 1 < macros.size()) ImGui::SameLine();
+        }
+    }
+    // --- End Macro Manager UI ---
 
     ImGui::End();
 }
@@ -426,6 +458,29 @@ std::string GuiLayer::OpenFileDialog() {
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
     ofn.lpstrFilter = "CSV Files\0*.csv\0All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+    if (GetOpenFileNameA(&ofn) == TRUE) {
+        return std::string(ofn.lpstrFile);
+    }
+#endif
+    return "";
+}
+
+std::string GuiLayer::OpenIniFileDialog() {
+#ifdef _WIN32
+    OPENFILENAMEA ofn;
+    char szFile[260] = { 0 };
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "INI Files\0*.ini\0All Files\0*.*\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;

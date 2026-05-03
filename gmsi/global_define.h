@@ -6,7 +6,7 @@
 #define GMSI_PURPOSE                    GENERAL_PURPOSE //!< GMSI purpose   
 #define GMSI_INTERFACE_VERSION          3               //!< GMSI interface version
 #define GMSI_MAJOR_VERSION              0               //!< GMSI major version
-#define GMSI_MINOR_VERSION              2               
+#define GMSI_MINOR_VERSION              3               
 
 #define GMSI_VERSION                 {                                      \
                                         GMSI_PURPOSE,                       \

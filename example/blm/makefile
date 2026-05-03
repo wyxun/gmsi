@@ -10,7 +10,7 @@ CHIP ?= at32f4
 # OS sensing
 ifeq ($(OS),Windows_NT)
     SHELL = cmd.exe
-    SW_ROOT ?= D:/0_software
+    SW_ROOT ?= D:/software
     LLVM_PATH = $(SW_ROOT)/llvm_for_arm/bin/
     MKDIR = if not exist $(subst /,\,$(BUILD_DIR)) mkdir $(subst /,\,$(BUILD_DIR))
     RMDIR = if exist build rd /s /q build

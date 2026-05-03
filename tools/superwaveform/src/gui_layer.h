@@ -10,6 +10,7 @@
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include "macro_mgr.h"
 
 class GuiLayer {
 public:
@@ -79,6 +80,9 @@ private:
     bool auto_scroll_ = true;
     ImGuiTextFilter term_filter_;
 
+    // Macro Manager
+    MacroManager macro_mgr_;
+
     // UI Helpers
     void FetchNetworkData();
     void RenderWaveformWindow();
@@ -110,6 +114,7 @@ private:
     void RenderOfflineViewer(OfflineSession& session);
     void LoadCSV(OfflineSession& session);
     std::string OpenFileDialog();
+    std::string OpenIniFileDialog();
 
 
 

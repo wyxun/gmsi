@@ -198,7 +198,7 @@ PERFC_PT_BEGIN(this.chState)
                 }
             } else if (s_tProtocol.tResult == PROTO_TIMEOUT) {
                 this.chRetryCount++;
-                GLOG(I, "C");
+                GLOG(T, "C");
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
                     /* If no connection, stay in bootloader for debug */
                     this.chRetryCount = 0; 

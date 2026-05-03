@@ -1,6 +1,6 @@
 @echo off
 :: Set MSYS2 path (Update this if your installation is elsewhere)
-set MSYS64_PATH=D:\0_software\msys64
+set MSYS64_PATH=D:\software\msys64
 
 :: Add MinGW-w64 and MSYS2 tools to PATH for this session
 set PATH=%MSYS64_PATH%\mingw64\bin;%MSYS64_PATH%\usr\bin;%PATH%
