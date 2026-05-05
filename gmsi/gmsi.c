@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include "gmsi.h"
-#include "gdebug/gshell.h"
-#include "gdebug/gwaveform.h"
+#if GSHELL_ENABLE
+#   include "gdebug/gshell.h"
+#endif
+#if GWAVEFORM_ENABLE
+#   include "gdebug/gwaveform.h"
+#endif
 
 /* gstorage 可选模块附着点：
  * 当 gstorage.c 未加入编译时，此 weak 定义生效 —— no-op。
@@ -148,7 +152,9 @@ void gmsi_Run(void)
     }
 
     gcoroutine_Run();
+#if GSHELL_ENABLE
     gshell_Poll();          /* 调试 shell 轮询 */
+#endif
 #if GWAVEFORM_ENABLE
     gwaveform.Poll();       /* 波形采集轮询 */
 #endif
@@ -207,8 +213,10 @@ void gmsi_Clock(void)
         ptBaseDes->pFcnInterface->Clock(ptBaseDes->wParent);
     }
     
+#if GWAVEFORM_ENABLE
     extern void gwaveform_Default_Step_Callback(void);
     gwaveform_Default_Step_Callback();
+#endif
 }
 
 /**

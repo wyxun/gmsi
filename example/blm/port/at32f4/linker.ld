@@ -1,11 +1,11 @@
 /* BLM Bootloader Linker Script - AT32F407VGT7 */
-/* Bootloader: 8KB at 0x08000000 */
-/* Shared: 1KB at 0x08002000 */
+/* Bootloader: up to 64KB at 0x08000000 */
+/* Shared: 2KB at 0x08010000 */
 
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 30K
-    SHARED (rw)     : ORIGIN = 0x08007800, LENGTH = 2K
+    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 64K
+    SHARED (rw)     : ORIGIN = 0x08010000, LENGTH = 2K
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 96K
 }
 

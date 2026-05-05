@@ -5,6 +5,14 @@
 #include <stdbool.h>
 #include "global_define.h"
 
+/*============================ COMPILE-TIME SWITCH ===========================*/
+
+#ifndef GSHELL_ENABLE
+#   define GSHELL_ENABLE            1
+#endif
+
+#if GSHELL_ENABLE
+
 /*============================ MACROS ========================================*/
 
 /* 命令行缓冲区大小（含 '\0'），可在 userconfig.h 中覆盖 */
@@ -80,5 +88,12 @@ int gshell_RegisterCmd(uintptr_t wAddr, uintptr_t wUnused);
  * @brief 轮询 I/O 并处理命令；由 gmsi_Run() 内部自动调用，用户无需手动调用
  */
 void gshell_Poll(void);
+
+#else /* GSHELL_ENABLE == 0 */
+
+/* 编译空桩：不生成任何 init 条目，gshell 代码被 gc-sections 自动剥离 */
+#define GMSI_SHELL_CMD(name, handler, help_str)
+
+#endif /* GSHELL_ENABLE */
 
 #endif /* __GMSI_GSHELL_H__ */

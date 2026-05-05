@@ -10,7 +10,7 @@ CHIP ?= at32f4
 # OS sensing
 ifeq ($(OS),Windows_NT)
     SHELL = cmd.exe
-    SW_ROOT ?= D:/software
+    SW_ROOT ?= D:/01SoftwareInstall
     LLVM_PATH = $(SW_ROOT)/llvm_for_arm/bin/
     MKDIR = if not exist $(subst /,\,$(BUILD_DIR)) mkdir $(subst /,\,$(BUILD_DIR))
     RMDIR = if exist build rd /s /q build
@@ -43,34 +43,52 @@ LD = $(LLVM_PATH)clang
 TARGET = blm
 
 # Directories
-GMSI_DIR = ../../gmsi
+GMSI_ROOT = ../..
 LIB_DIR = ../../lib
 
-# Common source files (platform-independent)
+# ---------------------------------------------------------------------------
+# Module enables — set BEFORE include so gmsi.mk can evaluate conditions
+# ---------------------------------------------------------------------------
+
+# BLM always needs gblinfo (bootloader shared info)
+GBLINFO_ENABLE  = 1
+# Enable gstorage for testing
+GSTORAGE_ENABLE = 1
+
+# Default: debug features enabled (F5 debugging)
+GSHELL_ENABLE    = 1
+GWAVEFORM_ENABLE = 1
+GMSI_USE_LOG     = 1
+GMSI_USE_ASSERT  = 1
+
+# Release target — strip all debug
+ifeq ($(filter release,$(MAKECMDGOALS)),release)
+    GSHELL_ENABLE    = 0
+    GWAVEFORM_ENABLE = 0
+    GMSI_USE_LOG     = 0
+    GMSI_USE_ASSERT  = 0
+endif
+
+include $(GMSI_ROOT)/gmsi.mk
+
+# Project-specific source files (platform-independent)
 C_SOURCES = \
     main.c \
     perfc_port_user.c \
     core/blm.c \
     core/blm_protocol.c \
-    $(GMSI_DIR)/gdebug/trace.c \
-    $(GMSI_DIR)/gdebug/trace_fmt.c \
-    $(GMSI_DIR)/gmsi.c \
-    $(GMSI_DIR)/gbase.c \
-    $(GMSI_DIR)/gblinfo.c \
-    $(GMSI_DIR)/gcoroutine.c \
-    $(GMSI_DIR)/glog.c \
-    $(GMSI_DIR)/gstorage.c \
-    $(GMSI_DIR)/utilities/list.c \
-    $(GMSI_DIR)/utilities/util_queue.c \
-    $(GMSI_DIR)/gdebug/util_debug.c \
-    $(GMSI_DIR)/gdebug/gshell.c \
-    $(GMSI_DIR)/gdebug/segger_rtt/SEGGER_RTT.c \
-    $(GMSI_DIR)/gdebug/gwaveform.c \
-    $(GMSI_DIR)/gdebug/gwaveform_protocol.c \
-    $(GMSI_DIR)/utilities/gringbuf.c \
-    $(LIB_DIR)/perf_counter/perf_counter.c \
-    blm_shell_test.c \
-    blm_waveform_test.c
+    $(LIB_DIR)/perf_counter/perf_counter.c
+
+# Debug-only sources
+ifneq ($(GSHELL_ENABLE),0)
+    C_SOURCES += blm_shell_test.c
+endif
+ifneq ($(GWAVEFORM_ENABLE),0)
+    C_SOURCES += blm_waveform_test.c
+endif
+
+# GMSI framework sources
+C_SOURCES += $(GMSI_SRCS)
 
 # Assembly sources (perf_counter SysTick wrapper)
 ASM_SOURCES = \
@@ -110,13 +128,12 @@ C_SOURCES += $(CHIP_SOURCES)
 BUILD_DIR = build/$(CHIP)
 
 # Optimization
-# Optimization
-# Default to -Oz (Optimize for size)
-OPT = -Oz
+# Default: -O0 (no optimization, F5 debugging friendly)
+OPT = -O0
 
-# Use -O0 (No optimization) for debug targets
-ifneq ($(filter debug debug-server,$(MAKECMDGOALS)),)
-    OPT = -O0
+# Release target: -Oz (optimize for size)
+ifeq ($(filter release,$(MAKECMDGOALS)),release)
+    OPT = -Oz
 endif
 
 # C definitions
@@ -126,9 +143,16 @@ C_DEFS = \
     -D__C_LANGUAGE_EXTENSIONS_PERFC_PT__=1 \
     -D__PERFC_CFG_PORTING_INCLUDE__=\"perfc_port_user.h\" \
     -D__COMPILER_HAS_GNU_EXTENSIONS__=1 \
-    -DTRACE_USE_LIBC_PRINTF=0 \
-    '-DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))' \
-    '-DTRACE_MCU_WRITE_BUFFER(p,l)=SEGGER_RTT_Write(0,(p),(l))'
+    -DTRACE_USE_LIBC_PRINTF=0
+
+# TRACE_MCU macros — only needed when trace.c is compiled (GSHELL_ENABLE=1)
+ifneq ($(GSHELL_ENABLE),0)
+    C_DEFS += -DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))
+    C_DEFS += -DTRACE_MCU_WRITE_BUFFER(p,l)=SEGGER_RTT_Write(0,(p),(l))
+endif
+
+# GMSI module flags from gmsi.mk
+C_DEFS += $(GMSI_CFLAGS)
 
 # Include paths
 C_INCLUDES = \
@@ -136,10 +160,11 @@ C_INCLUDES = \
     -I./core \
     -I./port \
     -I./cmsis \
-    -I$(GMSI_DIR) \
-    -I$(GMSI_DIR)/gdi \
     -I$(LIB_DIR)/perf_counter \
     -I$(LIB_DIR)/plooc
+
+# GMSI include paths from gmsi.mk
+C_INCLUDES += $(GMSI_INCLUDES)
 
 # Compiler flags
 CFLAGS = $(TARGET_TRIPLE) $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) $(OPT) -g
@@ -164,6 +189,8 @@ LDFLAGS += -lcrt0 -lc -lm -lsemihost
 
 # Build targets
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).bin size
+
+release: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).bin size
 
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))
@@ -249,5 +276,5 @@ info:
 	@echo "LDSCRIPT = $(LDSCRIPT)"
 	@echo "SOURCES  = $(CHIP_SOURCES)"
 
-.PHONY: all clean flash flash-rtt debug-server size check-size info rtt rtt-addr
+.PHONY: all release clean flash flash-rtt debug-server size check-size info rtt rtt-addr
 

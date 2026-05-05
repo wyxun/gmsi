@@ -5,8 +5,9 @@
 ## 1. 软件依赖
 
 在您的工程中，需要包含以下 GMSI 组件：
-- `gmsi/utilities/gwaveform.c/h`：波形协议核心。
-- `gmsi/utilities/segger_rtt/`：底层传输通道。
+- `gmsi/gdebug/gwaveform.c/h`：波形协议核心。
+- `gmsi/gdebug/gwaveform_protocol.c/h`：波形协议编解码（帧同步、校验）。
+- `gmsi/gdebug/segger_rtt/`：底层 RTT 传输通道。
 - `gmsi/utilities/gringbuf.c/h`：环形缓冲区支持。
 
 ## 2. 快速集成示例

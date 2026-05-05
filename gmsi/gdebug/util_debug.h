@@ -63,6 +63,10 @@ extern uint8_t g_chGLogMask;
 
 extern void util_debug_Printf(const char *format, ...);
 
+#ifdef __NO_USE_LOG__
+    #define GLOG(LEVEL, ...)        do {} while(0)
+    #define GLOGF(LEVEL, fmt, ...)  do {} while(0)
+#else
 #define GLOG(LEVEL, ...)                                                        \
     do {                                                                        \
         if ((GMSI_LOG_LEVEL >= _GLOG_LVL_##LEVEL) &&                           \
@@ -79,6 +83,7 @@ extern void util_debug_Printf(const char *format, ...);
             util_debug_Printf("[" #LEVEL "] " fmt, ##__VA_ARGS__);             \
         }                                                                       \
     } while(0)
+#endif
 
 #define LOG_OUT(...)           TRACE_TOSTR(__VA_ARGS__)
 

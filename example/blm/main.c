@@ -13,8 +13,11 @@
 #include <perf_counter.h>
 #include "gdebug/util_debug.h"
 #include "port/gdi_hw.h"
-#include "blm_waveform_test.h"
+#if GWAVEFORM_ENABLE
 #include "gdebug/gwaveform.h"
+#include "blm_waveform_test.h"
+#endif
+
 
 
 /* blm_shell_test.h 已不再需要，通过 GMSI_SHELL_CMD 自动发现 */
@@ -123,10 +126,10 @@ static gstorage_data_t s_tStorageData = {
     .hwStorageLength     = sizeof(test_app_data_t) - 2,
 };
 
-/* GMSI_DECLARE_OBJECT(gstorage, GStorage,
+GMSI_DECLARE_OBJECT(gstorage, GStorage,
     .ptStorageObject = &s_tStorageData,
     .hwStorageTimeOut = 65000,
-); */
+);
 
 
 /*============================ IMPLEMENTATION ================================*/
@@ -215,8 +218,10 @@ int main(void)
     /* System initialization */
     System_Init();
     
+#if GSHELL_ENABLE
     /* Initialize TRACE */
     TRACE.Init(NULL);
+#endif
     GLOG(I, "BLM Bootloader Started (Optimizing Waveform)\r\n");
     
     /* Initialize GMSI framework — ptAppFlash is bound internally */
@@ -225,8 +230,10 @@ int main(void)
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
     
+#if GWAVEFORM_ENABLE
     /* Initialize Waveform Test */
     blm_waveform_test_init();
+#endif
     
     __enable_irq();
 
@@ -329,11 +336,13 @@ static void cmd_perf(const char *args)
             (int)perfc_convert_ticks_to_us(s_lMaxGmsiClockCycles),
             (int)perfc_convert_ticks_to_us(s_lMaxWaveStepCycles));
         
-        GLOGF(I, " - Wave Drop: %lu (Cumulative), %lu (Last 1s)\r\n", 
+#if GWAVEFORM_ENABLE
+        GLOGF(I, " - Wave Drop: %lu (Cumulative), %lu (Last 1s)\r\n",
             (unsigned long)gwaveform.GetDropCount(),
             (unsigned long)gwaveform.GetLastIntervalDrops());
         extern uint32_t gwaveform_GetRTTFullCount(void);
         GLOGF(I, " - RTT Congest: %lu times\r\n", (unsigned long)gwaveform_GetRTTFullCount());
+#endif
 
 
 
@@ -352,12 +361,10 @@ static void cmd_perf(const char *args)
         s_lMaxSysTickCycles = 0;
         s_lMaxGmsiClockCycles = 0;
         s_lMaxWaveStepCycles = 0;
+#if GWAVEFORM_ENABLE
         gwaveform.ClearDropCount();
         GLOG(I, "Perf: Max cycles and Wave drops cleared.\r\n");
-
-
-
-
+#endif
     } else {
         GLOG(I, "Usage: perf <on|off|status|clear>\r\n");
     }
@@ -379,8 +386,10 @@ void SysTick_Handler(void)
     /* GMSI clock tick (1ms) */
     gmsi_Clock();
     
+#if GWAVEFORM_ENABLE
     /* Waveform test step (1ms) */
     blm_waveform_test_step();
+#endif
 
     if (s_bPerfMonitorEnable) {
         int64_t lUsed = get_system_ticks() - lStart;

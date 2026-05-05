@@ -1,6 +1,6 @@
-# GMSI (Generic MCU Software Infrastructure)
+# Modus — 嵌入式 MCU 软件框架
 
-GMSI 是一个轻量级、面向对象且高度可移植的嵌入式软件框架。它致力于通过
+Modus 是一个轻量级、面向对象且高度可移植的嵌入式软件框架。它致力于通过
 抽象硬件接口（GDI）与业务逻辑，提供一套统一的对象管理机制，支持任务
 的自动发现、初始化和事件驱动运行。
 ![framework](.assets/framework.jpg)
@@ -52,7 +52,7 @@ GMSI 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景
 通过 `plooc` 变参技术将每个参数的类型自动映射到底层 `TRACE` 接口处理函数。它不需要格式化解析，性能最高，且类型安全。
 
 ```c
-#include "utilities/util_debug.h"
+#include "gdebug/util_debug.h"
 
 // 简单字符串
 GLOG(I, "System startup.\n");
@@ -109,7 +109,7 @@ J-Link RTT Viewer 即用。可通过 `gshell_SetIO()` 将 I/O 后端从默认 RT
 ### 注册自定义命令
 
 ```c
-#include "utilities/gshell.h"
+#include "gdebug/gshell.h"
 
 static void cmd_burn(const char *args) {
     GLOGF(I, "Burn-in started\r\n");
@@ -349,6 +349,76 @@ int main(void) {
 ---
 
 ## 系统集成 (System Integration)
+
+### GMSI.MK 构建集成
+
+从 v0.3.0.4 起，GMSI 提供根目录 `gmsi.mk` 作为统一构建入口。外部项目只需
+`include` 一行即可获得所有源文件、头文件路径和模块开关。
+
+**快速开始：**
+```makefile
+GMSI_ROOT ?= lib/gmsi
+
+# 按需开启模块（必须在 include 之前设置）
+GBLINFO_ENABLE  = 1
+GSTORAGE_ENABLE = 1
+
+include $(GMSI_ROOT)/gmsi.mk
+
+C_SOURCES += $(GMSI_SRCS)
+C_INCLUDES += $(GMSI_INCLUDES)
+CFLAGS += $(GMSI_CFLAGS)
+```
+
+**可用开关（默认全部关闭）：**
+
+| 变量 | 默认 | 作用 |
+|------|:----:|------|
+| `GSHELL_ENABLE` | 0 | gshell + trace + SEGGER_RTT 调试 Shell |
+| `GWAVEFORM_ENABLE` | 0 | gwaveform 实时波形采集 |
+| `GSTORAGE_ENABLE` | 0 | gstorage 持久化存储 |
+| `GBLINFO_ENABLE` | 0 | gblinfo Bootloader 共享信息 |
+| `GMSI_USE_LOG` | 0 | GLOG / GLOGF 日志宏 |
+| `GMSI_USE_ASSERT` | 0 | GMSI_ASSERT 断言宏 |
+
+**输出变量：**
+
+| 变量 | 内容 |
+|------|------|
+| `GMSI_SRCS` | 根据开关自动聚合的源文件列表 |
+| `GMSI_INCLUDES` | 框架头文件搜索路径 |
+| `GMSI_CFLAGS` | 模块启用宏（`-DGSHELL_ENABLE=1` 等） |
+
+**典型 Makefile 结构：**
+```makefile
+# 1. 选择芯片和工具链
+CHIP ?= at32f4
+# ... 工具链配置 ...
+
+# 2. 开启需要的 GMSI 模块
+GBLINFO_ENABLE  = 1
+GSTORAGE_ENABLE = 1
+
+# 3. Debug / Release 切换
+ifeq ($(filter release,$(MAKECMDGOALS)),release)
+    OPT = -Oz
+else
+    OPT = -O0
+    GSHELL_ENABLE    = 1
+    GWAVEFORM_ENABLE = 1
+    GMSI_USE_LOG     = 1
+endif
+
+# 4. 引入 GMSI
+include $(GMSI_ROOT)/gmsi.mk
+
+# 5. 添加项目自有源码
+C_SOURCES += main.c my_module.c $(GMSI_SRCS)
+C_INCLUDES += -I. $(GMSI_INCLUDES)
+C_DEFS += $(GMSI_CFLAGS)
+```
+
+> 完整示例参考 `example/blm/makefile`：`make` 默认 `-O0` + 全调试，`make release` 剥离所有调试模块。
 
 ### 核心初始化流
 `gmsi_Init()` 会解析链接器生成的 `init_infos` 数据段，动态执行所有已声明对象的

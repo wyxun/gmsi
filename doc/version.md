@@ -1,7 +1,8 @@
-# GMSI 版本历史
+# Modus 版本历史
 
 | 版本 | 日期 | 状态 | 核心变更 |
 | :--- | :--- | :--- | :--- |
+| **v0.3.0.4** | 2026-05-05 | 稳定 | gmsi.mk 统一构建系统，模块化编译开关 |
 | **v0.3.0.3** | 2026-05-03 | 稳定 | 新增 -T 日志类别与 SuperWaveform INI 宏命令管理 |
 | **v0.3.0.2** | 2026-04-23 | 稳定 | gwaveform 架构维护：回归 Ping-Pong 及文档补全 |
 | **v0.3.0.1** | 2026-04-22 | 稳定 | gwaveform 架构重构：乒乓缓冲与 ISR 安全优化 |
@@ -9,6 +10,29 @@
 | **v0.2.1.0** | 2026-04-14 | 稳定 | 新增 gshell 调试 Shell；GLOG 运行期级别控制；GLOGF 补充 `%f` |
 | **v0.2.0.1** | 2026-04-08 | 稳定 | GLOGF 支持 %lu 格式化打印 |
 | **v0.2.0.0** | 2026-04-07 | 稳定 | 新增 GStorage 持久化存储模块 |
+
+## [0.3.0.4] - 2026-05-05
+
+### 新增功能
+- **gmsi.mk 统一构建系统**:
+  - 在仓库根目录新增 `gmsi.mk`，外部项目只需 `include $(GMSI_ROOT)/gmsi.mk` 即可引用 GMSI 框架。
+  - 所有可选模块默认关闭（保守策略），外部项目按需通过 Make 变量显式开启。
+- **模块化编译开关**:
+  - `GSHELL_ENABLE` / `GWAVEFORM_ENABLE`: 控制 gshell、trace、SEGGER_RTT、gwaveform 等调试模块的编译。
+  - `GSTORAGE_ENABLE` / `GBLINFO_ENABLE`: 控制 gstorage、gblinfo 功能模块的编译。
+  - `GMSI_USE_LOG` / `GMSI_USE_ASSERT`: 控制 GLOG/GLOGF 日志宏和 GMSI_ASSERT 断言宏。
+  - 关闭时零开销：对应源码不参与编译，ROM/RAM 完全不占用。
+- **BLM 示例双模式构建**:
+  - `make`（默认）: `-O0` + 全调试功能开启，支持 F5 一键调试。
+  - `make release`: `-Oz` + 所有调试模块剥离，产出精简发布固件。
+
+### 更新与优化
+- **gmsi.c**: 在 `gmsi_Run()` 和 `gmsi_Clock()` 中增加了 `#if GSHELL_ENABLE` / `#if GWAVEFORM_ENABLE` 条件编译守卫，关闭时可被链接器垃圾回收。
+- **gshell.h**: 增加了 `GSHELL_ENABLE` 编译期开关，当值为 `0` 时 `GMSI_SHELL_CMD` 宏展开为空，shell 命令自动废弃。
+- **gwaveform.h**: 当 `GWAVEFORM_ENABLE == 0` 时提供轻量 API 桩结构体，避免调用方编译报错。
+- **util_debug.h**: `__NO_USE_LOG__` 定义时 `GLOG`/`GLOGF` 宏展开为真正的空操作 `do {} while(0)`，彻底消除对 TRACE 符号的间接依赖。
+- **BLM main.c**: 增加了 `#if GSHELL_ENABLE` / `#if GWAVEFORM_ENABLE` 守卫，保护 TRACE 初始化和波形测试相关调用。
+
 
 ## [0.3.0.3] - 2026-05-03
 
