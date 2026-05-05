@@ -10,12 +10,12 @@ CHIP ?= at32f4
 # OS sensing
 ifeq ($(OS),Windows_NT)
     SHELL = cmd.exe
-    SW_ROOT ?= D:/01SoftwareInstall
+    SW_ROOT ?= D:/software
     LLVM_PATH = $(SW_ROOT)/llvm_for_arm/bin/
     MKDIR = if not exist $(subst /,\,$(BUILD_DIR)) mkdir $(subst /,\,$(BUILD_DIR))
     RMDIR = if exist build rd /s /q build
     # Tools
-    OPENOCD_BIN     = $(SW_ROOT)/msys64/mingw64/bin/openocd.exe
+    OPENOCD_BIN     = $(SW_ROOT)/msys64/mingw64/bin/openocd-at32.exe
     OPENOCD_SCRIPTS = $(SW_ROOT)/msys64/mingw64/share/openocd/scripts
     OPENOCD_CMD = $(OPENOCD_BIN) -s $(OPENOCD_SCRIPTS) \
                   -f $(OPENOCD_INTERFACE) -c "cmsis_dap_backend hid" \

@@ -270,6 +270,8 @@ int main(void)
         /* Maintenance tasks */
         if (perfc_is_time_out_ms(1000)) {
             wCounter++;
+            // trigger save value
+            // s_tAppData.chVar1 += 1;
             GLOGF(T, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
                 (unsigned long)wCounter,
                 (unsigned long)SystemCoreClock);
