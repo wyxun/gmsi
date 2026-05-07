@@ -86,7 +86,7 @@ mstorage_data_t tSysData = {
     .hwStorageLength     = 16 * sizeof(uint16_t),
 };
 
-MODUS_DECLARE_OBJECT(mstorage, GStorage, 
+MODUS_DECLARE_OBJECT(mstorage, MStorage, 
     .ptStorageObject  = &tSysData,
     .hwStorageTimeOut = 100, // 100ms cycle
 );

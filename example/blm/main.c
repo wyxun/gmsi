@@ -39,7 +39,7 @@
 /*============================ TYPES =========================================*/
 
 /**
- * @brief Test application data structure for GStorage
+ * @brief Test application data structure for MStorage
  */
 typedef struct {
     uint8_t  chVar1;
@@ -47,7 +47,7 @@ typedef struct {
     uint32_t wVar3;
     int8_t   nVar4;
     uint32_t wVar5;
-    uint16_t hwCrc; // Reserved for GStorage
+    uint16_t hwCrc; // Reserved for MStorage
 } test_app_data_t;
 
 /**
@@ -126,7 +126,7 @@ static mstorage_data_t s_tStorageData = {
     .hwStorageLength     = sizeof(test_app_data_t) - 2,
 };
 
-MODUS_DECLARE_OBJECT(mstorage, GStorage,
+MODUS_DECLARE_OBJECT(mstorage, MStorage,
     .ptStorageObject = &s_tStorageData,
     .hwStorageTimeOut = 65000,
 );

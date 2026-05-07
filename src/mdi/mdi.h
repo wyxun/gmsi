@@ -202,20 +202,20 @@ static inline int32_t mdi_flash_Lock(mdi_flash_t *ptDev)
  *        MDI_Write(spi_dev, data, len)    → mdi_spi_Write
  *===========================================================================*/
 
-#define MDI_Write(dev, ...)  \
+#define MDI_Write(dev, ...)                                                     \
     MDI_CONCAT(MDI_Write_, MDI_NARGS(__VA_ARGS__))(dev, __VA_ARGS__)
 
 /* 2参版 — GPIO Set / PWM SetDuty */
-#define MDI_Write_1(dev, val)  _Generic((dev),          \
-    mdi_gpio_t*:    mdi_gpio_Set,                       \
-    mdi_pwm_t*:     mdi_pwm_SetDuty                     \
+#define MDI_Write_1(dev, val)  _Generic((dev),                                  \
+    mdi_gpio_t*:    mdi_gpio_Set,                                               \
+    mdi_pwm_t*:     mdi_pwm_SetDuty                                             \
 )(dev, val)
 
 /* 3参版 — Stream / IIC / SPI Write */
-#define MDI_Write_2(dev, data, len)  _Generic((dev),    \
-    mdi_stream_t*:  mdi_stream_Write,                   \
-    mdi_iic_t*:     mdi_iic_Write,                      \
-    mdi_spi_t*:     mdi_spi_Write                       \
+#define MDI_Write_2(dev, data, len)  _Generic((dev),                            \
+    mdi_stream_t*:  mdi_stream_Write,                                           \
+    mdi_iic_t*:     mdi_iic_Write,                                              \
+    mdi_spi_t*:     mdi_spi_Write                                               \
 )(dev, data, len)
 
 /*============================================================================
@@ -228,7 +228,7 @@ static inline int32_t mdi_flash_Lock(mdi_flash_t *ptDev)
  *        MDI_Read(spi_dev, buf, len)    → mdi_spi_Read
  *===========================================================================*/
 
-#define MDI_Read(dev, ...)  \
+#define MDI_Read(dev, ...)                                                      \
     MDI_CONCAT(MDI_Read_, MDI_NARGS(__VA_ARGS__))(dev, __VA_ARGS__)
 
 /* 仅 dev — GPIO Get / ADC Read（0 个额外参数，但宏计数从 dev 后开始） */
@@ -240,46 +240,46 @@ static inline int32_t mdi_flash_Lock(mdi_flash_t *ptDev)
  * 使用 _Generic 直接分发。
  */
 #undef MDI_Read
-#define MDI_Read(...)  \
+#define MDI_Read(...)                                                           \
     MDI_CONCAT(MDI_Read_N_, MDI_NARGS(__VA_ARGS__))(__VA_ARGS__)
 
 /* 1参: MDI_Read(dev) — GPIO Get / ADC Read */
-#define MDI_Read_N_1(dev)  _Generic((dev),              \
-    mdi_gpio_t*:    mdi_gpio_Get,                       \
-    mdi_adc_t*:     mdi_adc_Read                        \
+#define MDI_Read_N_1(dev)  _Generic((dev),                                      \
+    mdi_gpio_t*:    mdi_gpio_Get,                                               \
+    mdi_adc_t*:     mdi_adc_Read                                                \
 )(dev)
 
 /* 3参: MDI_Read(dev, buf, len) — Stream / IIC / SPI Read */
-#define MDI_Read_N_3(dev, buf, len)  _Generic((dev),    \
-    mdi_stream_t*:  mdi_stream_Read,                    \
-    mdi_iic_t*:     mdi_iic_Read,                       \
-    mdi_spi_t*:     mdi_spi_Read                        \
+#define MDI_Read_N_3(dev, buf, len)  _Generic((dev),                            \
+    mdi_stream_t*:  mdi_stream_Read,                                            \
+    mdi_iic_t*:     mdi_iic_Read,                                               \
+    mdi_spi_t*:     mdi_spi_Read                                                \
 )(dev, buf, len)
 
 /*============================================================================
  * MDI_Toggle — GPIO 翻转 (固定参数)
  *===========================================================================*/
 
-#define MDI_Toggle(dev)  _Generic((dev),                \
-    mdi_gpio_t*:    mdi_gpio_Toggle                     \
+#define MDI_Toggle(dev)  _Generic((dev),                                        \
+    mdi_gpio_t*:    mdi_gpio_Toggle                                             \
 )(dev)
 
 /*============================================================================
  * MDI_Enable — PWM 使能 (固定参数)
  *===========================================================================*/
 
-#define MDI_Enable(dev, en)  _Generic((dev),            \
-    mdi_pwm_t*:     mdi_pwm_Enable                      \
+#define MDI_Enable(dev, en)  _Generic((dev),                                    \
+    mdi_pwm_t*:     mdi_pwm_Enable                                              \
 )(dev, en)
 
 /*============================================================================
  * MDI_IsBusy — 总线忙检测 (固定参数)
  *===========================================================================*/
 
-#define MDI_IsBusy(dev)  _Generic((dev),                \
-    mdi_stream_t*:  mdi_stream_IsBusy,                  \
-    mdi_iic_t*:     mdi_iic_IsBusy,                     \
-    mdi_spi_t*:     mdi_spi_IsBusy                      \
+#define MDI_IsBusy(dev)  _Generic((dev),                                        \
+    mdi_stream_t*:  mdi_stream_IsBusy,                                          \
+    mdi_iic_t*:     mdi_iic_IsBusy,                                             \
+    mdi_spi_t*:     mdi_spi_IsBusy                                              \
 )(dev)
 
 /*============================================================================

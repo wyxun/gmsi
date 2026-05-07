@@ -24,7 +24,7 @@ static uint16_t mstorage_CalculateCrc16(uint8_t *pchData, uint16_t hwLen)
 
 // Define a global storage base of type modus_base_t
 static modus_base_t s_tStorageBase;
-// Define and initialize a global storage base configuration of type modus_base_cfg_t
+// Define and initialize a global storage base configuration
 modus_base_cfg_t s_tStorageBaseCfg = {
     .wId = MODUS_STORAGE,
     .wParent = 0,
@@ -34,7 +34,7 @@ modus_base_cfg_t s_tStorageBaseCfg = {
     },
 };
 
-/** @brief 模块级默认 Flash 设备，由 modus_Init 通过 mstorage_SetDefaultFlash() 注入 */
+/** @brief 模块级默认 Flash 设备，由 modus_Init 通过注入 */
 static mdi_flash_t *s_ptDefaultFlash = NULL;
 
 void mstorage_SetDefaultFlash(void *ptFlash)
@@ -59,29 +59,32 @@ void mstorage_EventHandle(mstorage_t *ptThis, uint32_t wEvent)
 
     if (wEvent & Event_Storage)
     {
-        uint16_t hwCrc = mstorage_CalculateCrc16(ptObj->pchStorageStartAddr, len);
+        uint16_t hwCrc = mstorage_CalculateCrc16(
+            ptObj->pchStorageStartAddr, len);
 
         /* Append CRC at the end (2 bytes, little-endian) */
         ptObj->pchStorageStartAddr[len]     = (uint8_t)(hwCrc & 0xFF);
         ptObj->pchStorageStartAddr[len + 1] = (uint8_t)((hwCrc >> 8) & 0xFF);
 
-        MLOGF(I, "GStorage: Saving data, CRC: 0x%04X\n", hwCrc);
+        MLOGF(I, "MStorage: Saving data, CRC: 0x%04X\n", hwCrc);
 
         mdi_flash_Unlock(ptFlash);
         mdi_flash_Erase(ptFlash, wAddr, (uint32_t)(len + 2));
-        int32_t nRet = mdi_flash_Write(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+        int32_t nRet = mdi_flash_Write(ptFlash, wAddr, 
+                                       ptObj->pchStorageStartAddr, 
+                                       (uint32_t)(len + 2));
         mdi_flash_Lock(ptFlash);
 
         if (nRet >= 0) {
             ptThis->hwLastCrc = hwCrc;
         } else {
-            MLOG(E, "GStorage: Write Failed!\n");
+            MLOG(E, "MStorage: Write Failed!\n");
         }
     }
 
     if (wEvent & Event_ResetDefault)
     {
-        MLOG(W, "GStorage: Blanking Flash (RAM untouched)...\n");
+        MLOG(W, "MStorage: Blanking Flash (RAM untouched)...\n");
         /* 只清空 Flash，不修改 RAM。
          * 系统继续以当前 RAM 数据运行，硬件行为不受影响。
          * 下次上电时 mstorage_Init 检测到 Flash 全 FF，
@@ -94,13 +97,15 @@ void mstorage_EventHandle(mstorage_t *ptThis, uint32_t wEvent)
          * 防止 Clock 检测到"CRC 变化"立即把当前 RAM 重写回 Flash。 */
         ptThis->hwLastCrc = mstorage_CalculateCrc16(
             ptObj->pchStorageStartAddr, len);
-        MLOG(I, "GStorage: Flash blanked. Reboot to apply defaults.\n");
+        MLOG(I, "MStorage: Flash blanked. Reboot to apply defaults.\n");
     }
 
     if (wEvent & Event_GetData)
     {
-        MLOG(I, "GStorage: Loading data...\n");
-        int32_t nRet = mdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+        MLOG(I, "MStorage: Loading data...\n");
+        int32_t nRet = mdi_flash_Read(ptFlash, wAddr, 
+                                      ptObj->pchStorageStartAddr, 
+                                      (uint32_t)(len + 2));
 
         if (nRet >= 0) {
             uint16_t hwReadCrc = ptObj->pchStorageStartAddr[len];
@@ -110,9 +115,10 @@ void mstorage_EventHandle(mstorage_t *ptThis, uint32_t wEvent)
 
             if (hwReadCrc == hwCalcCrc) {
                 ptThis->hwLastCrc = hwReadCrc;
-                MLOG(I, "GStorage: Load Success, CRC Match.\n");
+                MLOG(I, "MStorage: Load Success, CRC Match.\n");
             } else {
-                MLOGF(E, "GStorage: CRC Mismatch! Read: 0x%04X, Calc: 0x%04X\n", hwReadCrc, hwCalcCrc);
+                MLOGF(E, "MStorage: CRC Mismatch! Read: 0x%04X, Calc: 0x%04X\n", 
+                      hwReadCrc, hwCalcCrc);
             }
         }
     }
@@ -213,7 +219,8 @@ int mstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     uint16_t len   = ptObj->hwStorageLength;
 
     /* Initial read from Flash */
-    mdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, (uint32_t)(len + 2));
+    mdi_flash_Read(ptFlash, wAddr, ptObj->pchStorageStartAddr, 
+                   (uint32_t)(len + 2));
 
     bool bIsBlank = true;
     for (uint16_t i = 0; i < len + 2; i++) {
@@ -224,7 +231,7 @@ int mstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     }
 
     if (bIsBlank) {
-        MLOG(W, "GStorage: Storage blank. Initializing defaults...\n");
+        MLOG(W, "MStorage: Storage blank. Initializing defaults...\n");
         mbase_EventPost(ptThis->ptBase->wId, Event_Storage);
     } else {
         uint16_t hwReadCrc = ptObj->pchStorageStartAddr[len];
@@ -234,9 +241,10 @@ int mstorage_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
         if (hwReadCrc == hwCalcCrc) {
             ptThis->hwLastCrc = hwReadCrc;
-            MLOGF(I, "GStorage: Load Success, CRC: 0x%04X\n", hwReadCrc);
+            MLOGF(I, "MStorage: Load Success, CRC: 0x%04X\n", hwReadCrc);
         } else {
-            MLOGF(E, "GStorage: CRC Error! Calc: 0x%04X, Stored: 0x%04X\n", hwCalcCrc, hwReadCrc);
+            MLOGF(E, "MStorage: CRC Error! Calc: 0x%04X, Stored: 0x%04X\n", 
+                  hwCalcCrc, hwReadCrc);
         }
     }
 

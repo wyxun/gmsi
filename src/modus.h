@@ -25,13 +25,13 @@ typedef struct {
     void *ptAppFlash;
 } modus_t;
 
-#define MODUS_DECLARE_OBJECT(object_type, object_name, ...)                \
-    object_type##_cfg_t t##object_name##Cfg = { __VA_ARGS__ };            \
-    object_type##_t t##object_name;                                       \
-    INIT_SECTION const modus_init_info_t init_info_##object_name = {       \
-        .pfcnInitFunc = (init_func_t)object_type##_Init,                  \
-        .wObjectAddr = (uintptr_t)&t##object_name,                        \
-        .wConfigAddr = (uintptr_t)&t##object_name##Cfg                    \
+#define MODUS_DECLARE_OBJECT(object_type, object_name, ...)                     \
+    object_type##_cfg_t t##object_name##Cfg = { __VA_ARGS__ };                  \
+    object_type##_t t##object_name;                                             \
+    INIT_SECTION const modus_init_info_t init_info_##object_name = {            \
+        .pfcnInitFunc = (init_func_t)object_type##_Init,                        \
+        .wObjectAddr = (uintptr_t)&t##object_name,                              \
+        .wConfigAddr = (uintptr_t)&t##object_name##Cfg                          \
     };
 
 // Function prototypes

@@ -1,6 +1,6 @@
 # MODUS Modernization and Registry System Review
 
-This document summarizes the architectural changes introduced during the recent MODUS modularization, specifically the transition to a registry-driven initialization system and the refactoring of the `GStorage` component.
+This document summarizes the architectural changes introduced during the recent MODUS modularization, specifically the transition to a registry-driven initialization system and the refactoring of the `MStorage` component.
 
 ## 1. Core Architectural Shift: Registry-Driven Model
 The framework transitioned from a manual, list-based initialization (controlled entirely in `main.c`) to a semi-automated **Registry-Driven** model.
@@ -22,8 +22,8 @@ The framework transitioned from a manual, list-based initialization (controlled 
 
 ---
 
-## 2. GStorage Component Refactoring
-`GStorage` is now an internal service requiring minimal main-loop logic.
+## 2. MStorage Component Refactoring
+`MStorage` is now an internal service requiring minimal main-loop logic.
 
 ### Changes:
 - **Strong Symbol Requirement**: Enabling `MODUS_USE_MSTORAGE` requires defining `g_tModusStorageConfig`. Failure to do so results in a **link-time error**.
@@ -60,7 +60,7 @@ As the BLM program currently "fails to run," the following areas require immedia
 - `main.c` calls `System_Init` before `modus_Init`.
 - **Problem**: We must verify that `SCB->VTOR` and `perfc_init` are correctly configured BEFORE any MODUS logs or flash accesses occur.
 
-### C. GStorage CRC/Flash Failures
+### C. MStorage CRC/Flash Failures
 - The new `mstorage_Init` performs an immediate Flash Read to verify CRC.
 - **Problem**: If the Flash driver (`ptAppFlash`) is not fully ready or if the address `0x0801F800` is invalid for the specific target sub-variant, it may cause a hard fault.
 

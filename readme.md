@@ -159,10 +159,25 @@ MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适�
 
 为了保持代码库的统一与整洁，请严格遵守以下命名规范：
 
-1. **类型定义（Type Definition）**：全小写加下划线，必须以 `_t` 结尾。例如 `modus_t`, `mbase_t`, `mlist_t`。
-2. **函数接口（Function API）**：模块名前缀（全小写） + 下划线 + 帕斯卡命名法（首字母大写）。例如 `modus_Init()`, `mbase_EventPost()`, `mlist_Init()`。
-3. **宏定义（Macros）**：全大写加下划线。例如 `MODUS_DECLARE_OBJECT()`, `MLOG()`, `MLIST_IS_EMPTY()`。
-4. **全局变量（Global Variables）**：通常使用 `g_` 前缀（如 `g_hwSystemDataArrary`）。此规则属于用户业务层全局习惯，不受核心框架名称影响。
+1. **类型定义（Type Definition）**：全小写加下划线，必须以 `_t` 结尾。
+   例如 `modus_t`, `mbase_t`, `mlist_t`。
+2. **函数接口（Function API）**：模块名前缀（全小写） + 下划线 + 
+   帕斯卡命名法（首字母大写）。例如 `modus_Init()`, `mbase_EventPost()`。
+3. **宏定义（Macros）**：全大写加下划线。例如 `MODUS_DECLARE_OBJECT()`, 
+   `MLOG()`, `MLIST_IS_EMPTY()`。
+4. **全局变量（Global Variables）**：通常使用 `g_` 前缀（如 `g_hwSystemDataArrary`）。
+   此规则属于用户业务层全局习惯，不受核心框架名称影响。
+5. **变量前缀（Hungarian Notation）**：遵循以下规则确保代码意图一目了然：
+
+| 前缀 | 原始含义 | 示例 | 备注 |
+|:---|:---|:---|:---|
+| `ch` | `char / uint8_t` | `chState` | 单字节状态或数据 |
+| `hw` | `uint16_t` | `hwBufferSize` | 半字 (Half-Word), 16位长度 |
+| `w` | `uint32_t` | `wEvent` | 字 (Word), 32位变量 |
+
+6. **代码风格（Coding Style）**：
+   - **行长限制**：单行不得超过 **81** 个字符。
+   - **换行对齐**：若因超长需要换行（尤其是宏定义），续行符 `\` 必须统一对齐至第 **81** 列。
 
 ---
 
@@ -237,14 +252,7 @@ MODUS_DECLARE_OBJECT(template, MyTemplate,
 
 ---
 
-## 编码与命名规范
-遵循以下前缀规则（匈牙利命名法变体），可确保代码意图一目了然：
 
-| 前缀 | 原始含义 | 示例 | 备注 |
-|:---|:---|:---|:---|
-| `ch` | `char / uint8_t` | `chState` | 单字节状态或数据 |
-| `hw` | `uint16_t` | `hwBufferSize` | 半字 (Half-Word), 16位长度 |
-| `w` | `uint32_t` | `wEvent` | 字 (Word), 32位变量 |
 
 ## 核心组件与工具
 
@@ -272,7 +280,7 @@ MODUS_DECLARE_OBJECT(template, MyTemplate,
 
 ---
 
-## GStorage — 持久化存储模块
+## MStorage — 持久化存储模块
 
 `mstorage` 提供自动 CRC 校验的数据持久化能力：当 RAM 中的数据发生变化时，
 定时检测并将数据写入 Flash；系统启动时自动从 Flash 恢复数据。
@@ -327,7 +335,7 @@ typedef struct {
 } mdi_hardware_t;
 ```
 
-**3. 在 `main.c` 中注册 GStorage 对象：**
+**3. 在 `main.c` 中注册 MStorage 对象：**
 ```c
 /* 存储描述符，ptFlash 留 NULL — 由 modus_Init 框架内部自动绑定 */
 static mstorage_data_t s_tStorageData = {
@@ -337,7 +345,7 @@ static mstorage_data_t s_tStorageData = {
     .hwStorageLength     = sizeof(tAppData) - 2, /* 末尾 2 字节留给 CRC */
 };
 
-MODUS_DECLARE_OBJECT(mstorage, GStorage,
+MODUS_DECLARE_OBJECT(mstorage, MStorage,
     .ptStorageObject  = &s_tStorageData,
     .hwStorageTimeOut = 5000,              /* 5 秒检测一次变化 */
 );

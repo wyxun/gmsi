@@ -30,7 +30,7 @@
 
 
 /* Max data frame size: SYNC(2)+SEQ(1)+MASK+DATA+CRC(1) */
-#define MWAVEFORM_FRAME_SIZE \
+#define MWAVEFORM_FRAME_SIZE                                                    \
     (3 + ((MWAVEFORM_MAX_CHANNELS + 7) / 8) + 2 * MWAVEFORM_MAX_CHANNELS + 1)
 
 #ifndef MWAVEFORM_RTT_CHANNEL
@@ -57,8 +57,8 @@ typedef struct {
     void     (*Step)(void);
     void     (*Poll)(void);
     void     (*SetRate)(uint32_t wDecimation);  /* 0=external drive, n=every n-th Step call sends */
-    uint32_t (*GetDropCount)(void);             /* cumulative overwritten frames */
-    uint32_t (*GetLastIntervalDrops)(void);     /* frames dropped in the last 1s window */
+    uint32_t (*GetDropCount)(void);             /* Total dropped frames */
+    uint32_t (*GetLastIntervalDrops)(void);     /* Drops in last 1s */
     void     (*ClearDropCount)(void);
 
 } mwaveform_api_t;

@@ -57,9 +57,9 @@
 #   define TRACE_OUTPUT_CHAR(c)         printf("%c", (c))
 #else
 #   define TRACE_OUTPUT(buf)            TRACE_MCU_WRITE_STRING(buf)
-#   define TRACE_OUTPUT_CHAR(c)         do {        \
-        char __chTmp[2] = {(c), '\0'};              \
-        TRACE_MCU_WRITE_STRING(__chTmp);             \
+#   define TRACE_OUTPUT_CHAR(c)         do {                                    \
+        char __chTmp[2] = {(c), '\0'};                                          \
+        TRACE_MCU_WRITE_STRING(__chTmp);                                        \
     } while(0)
 #endif
 
@@ -285,17 +285,17 @@ static void __trace_double_to_string(double dfValue)
 
 #else /* MCU lightweight path */
 
-#define __OUTPUT_STREAM_MCU(__TYPE, __ADDR, __SIZE, __FMT_FN)                  \
+#define __OUTPUT_STREAM_MCU(__TYPE, __ADDR, __SIZE, __FMT_FN)                   \
     do {                                                                        \
         uint_fast16_t __Size = (__SIZE);                                        \
         __TYPE *pSrc = (__TYPE *)(__ADDR);                                      \
         char buf[12];                                                           \
-        for (uint_fast16_t i = 0; i < __Size; i++) {                           \
-            __FMT_FN(pSrc[i], buf);                                            \
-            TRACE_MCU_WRITE_STRING(buf);                                       \
-            TRACE_MCU_WRITE_STRING(" ");                                       \
+        for (uint_fast16_t i = 0; i < __Size; i++) {                            \
+            __FMT_FN(pSrc[i], buf);                                             \
+            TRACE_MCU_WRITE_STRING(buf);                                        \
+            TRACE_MCU_WRITE_STRING(" ");                                        \
         }                                                                       \
-        TRACE_MCU_WRITE_STRING("\r\n");                                        \
+        TRACE_MCU_WRITE_STRING("\r\n");                                         \
     } while(0)
 
 #endif /* TRACE_USE_LIBC_PRINTF */

@@ -20,7 +20,8 @@ typedef struct {
      * @param chSeq Sequence number
      * @return uint16_t Length of packed frame
      */
-    uint16_t (*pack_data)(uint8_t *pchBuffer, const int16_t *ahwSamples, const uint8_t *abMask, uint8_t chCount, uint8_t chSeq);
+    uint16_t (*pack_data)(uint8_t *pchBuffer, const int16_t *ahwSamples, 
+                          const uint8_t *abMask, uint8_t chCount, uint8_t chSeq);
     
     /**
      * @brief Pack descriptor frame
@@ -29,7 +30,8 @@ typedef struct {
      * @param chCount Total number of registered channels
      * @return uint16_t Length of packed frame
      */
-    uint16_t (*pack_desc)(uint8_t *pchBuffer, const mwaveform_ch_desc_t *atChannels, uint8_t chCount);
+    uint16_t (*pack_desc)(uint8_t *pchBuffer, 
+                          const mwaveform_ch_desc_t *atChannels, uint8_t chCount);
 
 } mwaveform_protocol_t;
 

@@ -4,15 +4,15 @@
 /*============================ MODUS VERSION ==================================*/
 #define GENERAL_PURPOSE                 0               //!< General purpose 
 #define MODUS_PURPOSE                    GENERAL_PURPOSE //!< MODUS purpose   
-#define MODUS_INTERFACE_VERSION          3               //!< MODUS interface version
+#define MODUS_INTERFACE_VERSION          4               //!< MODUS interface version
 #define MODUS_MAJOR_VERSION              0               //!< MODUS major version
-#define MODUS_MINOR_VERSION              4               
+#define MODUS_MINOR_VERSION              1               
 
-#define MODUS_VERSION                 {                                      \
-                                        MODUS_PURPOSE,                       \
-                                        MODUS_INTERFACE_VERSION,             \
-                                        MODUS_MAJOR_VERSION,                 \
-                                        MODUS_MINOR_VERSION,                 \
+#define MODUS_VERSION                 {                                         \
+                                        MODUS_PURPOSE,                          \
+                                        MODUS_INTERFACE_VERSION,                \
+                                        MODUS_MAJOR_VERSION,                    \
+                                        MODUS_MINOR_VERSION,                    \
                                     }
 
 

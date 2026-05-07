@@ -33,13 +33,13 @@
 /* 自动注册命令宏：在任何 .c 文件中使用，无需手动初始化。
  * 它会在 init_infos 章节中产生一个初始化项，由 modus_Init() 自动触发注册。
  */
-#define MODUS_SHELL_CMD(name, handler, help_str)                                 \
-    static const mshell_cmd_t shell_cmd_##name = {                             \
+#define MODUS_SHELL_CMD(name, handler, help_str)                                \
+    static const mshell_cmd_t shell_cmd_##name = {                              \
         .pchName = #name,                                                       \
         .pfcnHandle = (handler),                                                \
         .pchHelp = (help_str),                                                  \
     };                                                                          \
-    INIT_SECTION const modus_init_info_t shell_init_##name = {                   \
+    INIT_SECTION const modus_init_info_t shell_init_##name = {                  \
         .pfcnInitFunc = (init_func_t)mshell_RegisterCmd,                        \
         .wObjectAddr = (uintptr_t)&shell_cmd_##name,                            \
         .wConfigAddr = 0                                                        \

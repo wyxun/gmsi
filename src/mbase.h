@@ -60,70 +60,70 @@ int mbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t mbase_EventPend(modus_base_t *ptBase);
 int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem);
 int mbase_MessagePend(modus_base_t *ptBase, message_t *ptMsg);
-int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLength);
-int mbase_MessagePendFromRing(modus_base_t *ptBase, uint8_t *pchMsgBuffer, uint16_t hwMaxSize);
+int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, 
+                            uint16_t hwLength);
+int mbase_MessagePendFromRing(modus_base_t *ptBase, uint8_t *pchMsgBuffer, 
+                              uint16_t hwMaxSize);
 share_mem_t* mbase_ShareMemRead(uint32_t wId);
 mlist_t* mbase_GetBaseList(void);
 void mbase_DebugListBase(void);
 
 // msg item macros
-#define MODUS_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
-        uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
-        message_item_t t##NAME##item = {                                    \
-            .tListItem.wItemValue = OBJECT,                                 \
-            .pchMessage = ch##NAME##_Buffer,                                \
-            .hwLength = 0,                                                  \
-            .hwMaxSize = SIZE                                               \
-        };                                                                  \
-
-#define MODUS_MSG_ITEM_INITIALISE_LIST(NAME)                                 \
-    do{                                                                     \
-        mlist_ItemInit(&(t##NAME##item).tListItem);                    \
-        (t##NAME##item).tListItem.wItemValue = (t##NAME##item).hwLength;    \
-        (t##NAME##item).hwLength = 0;                                       \
-        (t##NAME##item).tListItem.pvOwner = &(t##NAME##item);               \
+#define MODUS_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                                \
+        uint8_t ch##NAME##_Buffer[SIZE] = {0};                                  \
+        message_item_t t##NAME##item = {                                        \
+            .tListItem.wItemValue = OBJECT,                                     \
+            .pchMessage = ch##NAME##_Buffer,                                    \
+            .hwLength = 0,                                                      \
+            .hwMaxSize = SIZE                                                   \
+        };
+#define MODUS_MSG_ITEM_INITIALISE_LIST(NAME)                                    \
+    do{                                                                         \
+        mlist_ItemInit(&(t##NAME##item).tListItem);                             \
+        (t##NAME##item).tListItem.wItemValue = (t##NAME##item).hwLength;        \
+        (t##NAME##item).hwLength = 0;                                           \
+        (t##NAME##item).tListItem.pvOwner = &(t##NAME##item);                   \
     }while(0)
 
 #define MODUS_MSG_ITEM_GET_HANDLE(NAME) &(t##NAME##item)   
 
-#define MODUS_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                         \
-    do{                                                                     \
-        if((t##NAME##item).hwMaxSize >= LENGTH)                             \
-        {                                                                   \
-            memcpy((t##NAME##item).pchMessage, MESSAGE, LENGTH);            \
-            (t##NAME##item).hwLength = LENGTH;                              \
-        }                                                                   \
-        else                                                                \
-        {                                                                   \
-            (t##NAME##item).hwLength = 0;                                   \
-        }                                                                   \
+#define MODUS_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                            \
+    do{                                                                         \
+        if((t##NAME##item).hwMaxSize >= LENGTH)                                 \
+        {                                                                       \
+            memcpy((t##NAME##item).pchMessage, MESSAGE, LENGTH);                \
+            (t##NAME##item).hwLength = LENGTH;                                  \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            (t##NAME##item).hwLength = 0;                                       \
+        }                                                                       \
     }while(0)
 
 #define MODUS_MSG_ITEM_GET_BUFFER(NAME) (t##NAME##item).pchMessage
 #define MODUS_MSG_ITEM_GET_LENGTH(NAME) (t##NAME##item).hwLength        
 
 // msg macros
-#define MODUS_MSG_DECLARE(NAME,SIZE)                                         \
-        uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
-        message_t t##NAME##Msg = {                                          \
-            .pchMessage = ch##NAME##_Buffer,                                \
-            .hwLength = 0,                                                  \
-            .hwMaxSize = SIZE                                               \
-        };                                                                  \
-
+#define MODUS_MSG_DECLARE(NAME,SIZE)                                            \
+        uint8_t ch##NAME##_Buffer[SIZE] = {0};                                  \
+        message_t t##NAME##Msg = {                                              \
+            .pchMessage = ch##NAME##_Buffer,                                    \
+            .hwLength = 0,                                                      \
+            .hwMaxSize = SIZE                                                   \
+        };
 #define MODUS_MSG_GET_HANDLE(NAME) &(t##NAME##Msg)   
 
-#define MODUS_MSG_UPDATE(NAME, MESSAGE, LENGTH)                              \
-    do{                                                                     \
-        if((t##NAME##Msg).hwMaxSize >= LENGTH)                              \
-        {                                                                   \
-            memcpy((t##NAME##Msg).pchMessage, MESSAGE, LENGTH);             \
-            (t##NAME##Msg).hwLength = LENGTH;                               \
-        }                                                                   \
-        else                                                                \
-        {                                                                   \
-            (t##NAME##Msg).hwLength = 0;                                    \
-        }                                                                   \
+#define MODUS_MSG_UPDATE(NAME, MESSAGE, LENGTH)                                 \
+    do{                                                                         \
+        if((t##NAME##Msg).hwMaxSize >= LENGTH)                                  \
+        {                                                                       \
+            memcpy((t##NAME##Msg).pchMessage, MESSAGE, LENGTH);                 \
+            (t##NAME##Msg).hwLength = LENGTH;                                   \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            (t##NAME##Msg).hwLength = 0;                                        \
+        }                                                                       \
     }while(0)
 
 #define MODUS_MSG_GET_BUFFER(NAME) (t##NAME##Msg).pchMessage

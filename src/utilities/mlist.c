@@ -50,8 +50,8 @@ void mlist_Insert(mlist_t * const ptList, mlist_item_t * const ptNewListItem)
     mlist_item_t *ptIterator;
     const uint32_t wValueOfInsertion = ptNewListItem->wItemValue;
 
-    /* Insert the new list item into the list, sorted in descending item value order.
-     * If the list item value is 0xFFFFFFFFUL, place it at the end (before the marker). */
+    /* Insert the new list item into the list, sorted in descending order.
+     * If the value is 0xFFFFFFFFUL, place it at the end (before marker). */
     if(wValueOfInsertion == 0xFFFFFFFFUL)
     {
         ptIterator = ptList->tListEnd.ptPrevious;
@@ -59,9 +59,11 @@ void mlist_Insert(mlist_t * const ptList, mlist_item_t * const ptNewListItem)
     else
     {
         /* Otherwise, traverse the list to find the correct position. */
-        for(ptIterator = (mlist_item_t *) &( ptList->tListEnd ); ptIterator->ptNext->wItemValue <= wValueOfInsertion; ptIterator = ptIterator->ptNext)
+        for (ptIterator = (mlist_item_t *)&(ptList->tListEnd); 
+             ptIterator->ptNext->wItemValue <= wValueOfInsertion; 
+             ptIterator = ptIterator->ptNext)
         {
-            /* There is nothing to do here, just iterating to the right position. */
+            /* There is nothing to do here, just iterating. */
         }
     }
 

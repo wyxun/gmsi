@@ -15,7 +15,10 @@ static uint8_t calc_crc8(const uint8_t *pchData, uint16_t hwLen)
     return chCRC;
 }
 
-static uint16_t default_pack_data(uint8_t *pchBuffer, const int16_t *ahwSamples, const uint8_t *abMask, uint8_t chCount, uint8_t chSeq)
+static uint16_t default_pack_data(uint8_t *pchBuffer, 
+                                  const int16_t *ahwSamples, 
+                                  const uint8_t *abMask, 
+                                  uint8_t chCount, uint8_t chSeq)
 {
     uint16_t hwIdx = 0;
     uint8_t chMaskBytes = (chCount + 7) / 8;
@@ -41,7 +44,9 @@ static uint16_t default_pack_data(uint8_t *pchBuffer, const int16_t *ahwSamples,
     return hwIdx;
 }
 
-static uint16_t default_pack_desc(uint8_t *pchBuffer, const mwaveform_ch_desc_t *atChannels, uint8_t chCount)
+static uint16_t default_pack_desc(uint8_t *pchBuffer, 
+                                  const mwaveform_ch_desc_t *atChannels, 
+                                  uint8_t chCount)
 {
     uint16_t hwIdx = 0;
 

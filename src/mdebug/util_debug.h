@@ -70,7 +70,7 @@ extern void util_debug_Printf(const char *format, ...);
 #define MLOG(LEVEL, ...)                                                        \
     do {                                                                        \
         if ((MODUS_LOG_LEVEL >= _MLOG_LVL_##LEVEL) &&                           \
-            (g_chGLogMask & _MLOG_MASK_BIT(LEVEL))) {                          \
+            (g_chGLogMask & _MLOG_MASK_BIT(LEVEL))) {                           \
             TRACE_TOSTR("[" #LEVEL "] ");                                       \
             TRACE_TOSTR(__VA_ARGS__);                                           \
         }                                                                       \
@@ -79,8 +79,8 @@ extern void util_debug_Printf(const char *format, ...);
 #define MLOGF(LEVEL, fmt, ...)                                                  \
     do {                                                                        \
         if ((MODUS_LOG_LEVEL >= _MLOG_LVL_##LEVEL) &&                           \
-            (g_chGLogMask & _MLOG_MASK_BIT(LEVEL))) {                          \
-            util_debug_Printf("[" #LEVEL "] " fmt, ##__VA_ARGS__);             \
+            (g_chGLogMask & _MLOG_MASK_BIT(LEVEL))) {                           \
+            util_debug_Printf("[" #LEVEL "] " fmt, ##__VA_ARGS__);              \
         }                                                                       \
     } while(0)
 #endif

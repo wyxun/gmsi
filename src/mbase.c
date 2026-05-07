@@ -179,8 +179,8 @@ int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                         \
-            ptListItemDes != &tListObject.tListEnd;                         \
+    for (uint8_t chErgodicTime = 1;                                             \
+            ptListItemDes != &tListObject.tListEnd;                             \
             ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
         if(ptListItemDes->wItemValue == wId)
             break;
@@ -286,8 +286,8 @@ int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLeng
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                         \
-            ptListItemDes != &tListObject.tListEnd;                         \
+    for (uint8_t chErgodicTime = 1;                                             \
+            ptListItemDes != &tListObject.tListEnd;                             \
             ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
         if(ptListItemDes->wItemValue == wId)
             break;
@@ -414,8 +414,8 @@ share_mem_t* mbase_ShareMemRead(uint32_t wId)
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                         \
-            ptListItemDes != &tListObject.tListEnd;                         \
+    for (uint8_t chErgodicTime = 1;                                             \
+            ptListItemDes != &tListObject.tListEnd;                             \
             ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
         if(ptListItemDes->wItemValue == wId)
             break;

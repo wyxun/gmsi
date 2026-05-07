@@ -131,8 +131,8 @@ void modus_Run(void)
     const mlist_item_t *ptListItemDes;
     modus_base_t *ptBaseDes;
 
-    for (ptListItemDes = ptListObject->tListEnd.ptPrevious;                 \
-                ptListItemDes != &ptListObject->tListEnd;                   \
+    for (ptListItemDes = ptListObject->tListEnd.ptPrevious;                     \
+                ptListItemDes != &ptListObject->tListEnd;                       \
             ptListItemDes = ptListItemDes->ptPrevious) {
         ptBaseDes = ptListItemDes->pvOwner;
 
@@ -193,8 +193,8 @@ void modus_Clock(void)
     const mlist_item_t *ptListItemDes;
     modus_base_t *ptBaseDes;
 
-    for (ptListItemDes = ptListObject->tListEnd.ptPrevious;                 \
-            ptListItemDes != &ptListObject->tListEnd;                       \
+    for (ptListItemDes = ptListObject->tListEnd.ptPrevious;                     \
+            ptListItemDes != &ptListObject->tListEnd;                           \
             ptListItemDes = ptListItemDes->ptPrevious) {
         ptBaseDes = ptListItemDes->pvOwner;
 

@@ -25,7 +25,7 @@ typedef unsigned long    UBaseType_t;
 #endif
 
 #ifndef container_of
-#define container_of(pointer, type, member) \
+#define container_of(pointer, type, member)                                     \
     ((type *)((char *)(pointer) - (unsigned long)(&((type *)0)->member)))
 #endif
 

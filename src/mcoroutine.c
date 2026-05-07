@@ -108,8 +108,8 @@ int mcoroutine_Run(void)
     fsm_rt_t tFsm;
     const mlist_item_t *ptListItemDes;
 
-    for(ptListItemDes = tListCoroutine.tListEnd.ptPrevious;     \
-                    ptListItemDes != &tListCoroutine.tListEnd;  \
+    for(ptListItemDes = tListCoroutine.tListEnd.ptPrevious;                     \
+                    ptListItemDes != &tListCoroutine.tListEnd;                  \
                     ptListItemDes = ptListItemDes->ptPrevious)
     {
         if(ptListItemDes->pvOwner == NULL) {
