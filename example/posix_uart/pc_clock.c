@@ -1,7 +1,7 @@
 #include "pc_clock.h"
 #include "userconfig.h"
 #include <stdint.h>
-#include "gcoroutine.h"
+#include "mcoroutine.h"
 #include <perf_counter.h>
 
 #include <signal.h>
@@ -13,7 +13,7 @@ extern void timer_handler(int signum);
 int pcclock_Run(uintptr_t wObjectAddr);
 int pcclock_Clock(uintptr_t wObjectAddr);
 
-gmsi_base_cfg_t tTimerBaseCfg = {
+modus_base_cfg_t tTimerBaseCfg = {
     .wId = PC_CLOCK,
     .wParent = 0,
     .FcnInterface = {
@@ -21,17 +21,17 @@ gmsi_base_cfg_t tTimerBaseCfg = {
         .Run = pcclock_Run,
     },
 };
-gmsi_base_t tBase;
+modus_base_t tBase;
 
-GMSI_MSG_ITEM_DECLARE(PC_CLOCK, Clockbuffer, 30);
-gcoroutine_handle_t tGcoroutineHandle = {
+MODUS_MSG_ITEM_DECLARE(PC_CLOCK, Clockbuffer, 30);
+mcoroutine_handle_t tGcoroutineHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
 
-fsm_rt_t pcclock_gcoroutine(void *pvParam)
+fsm_rt_t pcclock_mcoroutine(void *pvParam)
 {
-    gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineHandle;
+    mcoroutine_handle_t *ptThis = (mcoroutine_handle_t *)&tGcoroutineHandle;
     pcclock_t *ptObject = (pcclock_t *)pvParam;
     uint8_t *pchMessage = NULL;
 
@@ -95,7 +95,7 @@ int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     ptThis->ptBase = &tBase;
     tTimerBaseCfg.wParent = wObjectAddr;
 
-    if(GMSI_SUCCESS != gbase_Init(ptThis->ptBase, &tTimerBaseCfg))
+    if(MODUS_SUCCESS != mbase_Init(ptThis->ptBase, &tTimerBaseCfg))
         printf("pcclock base Init failed\n");
     return 0;
 }
@@ -106,28 +106,28 @@ message_t tMessage = {
     .hwLength = 0,
     .hwMaxSize = 30,
 };
-GMSI_MSG_DECLARE(TestBuffer, 30);
+MODUS_MSG_DECLARE(TestBuffer, 30);
 
 int pcclock_Run(uintptr_t wObjectAddr)
 {
     uint32_t wEvent;
     pcclock_t *ptThis = (pcclock_t *)wObjectAddr;
     
-    GMSI_ASSERT(NULL != ptThis);
-    wEvent = gbase_EventPend(ptThis->ptBase);
-    if(wEvent & Gmsi_Event_Transition)
+    MODUS_ASSERT(NULL != ptThis);
+    wEvent = mbase_EventPend(ptThis->ptBase);
+    if(wEvent & Modus_Event_Transition)
     {
         //printf("get message, length is %d\n", ptThis->ptBase->tMessage.hwLength);
-        //GLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
+        //MLOG_PRINTF(ptThis->ptBase->tMessage.pchMessage);
     }
 
     if(perfc_is_time_out_ms(5000))
     {
-        gcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_gcoroutine);
+        mcoroutine_Insert(&tGcoroutineHandle, (void *)wObjectAddr, pcclock_mcoroutine);
     }
     if(perfc_is_time_out_ms(1000))
     {
-        GLOG_PRINTF("insert coroutine");
+        MLOG_PRINTF("insert coroutine");
     }
     return 0;
 }
@@ -139,8 +139,8 @@ int pcclock_Clock(uintptr_t wObjectAddr)
     if(!timeoutcount)
     {
         timeoutcount = 999;
-        // gbase_EventPost(PC_UART, Gmsi_Event00);
-        GLOG_PRINTF("post event to pc_uart");
+        // mbase_EventPost(PC_UART, Modus_Event00);
+        MLOG_PRINTF("post event to pc_uart");
     }
     else
         timeoutcount--;

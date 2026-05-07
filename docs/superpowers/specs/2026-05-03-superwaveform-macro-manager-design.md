@@ -31,7 +31,7 @@ SuperWaveform 的 Dashboard 当前硬编码了 4 个固定宏按钮（`wave star
 - **格式**：极简 Key-Value，无需第三方库
 
 ```
-last_macro_file=E:\Project\gmsi\blm_macros.ini
+last_macro_file=E:\Project\modus\blm_macros.ini
 ```
 
 - 启动时：`MacroManager` 读取 `superwaveform.cfg` → 若路径有效则自动加载对应 INI

@@ -21,7 +21,7 @@ INCLUDES = -I$(SRC_DIR) \
 
 # Source files (Core)
 SRCS = $(wildcard $(SRC_DIR)/*.cpp) \
-       $(SRC_DIR)/utils/gringbuf.c
+       $(SRC_DIR)/utils/mringbuf.c
 
 # ImGui & ImPlot Sources (Only compile if they exist)
 IMGUI_SRCS = $(wildcard $(THIRD_PARTY_DIR)/imgui/*.cpp) \

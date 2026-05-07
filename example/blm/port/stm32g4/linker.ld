@@ -43,7 +43,7 @@ SECTIONS
         _etext = .;
     } >FLASH
 
-    /* GMSI init section */
+    /* MODUS init section */
     init_infos :
     {
         . = ALIGN(4);

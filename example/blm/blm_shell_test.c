@@ -1,14 +1,14 @@
 /**
  * @file blm_shell_test.c
- * @brief gshell 调试命令测试模块（blm 工程专用）
+ * @brief mshell 调试命令测试模块（blm 工程专用）
  *
  * 提供 burn（老化测试）和 peek（内存读取）两条调试命令，
- * 通过 gshell RTT Shell 触发，用于 v0.2.1.0 功能验证。
+ * 通过 mshell RTT Shell 触发，用于 v0.2.1.0 功能验证。
  */
 
 #include "blm_shell_test.h"
-#include "gdebug/gshell.h"
-#include "gdebug/util_debug.h"
+#include "mdebug/mshell.h"
+#include "mdebug/util_debug.h"
 #include <stdint.h>
 
 /*============================ PRIVATE FUNCTIONS =============================*/
@@ -20,7 +20,7 @@
 static void cmd_burn(const char *args)
 {
     (void)args;
-    GLOGF(I, "Burn-in test started.\r\n");
+    MLOGF(I, "Burn-in test started.\r\n");
     /* TODO: 替换为实际老化程序入口，例如 blm_StartBurnIn() */
 }
 
@@ -51,20 +51,20 @@ static void cmd_peek(const char *args)
     }
 
     if (p == pStart) {
-        GLOGF(W, "Usage: peek <hex_addr> (e.g. peek 0x20000000)\r\n");
+        MLOGF(W, "Usage: peek <hex_addr> (e.g. peek 0x20000000)\r\n");
         return;
     }
 
     uint32_t wVal = *(volatile uint32_t *)wAddr;
-    GLOGF(I, "@0x%08X = 0x%08X (%d)\r\n", 
+    MLOGF(I, "@0x%08X = 0x%08X (%d)\r\n", 
           (unsigned)wAddr, (unsigned)wVal, (int)wVal);
 }
 
 /*============================ PRIVATE DATA ==================================*/
 
-GMSI_SHELL_CMD(burn, cmd_burn, "Start burn-in aging test");
-GMSI_SHELL_CMD(peek, cmd_peek, "Read memory word: peek <hex_addr>");
+MODUS_SHELL_CMD(burn, cmd_burn, "Start burn-in aging test");
+MODUS_SHELL_CMD(peek, cmd_peek, "Read memory word: peek <hex_addr>");
 
 /*============================ PUBLIC FUNCTIONS ==============================*/
 
-/* 架构更新：现在使用 GMSI_SHELL_CMD 宏自动注册，无需显式 Init 函数 */
+/* 架构更新：现在使用 MODUS_SHELL_CMD 宏自动注册，无需显式 Init 函数 */

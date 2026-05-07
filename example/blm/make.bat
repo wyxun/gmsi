@@ -49,7 +49,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [INFO] Launching RTT Server in background...
-start "GMSI RTT Server" cmd /c %MAKE_EXE% rtt
+start "MODUS RTT Server" cmd /c %MAKE_EXE% rtt
 
 echo [INFO] Waiting for Server to initialize...
 timeout /t 3 /nobreak > nul

@@ -8,14 +8,14 @@
 #include <signal.h>
 #include <time.h>
 
-#include "gmsi.h"
+#include "modus.h"
 
 typedef struct{
     uint8_t chClockbase;
 }pcclock_cfg_t;
 
 typedef struct{
-    gmsi_base_t *ptBase;
+    modus_base_t *ptBase;
 }pcclock_t;
 //int pcclock_Init(pcclock_t *ptThis, pcclock_cfg_t *ptCfg);
 int pcclock_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);

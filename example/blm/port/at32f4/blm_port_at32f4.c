@@ -8,7 +8,7 @@
 #include "../userconfig.h"
 #include <perf_counter.h>
 #include <string.h>
-#include "../gdi_hw.h"
+#include "../mdi_hw.h"
 
 /*============================ MACROS ========================================*/
 
@@ -46,8 +46,8 @@
 /*============================ IMPLEMENTATION ================================*/
 
 uint32_t SystemCoreClock = BLM_SYSCLK;
-#include "utilities/util_queue.h"
-static util_queue_t s_tRxQueue;
+#include "utilities/mringbuf.h"
+static mringbuf_t s_tRxQueue;
 static uint8_t s_achRxBuf[512];  /* Reduced from 2048 for size optimization */
 
 static void gpio_set_mode_cnf(GPIO_TypeDef *pGPIO, uint8_t chPin, uint8_t chModeCnf)
@@ -127,7 +127,7 @@ int blm_port_UartInit(uint32_t wBaudrate)
     blm_port_SystemClockConfig();
     SystemCoreClock = BLM_SYSCLK;
 
-    queue_init(&s_tRxQueue, s_achRxBuf, sizeof(s_achRxBuf));
+    mringbuf_Init(&s_tRxQueue, s_achRxBuf, sizeof(s_achRxBuf));
 
 
     CRM->APB2EN |= CRM_APB2EN_GPIOAEN | CRM_APB2EN_IOMUXEN;
@@ -162,8 +162,8 @@ void USART1_IRQHandler(void)
     uint32_t wStatus = BLM_USART->STS;
     if (wStatus & USART_STS_RDBF) {
         uint8_t chByte = (uint8_t)BLM_USART->DT;
-        if (!queue_isFull(&s_tRxQueue)) {
-            queue_write(&s_tRxQueue, chByte);
+        if (mringbuf_GetFree(&s_tRxQueue) > 0) {
+            mringbuf_Write(&s_tRxQueue, chByte);
         }
     }
     if (wStatus & (USART_STS_ROERR | USART_STS_FERR | USART_STS_NERR)) {
@@ -205,7 +205,7 @@ int blm_port_UartRecv(uint8_t *pchData, uint16_t hwLen, uint32_t wTimeoutMs)
 
         uint8_t chByte;
         /* ISR Queue Read */
-        if (queue_read(&s_tRxQueue, &chByte) == QUEUE_OK) {
+        if (mringbuf_Read(&s_tRxQueue, &chByte) > 0) {
             pchData[hwReceived++] = chByte;
             lStart = get_system_ms();
             continue;
@@ -221,12 +221,12 @@ int blm_port_UartRecv(uint8_t *pchData, uint16_t hwLen, uint32_t wTimeoutMs)
     return hwReceived;
 }
 
-int blm_port_UartAvailable(void) { return !queue_isEmpty(&s_tRxQueue); }
+int blm_port_UartAvailable(void) { return (mringbuf_GetUsed(&s_tRxQueue) > 0); }
 
 void blm_port_UartFlush(void)
 {
     __disable_irq();
-    s_tRxQueue.addr_rd = s_tRxQueue.addr_wr;
+    s_tRxQueue.hwTail = s_tRxQueue.hwHead;
     __enable_irq();
 }
 
@@ -299,36 +299,36 @@ void blm_port_LedSet(int n) {
 
 /* ---- GPIO (LED) ---- */
 
-static int32_t gdi_led_Set(void *pPriv, gdi_gpio_level_t eLevel)
+static int32_t mdi_led_Set(void *pPriv, mdi_gpio_level_t eLevel)
 {
     (void)pPriv;
     blm_port_LedSet((int)eLevel);
     return 0;
 }
 
-static int32_t gdi_led_Get(void *pPriv)
+static int32_t mdi_led_Get(void *pPriv)
 {
     (void)pPriv;
-    return (BLM_LED_GPIO->ODT & (1UL << BLM_LED_PIN)) ? GDI_GPIO_HIGH : GDI_GPIO_LOW;
+    return (BLM_LED_GPIO->ODT & (1UL << BLM_LED_PIN)) ? MDI_GPIO_HIGH : MDI_GPIO_LOW;
 }
 
-static int32_t gdi_led_Toggle(void *pPriv)
+static int32_t mdi_led_Toggle(void *pPriv)
 {
     (void)pPriv;
     BLM_LED_GPIO->ODT ^= (1UL << BLM_LED_PIN);
     return 0;
 }
 
-static gdi_gpio_t s_tLedGpio = {
+static mdi_gpio_t s_tLedGpio = {
     .pPriv    = NULL,
-    .fnSet    = gdi_led_Set,
-    .fnGet    = gdi_led_Get,
-    .fnToggle = gdi_led_Toggle,
+    .fnSet    = mdi_led_Set,
+    .fnGet    = mdi_led_Get,
+    .fnToggle = mdi_led_Toggle,
 };
 
 /* ---- Stream (UART) ---- */
 
-static int32_t gdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen)
+static int32_t mdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_UartSend(pchData, (uint16_t)wLen);
@@ -340,69 +340,69 @@ static int32_t gdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen
  * 协议层通过 PERFC_PT_WAIT_UNTIL 外层循环处理宏观超时，
  * 此处只需短暂尝试读取即可。
  */
-static int32_t gdi_uart_Read(void *pPriv, uint8_t *pchBuf, uint32_t wLen)
+static int32_t mdi_uart_Read(void *pPriv, uint8_t *pchBuf, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_UartRecv(pchBuf, (uint16_t)wLen, 3);
 }
 
-static int32_t gdi_uart_IsBusy(void *pPriv)
+static int32_t mdi_uart_IsBusy(void *pPriv)
 {
     (void)pPriv;
     return (BLM_USART->STS & USART_STS_TDC) ? 0 : 1;
 }
 
-static gdi_stream_t s_tUartDebug = {
+static mdi_stream_t s_tUartDebug = {
     .pPriv    = NULL,
-    .fnWrite  = gdi_uart_Write,
-    .fnRead   = gdi_uart_Read,
-    .fnIsBusy = gdi_uart_IsBusy,
+    .fnWrite  = mdi_uart_Write,
+    .fnRead   = mdi_uart_Read,
+    .fnIsBusy = mdi_uart_IsBusy,
 };
 
 /* ---- Flash ---- */
 
-static int32_t gdi_flash_Erase_wrapper(void *pPriv, uint32_t wAddr, uint32_t wSize)
+static int32_t mdi_flash_Erase_wrapper(void *pPriv, uint32_t wAddr, uint32_t wSize)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashErase(wAddr, wSize);
 }
 
-static int32_t gdi_flash_Write_wrapper(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
+static int32_t mdi_flash_Write_wrapper(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashWrite(wAddr, pchData, wLen);
 }
 
-static int32_t gdi_flash_Read_wrapper(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
+static int32_t mdi_flash_Read_wrapper(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashRead(wAddr, pchBuf, wLen);
 }
 
-static int32_t gdi_flash_Unlock_wrapper(void *pPriv)
+static int32_t mdi_flash_Unlock_wrapper(void *pPriv)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashUnlock();
 }
 
-static int32_t gdi_flash_Lock_wrapper(void *pPriv)
+static int32_t mdi_flash_Lock_wrapper(void *pPriv)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashLock();
 }
 
-static gdi_flash_t s_tFlashApp = {
+static mdi_flash_t s_tFlashApp = {
     .pPriv    = NULL,
-    .fnErase  = gdi_flash_Erase_wrapper,
-    .fnWrite  = gdi_flash_Write_wrapper,
-    .fnRead   = gdi_flash_Read_wrapper,
-    .fnUnlock = gdi_flash_Unlock_wrapper,
-    .fnLock   = gdi_flash_Lock_wrapper,
+    .fnErase  = mdi_flash_Erase_wrapper,
+    .fnWrite  = mdi_flash_Write_wrapper,
+    .fnRead   = mdi_flash_Read_wrapper,
+    .fnUnlock = mdi_flash_Unlock_wrapper,
+    .fnLock   = mdi_flash_Lock_wrapper,
 };
 
 /* ---- 全局硬件资源池 ---- */
 
-const gdi_hardware_t HW = {
+const mdi_hardware_t HW = {
     .ptLedStatus   = &s_tLedGpio,
     .ptSerialDebug = &s_tUartDebug,
     .ptAppFlash    = &s_tFlashApp,

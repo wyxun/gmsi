@@ -12,7 +12,7 @@
 
 ### Task 1: Update GuiLayer State Variables
 **Files:**
-- Modify: `e:/Project/gmsi/tools/superwaveform/src/gui_layer.h`
+- Modify: `e:/Project/modus/tools/superwaveform/src/gui_layer.h`
 
 - [ ] **Step 1: Add private members to GuiLayer class**
 ```cpp
@@ -24,7 +24,7 @@
 
 ### Task 2: Implement Adaptive Smoothing Logic
 **Files:**
-- Modify: `e:/Project/gmsi/tools/superwaveform/src/gui_layer.cpp`
+- Modify: `e:/Project/modus/tools/superwaveform/src/gui_layer.cpp`
 
 - [ ] **Step 1: Update UpdateWaveformData with adaptive estimation**
 ```cpp
@@ -57,7 +57,7 @@
 
 ### Task 3: Update Dashboard UI
 **Files:**
-- Modify: `e:/Project/gmsi/tools/superwaveform/src/gui_layer.cpp`
+- Modify: `e:/Project/modus/tools/superwaveform/src/gui_layer.cpp`
 
 - [ ] **Step 1: Show Sample Rate in the Dashboard**
 ```cpp

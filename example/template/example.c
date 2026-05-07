@@ -19,16 +19,16 @@ share_mem_t s_tExampleShareMem = {
     .hwSize    = sizeof(tExampleShareMem),
 };
 
-gcoroutine_handle_t tGcoroutineExampleHandle = {
+mcoroutine_handle_t tGcoroutineExampleHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
 
 /*============================ LOCAL VARIABLES ===============================*/
 
-static gmsi_base_t s_tExampleBase;
+static modus_base_t s_tExampleBase;
 
-static gmsi_base_cfg_t s_tExampleBaseCfg = {
+static modus_base_cfg_t s_tExampleBaseCfg = {
     .wId    = EXAMPLE,
     .wParent = 0,
     .FcnInterface = {
@@ -41,11 +41,11 @@ static gmsi_base_cfg_t s_tExampleBaseCfg = {
 /*============================ IMPLEMENTATION ================================*/
 
 /* coroutine triggered by Event_SyncButtonPushed */
-fsm_rt_t example_gcoroutine(void *pvParam)
+fsm_rt_t example_mcoroutine(void *pvParam)
 {
     static uint8_t s_eState = 0;
     example_t *ptObject = (example_t *)pvParam;
-    gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineExampleHandle;
+    mcoroutine_handle_t *ptThis = (mcoroutine_handle_t *)&tGcoroutineExampleHandle;
 
 PERFC_PT_BEGIN(this.chState)
     do {
@@ -68,46 +68,46 @@ PERFC_PT_END()
 static void example_EventHandle(example_t *ptThis, uint32_t wEvent)
 {
     if (ptThis == NULL) {
-        GLOG(E, "ptThis is NULL.");
+        MLOG(E, "ptThis is NULL.");
         return;
     }
 
     if (wEvent & Event_SyncMissed) {
-        GLOG(D, "get event Event_SyncMissed");
+        MLOG(D, "get event Event_SyncMissed");
     }
 
     if (wEvent & Event_SyncButtonPushed) {
-        if (GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineExampleHandle,
+        if (MODUS_SUCCESS != mcoroutine_Insert(&tGcoroutineExampleHandle,
                                               (void *)ptThis,
-                                              example_gcoroutine)) {
-            GLOG(E, "Error: gcoroutine_Insert failed.");
+                                              example_mcoroutine)) {
+            MLOG(E, "Error: mcoroutine_Insert failed.");
         }
     }
 }
 
-/* called in the GMSI while(1) main loop */
+/* called in the MODUS while(1) main loop */
 int example_Run(uintptr_t wObjectAddr)
 {
-    int      wRet = GMSI_SUCCESS;
+    int      wRet = MODUS_SUCCESS;
     uint32_t wEvent;
     uint8_t  chRingBufferMsg[16];
 
     example_t *ptThis = (example_t *)wObjectAddr;
     if (ptThis == NULL) {
-        GLOG(E, "ptThis is NULL.");
-        return GMSI_EFAIL;
+        MLOG(E, "ptThis is NULL.");
+        return MODUS_EFAIL;
     }
 
-    wEvent = gbase_EventPend(ptThis->ptBase);
+    wEvent = mbase_EventPend(ptThis->ptBase);
     if (wEvent) {
         example_EventHandle(ptThis, wEvent);
     }
 
-    uint16_t hwLength = gbase_MessagePendFromRing(ptThis->ptBase,
+    uint16_t hwLength = mbase_MessagePendFromRing(ptThis->ptBase,
                                                   chRingBufferMsg,
                                                   sizeof(chRingBufferMsg));
     if (hwLength > 0) {
-        GLOG(I, "get chRingBufferMsg, length: ", hwLength);
+        MLOG(I, "get chRingBufferMsg, length: ", hwLength);
         tExampleShareMem.value2 = hwLength;
     }
 
@@ -122,10 +122,10 @@ int example_Clock(uintptr_t wObjectAddr)
     example_t *ptThis = (example_t *)wObjectAddr;
     uint16_t hwExampleTestCount  = 2000;    /* 2000ms send a message */
     uint16_t hwExampleTestCount2 = 5000;    /* 5000ms send Event_PacketReceived */
-    int wRet = GMSI_SUCCESS;
+    int wRet = MODUS_SUCCESS;
 
     if (!hwExampleTestCount2) {
-        gbase_EventPost(EXAMPLE, Event_PacketReceived);
+        mbase_EventPost(EXAMPLE, Event_PacketReceived);
         hwExampleTestCount2 = 5000;
     } else {
         hwExampleTestCount2--;
@@ -134,22 +134,22 @@ int example_Clock(uintptr_t wObjectAddr)
     return wRet;
 }
 
-/* initialize example object and register it in the GMSI list */
+/* initialize example object and register it in the MODUS list */
 int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     example_t     *ptThis = (example_t *)wObjectAddr;
     example_cfg_t *ptCfg  = (example_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG(E, "Error: ptThis or ptCfg is NULL.");
-        return GMSI_EFAIL;
+        MLOG(E, "Error: ptThis or ptCfg is NULL.");
+        return MODUS_EFAIL;
     }
 
     /* initialize the hardware */
 
     ptThis->ptBase = &s_tExampleBase;
     if (ptThis->ptBase == NULL) {
-        return GMSI_EAGAIN;
+        return MODUS_EAGAIN;
     }
 
     s_tExampleBaseCfg.wParent = wObjectAddr;
@@ -162,13 +162,13 @@ int example_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         };
     }
 
-    return gbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
+    return mbase_Init(ptThis->ptBase, &s_tExampleBaseCfg);
 }
 
 #define EXAMPLE_RING_BUFFER_SIZE 256
 uint8_t gchExampleBuffer[EXAMPLE_RING_BUFFER_SIZE] = {0};
 
-GMSI_DECLARE_OBJECT(example, Example, 
+MODUS_DECLARE_OBJECT(example, Example, 
     .hwRingSize = EXAMPLE_RING_BUFFER_SIZE,
     .pchRingBuffer = gchExampleBuffer,
 );

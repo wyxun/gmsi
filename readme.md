@@ -7,7 +7,7 @@ Modus 是一个轻量级、面向对象且高度可移植的嵌入式软件框�
 
 ## 核心特性
 - **面向对象设计**：支持多实例，每个模块（驱动、任务、应用）都封装为独立的对象。
-- **自动初始化机制**：引入链接脚本段（Linker Section），利用 `GMSI_DECLARE_OBJECT`
+- **自动初始化机制**：引入链接脚本段（Linker Section），利用 `MODUS_DECLARE_OBJECT`
   宏实现模块的零修改自动注册，无需手动更新 `main.c` 中的初始化列表。
 - **非阻塞事件机制**：内置事件挂起（Pend）与发布（Post）机制，极大简化了异步任务逻辑。
 - **协程/状态机支持**：无缝集成 `plooc` (Protected Low-overhead Object-Oriented 
@@ -26,8 +26,8 @@ sudo apt-get update
 sudo apt install clang make git
 
 # 获取源码并运行示例
-git clone https://gitee.com/wyxun/gmsi.git
-cd gmsi/example/template
+git clone https://gitee.com/wyxun/modus.git
+cd modus/example/template
 make
 ./build/example
 ```
@@ -38,98 +38,98 @@ make
 - **预定义宏**：
   - `__NO_USE_LOG__`：禁用日志输出。
   - `__NO_USE_ASSERT`：禁用断言检测。
-- **语言扩展**：GMSI 强依赖 `plooc` 实现对象封装，请确保包含路径中含有 `lib/plooc`。
+- **语言扩展**：MODUS 强依赖 `plooc` 实现对象封装，请确保包含路径中含有 `lib/plooc`。
 
 ![image-20240514190553036](.assets/image-20240514190553036.png)
 
 ---
 
-## GMSI 日志系统 (LOG)
+## MODUS 日志系统 (LOG)
 
-GMSI 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景。
+MODUS 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景。
 
-### 1. `GLOG` — 类型自动分发（高效、零缓存）
+### 1. `MLOG` — 类型自动分发（高效、零缓存）
 通过 `plooc` 变参技术将每个参数的类型自动映射到底层 `TRACE` 接口处理函数。它不需要格式化解析，性能最高，且类型安全。
 
 ```c
-#include "gdebug/util_debug.h"
+#include "mdebug/util_debug.h"
 
 // 简单字符串
-GLOG(I, "System startup.\n");
+MLOG(I, "System startup.\n");
 
 // 混合字符串与变量 (自动按类型分发)
-GLOG(W, "Sensor alert! ID: ", wID, ", Val: ", hwVal, "\n");
+MLOG(W, "Sensor alert! ID: ", wID, ", Val: ", hwVal, "\n");
 
 // 十六进制输出 (手动带 0x)
-GLOG(D, "Buffer Head: 0x", wHead, "\n");
+MLOG(D, "Buffer Head: 0x", wHead, "\n");
 ```
 
-### 2. `GLOGF` — 格式化输出（标准风格、轻量级）
+### 2. `MLOGF` — 格式化输出（标准风格、轻量级）
 内部调用手写格式化解析器（无 `snprintf` 依赖），支持常用的格式符：`%d %u %x %s %c` 以及补零和宽度（如 `%08x`）。
 
 ```c
 // 常用整数格式化
-GLOGF(I, "Current tick: %d\n", wTicks);
+MLOGF(I, "Current tick: %d\n", wTicks);
 
 // 带补零的十六进制
-GLOGF(D, "Address: 0x%08x\n", (uintptr_t)ptThis);
+MLOGF(D, "Address: 0x%08x\n", (uintptr_t)ptThis);
 
 // 组合字符串与字符
-GLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
+MLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
 ```
 
 ### 3. 日志级别 (Severity Levels)
-可以通过在 `userconfig.h` 中定义 `GMSI_LOG_LEVEL` 来控制编译期过滤级别：
-- `GMSI_LOG_LEVEL_NONE`  (0)
-- `GMSI_LOG_LEVEL_ERROR` (1) - 简写 `E`
-- `GMSI_LOG_LEVEL_WARN`  (2) - 简写 `W`
-- `GMSI_LOG_LEVEL_INFO`  (3) - 简写 `I` (默认级别)
-- `GMSI_LOG_LEVEL_DEBUG` (4) - 简写 `D`
+可以通过在 `userconfig.h` 中定义 `MODUS_LOG_LEVEL` 来控制编译期过滤级别：
+- `MODUS_LOG_LEVEL_NONE`  (0)
+- `MODUS_LOG_LEVEL_ERROR` (1) - 简写 `E`
+- `MODUS_LOG_LEVEL_WARN`  (2) - 简写 `W`
+- `MODUS_LOG_LEVEL_INFO`  (3) - 简写 `I` (默认级别)
+- `MODUS_LOG_LEVEL_DEBUG` (4) - 简写 `D`
 
 ### 4. 设计详情
 更多关于 LOG 的零缓存设计与实现细节，请参考 [LOG 设计文档](doc/superpowers/LOG_design.md)。
 
 ---
 
-## gshell — 极简调试 Shell
+## mshell — 极简调试 Shell
 
-GMSI 内置轻量级 RTT 调试 Shell，随 `gmsi_Run()` 自动轮询，**无需修改主循环**，连接
-J-Link RTT Viewer 即用。可通过 `gshell_SetIO()` 将 I/O 后端从默认 RTT 替换为 UART。
+MODUS 内置轻量级 RTT 调试 Shell，随 `modus_Run()` 自动轮询，**无需修改主循环**，连接
+J-Link RTT Viewer 即用。可通过 `mshell_SetIO()` 将 I/O 后端从默认 RTT 替换为 UART。
 
 ### 内置命令
 
 | 命令 | 说明 |
 |------|------|
 | `help` | 列出所有命令 |
-| `ver`  | 打印 GMSI 版本 |
-| `list` | 查看所有注册的 gbase 对象（id、event） |
+| `ver`  | 打印 MODUS 版本 |
+| `list` | 查看所有注册的 mbase 对象（id、event） |
 | `post <id_hex> <event_hex>` | 向指定对象投递事件 |
-| `log [-E][-W][-I][-D]` | 运行期开关 GLOG 各级别（无参数 = 显示当前状态） |
+| `log [-E][-W][-I][-D]` | 运行期开关 MLOG 各级别（无参数 = 显示当前状态） |
 
 ### 注册自定义命令
 
 ```c
-#include "gdebug/gshell.h"
+#include "mdebug/mshell.h"
 
 static void cmd_burn(const char *args) {
-    GLOGF(I, "Burn-in started\r\n");
+    MLOGF(I, "Burn-in started\r\n");
 }
 /* 零代码初始化：在 .c 中定义宏即可自动注册 */
-GMSI_SHELL_CMD(burn, cmd_burn, "Burn-in test");
+MODUS_SHELL_CMD(burn, cmd_burn, "Burn-in test");
 ```
 
 ### 运行期 Log 级别控制
 
-`g_chGLogMask` 默认由 `GLOG_MASK_DEFAULT`（全开，0x0F）初始化。
+`g_chGLogMask` 默认由 `MLOG_MASK_DEFAULT`（全开，0x0F）初始化。
 可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
 
-详细配置、UART 后端替换及注意事项参考 [gshell 使用指南](doc/gshell.md)。
+详细配置、UART 后端替换及注意事项参考 [mshell 使用指南](doc/mshell.md)。
 
 ---
 
-## gwaveform — 实时波形采集与可视化
+## mwaveform — 实时波形采集与可视化
 
-GMSI 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用于 FOC 电机、PID 调试等高频信号可视化场景。
+MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用于 FOC 电机、PID 调试等高频信号可视化场景。
 
 ### 核心优势
 - **极致性能**：底层采用 SPSC 无锁环形缓冲区，20kHz 采样下 CPU 占用极低。
@@ -138,27 +138,38 @@ GMSI 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用
 ### 快速使用
 1. **MCU 侧注册通道**：
    ```c
-   uint8_t s_chIa = gwaveform_AddChannel("Motor_Ia", 1000.0f);
-   gwaveform_Start();
+   uint8_t s_chIa = mwaveform_AddChannel("Motor_Ia", 1000.0f);
+   mwaveform_Start();
    ```
 2. **在中断中推送数据**：
    ```c
-   gwaveform_Push(s_chIa, fCurrentIa);
-   gwaveform_Commit();
+   mwaveform_Push(s_chIa, fCurrentIa);
+   mwaveform_Commit();
    ```
 3. **PC 侧启动查看器**：
    ```bash
-   python tools/gwaveform/viewer.py
+   python tools/mwaveform/viewer.py
    ```
 
-详细设计、协议格式及性能数据请参考 [gwaveform 完整文档](doc/gwaveform.md)。
+详细设计、协议格式及性能数据请参考 [mwaveform 完整文档](doc/mwaveform.md)。
+
+---
+
+## MODUS 命名规范 (Naming Convention)
+
+为了保持代码库的统一与整洁，请严格遵守以下命名规范：
+
+1. **类型定义（Type Definition）**：全小写加下划线，必须以 `_t` 结尾。例如 `modus_t`, `mbase_t`, `mlist_t`。
+2. **函数接口（Function API）**：模块名前缀（全小写） + 下划线 + 帕斯卡命名法（首字母大写）。例如 `modus_Init()`, `mbase_EventPost()`, `mlist_Init()`。
+3. **宏定义（Macros）**：全大写加下划线。例如 `MODUS_DECLARE_OBJECT()`, `MLOG()`, `MLIST_IS_EMPTY()`。
+4. **全局变量（Global Variables）**：通常使用 `g_` 前缀（如 `g_hwSystemDataArrary`）。此规则属于用户业务层全局习惯，不受核心框架名称影响。
 
 ---
 
 ## 模块开发指南 (Object Template)
 
-GMSI 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 
-GMSI 对象由以下部分组成：
+MODUS 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 
+MODUS 对象由以下部分组成：
 
 ### 1. 结构定义 (`template.h`)
 ```c
@@ -170,7 +181,7 @@ typedef struct {
 
 /* 模块对象实体 */
 typedef struct {
-    gmsi_base_t *ptBase;   /* 必须包含 GMSI 基础类指针 */
+    modus_base_t *ptBase;   /* 必须包含 MODUS 基础类指针 */
     int          wFd;      /* 模块私有数据 */
 } template_t;
 
@@ -180,8 +191,8 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 ### 2. 功能实现 (`template.c`)
 模块物理行为通过 `Init`, `Clock`, `Run` 三个钩子函数挂载到框架：
 ```c
-static gmsi_base_t s_tTemplateBase; // 静态分配基础类实例
-static gmsi_base_cfg_t s_tTemplateBaseCfg = {
+static modus_base_t s_tTemplateBase; // 静态分配基础类实例
+static modus_base_cfg_t s_tTemplateBaseCfg = {
     .wId = TEMPLATE_ID, // 唯一标识符
     .FcnInterface = {
         .Clock = template_Clock, // 定时调用 (1ms)
@@ -198,15 +209,15 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr) {
     
     // 初始化私有资源...
     
-    return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
+    return mbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
 }
 
 int template_Run(uintptr_t wObjectAddr) {
     template_t *ptThis = (template_t *)wObjectAddr;
     // 获取事件并处理
-    uint32_t wEvent = gbase_EventPend(ptThis->ptBase);
+    uint32_t wEvent = mbase_EventPend(ptThis->ptBase);
     if (wEvent) { /* handle event */ }
-    return GMSI_SUCCESS;
+    return MODUS_SUCCESS;
 }
 ```
 
@@ -214,11 +225,11 @@ int template_Run(uintptr_t wObjectAddr) {
 无需在主循环代码中手动添加。只需一行宏声明，框架启动时即可自动初始化并开始调
 度所有对象。
 ```c
-#include "gmsi.h"
+#include "modus.h"
 #include "template.h"
 
 /* 声明对象及初始参数 */
-GMSI_DECLARE_OBJECT(template, MyTemplate, 
+MODUS_DECLARE_OBJECT(template, MyTemplate, 
     .hwRingSize = 64,
     .pchRingBuffer = s_chBuffer
 );
@@ -244,8 +255,8 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 *   **数据归档**：一键保存符合年月日时分秒格式的规范 CSV 实验报告。
 *   **离线回放**：专业的多窗口离线查看器，支持对历史数据进行缩放和平移。
 
-### 📦 GMSI 框架核心
-*   **GLOG**: 分级日志系统。
+### 📦 MODUS 框架核心
+*   **MLOG**: 分级日志系统。
 *   **GWaveform**: 极简的嵌入式波形上传协议。
 *   **GShell**: 交互式 RTT/串口命令行。
 
@@ -254,7 +265,7 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 | `pt` | `Pointer to Type`| `ptThis`, `ptMotor`| 指向结构体或自定义类型的指针 |
 | `pch`| `uint8_t *` | `pchBuffer` | 指向字节流的指针 |
 | `pfcn`| `Function Ptr` | `pfcnCallback` | 函数指针 |
-| `s_` | `Static` | `s_tGmsiBase` | 静态变量 (文件作用域) |
+| `s_` | `Static` | `s_tModusBase` | 静态变量 (文件作用域) |
 | `g_` | `Global` | `g_hwCount` | 全局变量 |
 
 - **行宽限制**：所有源代码行的最大长度不得超过 **86个字符**。
@@ -263,18 +274,18 @@ GMSI_DECLARE_OBJECT(template, MyTemplate,
 
 ## GStorage — 持久化存储模块
 
-`gstorage` 提供自动 CRC 校验的数据持久化能力：当 RAM 中的数据发生变化时，
+`mstorage` 提供自动 CRC 校验的数据持久化能力：当 RAM 中的数据发生变化时，
 定时检测并将数据写入 Flash；系统启动时自动从 Flash 恢复数据。
 
 ### 功能特性
 - **定时自动保存**：以 CRC 变化检测为触发，避免频繁擦写
 - **CRC-16 完整性校验**：读取时自动验证，损坏时打印告警
 - **Erase-before-Write**：写入前自动执行 Unlock → Erase → Write → Lock
-- **GDI 接口解耦**：框架层与芯片无关，芯片端只需实现 `gdi_flash_t`
+- **GDI 接口解耦**：框架层与芯片无关，芯片端只需实现 `mdi_flash_t`
 
 ### Flash 移植步骤
 
-**1. 在 port 文件中实现 `gdi_flash_t`（以 AT32 为例）：**
+**1. 在 port 文件中实现 `mdi_flash_t`（以 AT32 为例）：**
 ```c
 static int32_t my_flash_erase(void *p, uint32_t addr, uint32_t size) {
     (void)p;
@@ -293,7 +304,7 @@ static int32_t my_flash_read(void *p, uint32_t addr,
 static int32_t my_flash_unlock(void *p) { (void)p; return blm_port_FlashUnlock(); }
 static int32_t my_flash_lock  (void *p) { (void)p; return blm_port_FlashLock(); }
 
-static gdi_flash_t s_tFlashApp = {
+static mdi_flash_t s_tFlashApp = {
     .pPriv    = NULL,
     .fnErase  = my_flash_erase,
     .fnWrite  = my_flash_write,
@@ -302,42 +313,42 @@ static gdi_flash_t s_tFlashApp = {
     .fnLock   = my_flash_lock,
 };
 
-const gdi_hardware_t HW = {
+const mdi_hardware_t HW = {
     /* ... 其他外设 ... */
     .ptAppFlash = &s_tFlashApp,
 };
 ```
 
-**2. 在 `gdi_hw.h` 中声明 Flash 资源：**
+**2. 在 `mdi_hw.h` 中声明 Flash 资源：**
 ```c
 typedef struct {
-    gdi_gpio_t   *ptLedStatus;
-    gdi_flash_t  *ptAppFlash;   /* ← 添加此字段 */
-} gdi_hardware_t;
+    mdi_gpio_t   *ptLedStatus;
+    mdi_flash_t  *ptAppFlash;   /* ← 添加此字段 */
+} mdi_hardware_t;
 ```
 
 **3. 在 `main.c` 中注册 GStorage 对象：**
 ```c
-/* 存储描述符，ptFlash 留 NULL — 由 gmsi_Init 框架内部自动绑定 */
-static gstorage_data_t s_tStorageData = {
+/* 存储描述符，ptFlash 留 NULL — 由 modus_Init 框架内部自动绑定 */
+static mstorage_data_t s_tStorageData = {
     .ptFlash             = NULL,
     .wFlashAddr          = 0x0800F800,     /* Flash 存储地址 */
     .pchStorageStartAddr = (uint8_t *)&tAppData,
     .hwStorageLength     = sizeof(tAppData) - 2, /* 末尾 2 字节留给 CRC */
 };
 
-GMSI_DECLARE_OBJECT(gstorage, GStorage,
+MODUS_DECLARE_OBJECT(mstorage, GStorage,
     .ptStorageObject  = &s_tStorageData,
     .hwStorageTimeOut = 5000,              /* 5 秒检测一次变化 */
 );
 
-/* main.c 只需在 gmsi_Init 前一行赋值，框架内部完成绑定 */
-static gmsi_t s_tGmsi;
+/* main.c 只需在 modus_Init 前一行赋值，框架内部完成绑定 */
+static modus_t s_tModus;
 
 int main(void) {
     System_Init();
-    s_tGmsi.ptAppFlash = HW.ptAppFlash;   /* ← 唯一需要的绑定操作 */
-    gmsi_Init(&s_tGmsi);
+    s_tModus.ptAppFlash = HW.ptAppFlash;   /* ← 唯一需要的绑定操作 */
+    modus_Init(&s_tModus);
     /* ... */
 }
 ```
@@ -350,44 +361,44 @@ int main(void) {
 
 ## 系统集成 (System Integration)
 
-### GMSI.MK 构建集成
+### MODUS.MK 构建集成
 
-从 v0.3.0.4 起，GMSI 提供根目录 `gmsi.mk` 作为统一构建入口。外部项目只需
+从 v0.3.0.4 起，MODUS 提供根目录 `modus.mk` 作为统一构建入口。外部项目只需
 `include` 一行即可获得所有源文件、头文件路径和模块开关。
 
 **快速开始：**
 ```makefile
-GMSI_ROOT ?= lib/gmsi
+MODUS_ROOT ?= lib/modus
 
 # 按需开启模块（必须在 include 之前设置）
-GBLINFO_ENABLE  = 1
-GSTORAGE_ENABLE = 1
+MBLINFO_ENABLE  = 1
+MSTORAGE_ENABLE = 1
 
-include $(GMSI_ROOT)/gmsi.mk
+include $(MODUS_ROOT)/modus.mk
 
-C_SOURCES += $(GMSI_SRCS)
-C_INCLUDES += $(GMSI_INCLUDES)
-CFLAGS += $(GMSI_CFLAGS)
+C_SOURCES += $(MODUS_SRCS)
+C_INCLUDES += $(MODUS_INCLUDES)
+CFLAGS += $(MODUS_CFLAGS)
 ```
 
 **可用开关（默认全部关闭）：**
 
 | 变量 | 默认 | 作用 |
 |------|:----:|------|
-| `GSHELL_ENABLE` | 0 | gshell + trace + SEGGER_RTT 调试 Shell |
-| `GWAVEFORM_ENABLE` | 0 | gwaveform 实时波形采集 |
-| `GSTORAGE_ENABLE` | 0 | gstorage 持久化存储 |
-| `GBLINFO_ENABLE` | 0 | gblinfo Bootloader 共享信息 |
-| `GMSI_USE_LOG` | 0 | GLOG / GLOGF 日志宏 |
-| `GMSI_USE_ASSERT` | 0 | GMSI_ASSERT 断言宏 |
+| `MSHELL_ENABLE` | 0 | mshell + trace + SEGGER_RTT 调试 Shell |
+| `MWAVEFORM_ENABLE` | 0 | mwaveform 实时波形采集 |
+| `MSTORAGE_ENABLE` | 0 | mstorage 持久化存储 |
+| `MBLINFO_ENABLE` | 0 | mblinfo Bootloader 共享信息 |
+| `MODUS_USE_LOG` | 0 | MLOG / MLOGF 日志宏 |
+| `MODUS_USE_ASSERT` | 0 | MODUS_ASSERT 断言宏 |
 
 **输出变量：**
 
 | 变量 | 内容 |
 |------|------|
-| `GMSI_SRCS` | 根据开关自动聚合的源文件列表 |
-| `GMSI_INCLUDES` | 框架头文件搜索路径 |
-| `GMSI_CFLAGS` | 模块启用宏（`-DGSHELL_ENABLE=1` 等） |
+| `MODUS_SRCS` | 根据开关自动聚合的源文件列表 |
+| `MODUS_INCLUDES` | 框架头文件搜索路径 |
+| `MODUS_CFLAGS` | 模块启用宏（`-DMSHELL_ENABLE=1` 等） |
 
 **典型 Makefile 结构：**
 ```makefile
@@ -395,54 +406,54 @@ CFLAGS += $(GMSI_CFLAGS)
 CHIP ?= at32f4
 # ... 工具链配置 ...
 
-# 2. 开启需要的 GMSI 模块
-GBLINFO_ENABLE  = 1
-GSTORAGE_ENABLE = 1
+# 2. 开启需要的 MODUS 模块
+MBLINFO_ENABLE  = 1
+MSTORAGE_ENABLE = 1
 
 # 3. Debug / Release 切换
 ifeq ($(filter release,$(MAKECMDGOALS)),release)
     OPT = -Oz
 else
     OPT = -O0
-    GSHELL_ENABLE    = 1
-    GWAVEFORM_ENABLE = 1
-    GMSI_USE_LOG     = 1
+    MSHELL_ENABLE    = 1
+    MWAVEFORM_ENABLE = 1
+    MODUS_USE_LOG     = 1
 endif
 
-# 4. 引入 GMSI
-include $(GMSI_ROOT)/gmsi.mk
+# 4. 引入 MODUS
+include $(MODUS_ROOT)/modus.mk
 
 # 5. 添加项目自有源码
-C_SOURCES += main.c my_module.c $(GMSI_SRCS)
-C_INCLUDES += -I. $(GMSI_INCLUDES)
-C_DEFS += $(GMSI_CFLAGS)
+C_SOURCES += main.c my_module.c $(MODUS_SRCS)
+C_INCLUDES += -I. $(MODUS_INCLUDES)
+C_DEFS += $(MODUS_CFLAGS)
 ```
 
 > 完整示例参考 `example/blm/makefile`：`make` 默认 `-O0` + 全调试，`make release` 剥离所有调试模块。
 
 ### 核心初始化流
-`gmsi_Init()` 会解析链接器生成的 `init_infos` 数据段，动态执行所有已声明对象的
+`modus_Init()` 会解析链接器生成的 `init_infos` 数据段，动态执行所有已声明对象的
 初始化函数。
 ```c
 int main(void) {
-    gmsi_t tGmsi = { 0 };
+    modus_t tModus = { 0 };
     
-    gmsi_Init(&tGmsi); // 自动初始化所有模块
+    modus_Init(&tModus); // 自动初始化所有模块
     while (1) {
-        gmsi_Run();    // 轮训调度所有模块的 Run() 与协程
+        modus_Run();    // 轮训调度所有模块的 Run() 与协程
     }
 }
 
 // 滴答定时器中断处理
 void SysTick_Handler(void) {
-    gmsi_Clock();      // 驱动各模块内部时钟（1ms 精度）
+    modus_Clock();      // 驱动各模块内部时钟（1ms 精度）
 }
 ```
 
 ---
 
 ## Git 子模块管理 (Git Submodules Configuration)
-由于外设底层、核心 CMSIS、GMSI 均属于独立外链依赖仓库。
+由于外设底层、核心 CMSIS、MODUS 均属于独立外链依赖仓库。
 **首次克隆本仓库架构：**
 务必带上 `--recursive` 参数，拉取所有依赖：
 ```bash

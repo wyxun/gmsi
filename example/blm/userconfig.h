@@ -11,7 +11,7 @@
 #include "global_define.h"
 
 /* Module ID */
-#define BLM     ((GMSI_ID_CLASS<<8)+1)
+#define BLM     ((MODUS_ID_CLASS<<8)+1)
 
 /* Flash Layout */
 #define BLM_BOOTLOADER_ADDR     0x08000000
@@ -46,22 +46,22 @@
 
 /* Events */
 typedef enum {
-    Event_BlmReceiveData = Gmsi_Event00,
-    Event_BlmTimeout = Gmsi_Event01,
-    Event_BlmComplete = Gmsi_Event02,
-    Event_BlmError = Gmsi_Event03,
+    Event_BlmReceiveData = Modus_Event00,
+    Event_BlmTimeout = Modus_Event01,
+    Event_BlmComplete = Modus_Event02,
+    Event_BlmError = Modus_Event03,
 } BLM_Event;
 
-#define GLOG_MASK_DEFAULT   (GLOG_MASK_E | GLOG_MASK_W | GLOG_MASK_I)
+#define MLOG_MASK_DEFAULT   (MLOG_MASK_E | MLOG_MASK_W | MLOG_MASK_I)
 
 /* GWaveform Configuration */
-#ifndef GWAVEFORM_ENABLE
-#   define GWAVEFORM_ENABLE             1
+#ifndef MWAVEFORM_ENABLE
+#   define MWAVEFORM_ENABLE             1
 #endif
-#define GWAVEFORM_MAX_CHANNELS          8
-#define GWAVEFORM_DECIMATION            1
-#define GWAVEFORM_RTT_BUFFER_SIZE       8192    /* High bandwidth for 1kHz */
-#define GWAVEFORM_FIFO_DEPTH            64      /* High jitter tolerance */
+#define MWAVEFORM_MAX_CHANNELS          8
+#define MWAVEFORM_DECIMATION            1
+#define MWAVEFORM_RTT_BUFFER_SIZE       8192    /* High bandwidth for 1kHz */
+#define MWAVEFORM_FIFO_DEPTH            64      /* High jitter tolerance */
 
 
 

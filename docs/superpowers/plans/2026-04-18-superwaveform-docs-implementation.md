@@ -18,7 +18,7 @@
 ```markdown
 # SuperWaveform
 
-High-performance GMSI Oscilloscope and Terminal host utility. Built with SDL2 + ImGui + ImPlot.
+High-performance MODUS Oscilloscope and Terminal host utility. Built with SDL2 + ImGui + ImPlot.
 
 ## Features
 - **Dual Channel Integration**: Monitor RTT Channel 0 (Shell) and Channel 1 (Waveform) simultaneously.
@@ -79,16 +79,16 @@ git commit -m "docs: add user manual"
 
 ## API Example
 ```c
-#include "gwaveform.h"
+#include "mwaveform.h"
 
 void init() {
-    gwaveform_Init();
-    gwaveform_AddChannel("Sine", 100.0f);
+    mwaveform_Init();
+    mwaveform_AddChannel("Sine", 100.0f);
 }
 
 void loop() {
-    gwaveform_PushRaw(0, val);
-    gwaveform_Commit();
+    mwaveform_PushRaw(0, val);
+    mwaveform_Commit();
 }
 ```
 ```

@@ -1,10 +1,10 @@
-# gwaveform — GMSI 实时波形采集与可视化模块设计
+# mwaveform — MODUS 实时波形采集与可视化模块设计
 
 ## 目标
 
-在 GMSI 库的 `utilities` 层新增 `gwaveform` 模块，为外部项目提供实时波形数据采集与传输服务。典型场景：FOC 电机控制中对三相电压、电流、角度等高频信号的实时可视化调试。
+在 MODUS 库的 `utilities` 层新增 `mwaveform` 模块，为外部项目提供实时波形数据采集与传输服务。典型场景：FOC 电机控制中对三相电压、电流、角度等高频信号的实时可视化调试。
 
-模块遵循 GMSI 一贯原则：
+模块遵循 MODUS 一贯原则：
 - 编译期可完全关闭（零代码、零 RAM 开销）
 - 仅提供服务 API，不耦合具体业务逻辑
 - ISR 安全，主循环负责 RTT 搬运
@@ -15,17 +15,17 @@
 ## 模块定位
 
 ```
-gmsi/utilities/
-├── gshell.h / gshell.c        ← 已有，调试 shell
-├── gwaveform.h / gwaveform.c  ← 新增，波形采集服务
+modus/utilities/
+├── mshell.h / mshell.c        ← 已有，调试 shell
+├── mwaveform.h / mwaveform.c  ← 新增，波形采集服务
 └── ...
 
-tools/gwaveform/               ← Host 侧工具（不参与 MCU 编译）
+tools/mwaveform/               ← Host 侧工具（不参与 MCU 编译）
 ├── viewer.py                  ← pyqtgraph 示波器主程序
 └── protocol.py                ← 二进制帧解析
 ```
 
-`gwaveform` 与 `gshell` 相互独立，均可单独开关。若两者同时启用，gshell 会自动注册 `wave` 命令用于运行时控制。
+`mwaveform` 与 `mshell` 相互独立，均可单独开关。若两者同时启用，mshell 会自动注册 `wave` 命令用于运行时控制。
 
 ---
 
@@ -33,13 +33,13 @@ tools/gwaveform/               ← Host 侧工具（不参与 MCU 编译）
 
 | 宏 | 默认值 | 说明 |
 |----|--------|------|
-| `GWAVEFORM_ENABLE` | `0` | 总开关，0=完全关闭 |
-| `GWAVEFORM_MAX_CHANNELS` | `16` | 最大通道数（影响静态数组大小） |
-| `GWAVEFORM_RTT_BUFFER_SIZE` | `512` | 字节，RTT up-buffer |
-| `GWAVEFORM_RTT_CHANNEL` | `1` | RTT 通道号（0 留给 gshell/terminal） |
-| `GWAVEFORM_DECIMATION` | `1` | 抽取比，ISR 每 N 次 Step 才实际发送一帧 |
+| `MWAVEFORM_ENABLE` | `0` | 总开关，0=完全关闭 |
+| `MWAVEFORM_MAX_CHANNELS` | `16` | 最大通道数（影响静态数组大小） |
+| `MWAVEFORM_RTT_BUFFER_SIZE` | `512` | 字节，RTT up-buffer |
+| `MWAVEFORM_RTT_CHANNEL` | `1` | RTT 通道号（0 留给 mshell/terminal） |
+| `MWAVEFORM_DECIMATION` | `1` | 抽取比，ISR 每 N 次 Step 才实际发送一帧 |
 
-当 `GWAVEFORM_ENABLE=0` 时，所有 API 宏展开为空语句，编译器完全裁剪。
+当 `MWAVEFORM_ENABLE=0` 时，所有 API 宏展开为空语句，编译器完全裁剪。
 
 ---
 
@@ -49,23 +49,23 @@ tools/gwaveform/               ← Host 侧工具（不参与 MCU 编译）
 
 ```c
 // 初始化模块，注册 RTT up-buffer，清空状态
-// 在 gmsi_Init() 流程中自动调用（通过 init_infos 段），无需手动调用
-void gwaveform_Init(void);
+// 在 modus_Init() 流程中自动调用（通过 init_infos 段），无需手动调用
+void mwaveform_Init(void);
 
 // 主循环轮询：将 ring buffer 中的帧搬运到 RTT
-// 在 gmsi_Run() 或 gshell_Poll() 后调用，或由 gmsi 框架自动调度
-void gwaveform_Poll(void);
+// 在 modus_Run() 或 mshell_Poll() 后调用，或由 modus 框架自动调度
+void mwaveform_Poll(void);
 
-// 开始/停止流式传输（可由 gshell wave 命令调用，也可由业务代码调用）
-void gwaveform.Start(void);
-void gwaveform.Stop(void);
+// 开始/停止流式传输（可由 mshell wave 命令调用，也可由业务代码调用）
+void mwaveform.Start(void);
+void mwaveform.Stop(void);
 ```
 
 ### 通道注册
 
 ```c
 // 注册一个波形通道，返回通道 ID（0-based）
-uint8_t gwaveform.AddChannel(const char *pchName, float fScale);
+uint8_t mwaveform.AddChannel(const char *pchName, float fScale);
 ```
 
 通道注册应在初始化之后、第一次 `Step()` 之前完成。
@@ -74,24 +74,24 @@ uint8_t gwaveform.AddChannel(const char *pchName, float fScale);
 
 ```c
 // 写入一个浮点采样值（内部自动 × fScale 转为 int16）
-void gwaveform.Push(uint8_t chID, float fValue);
+void mwaveform.Push(uint8_t chID, float fValue);
 
 // 写入原始 int16 值
-void gwaveform.PushRaw(uint8_t chID, int16_t hwValue);
+void mwaveform.PushRaw(uint8_t chID, int16_t hwValue);
 
 // 触发采样（在本 ISR 周期所有 Push 完成后调用一次）
-void gwaveform.Step(void);
+void mwaveform.Step(void);
 ```
 
 ### 诊断与控制
 
 ```c
 // 设置速率：0=外部驱动，n=内部 1/n kHz 驱动
-void gwaveform.SetRate(uint32_t wHz);
+void mwaveform.SetRate(uint32_t wHz);
 
 // 获取丢帧统计
-uint32_t gwaveform.GetDropCount(void);
-void gwaveform.ClearDropCount(void);
+uint32_t mwaveform.GetDropCount(void);
+void mwaveform.ClearDropCount(void);
 ```
 
 ### 典型调用示例（外部 FOC 项目）
@@ -101,27 +101,27 @@ void gwaveform.ClearDropCount(void);
 static uint8_t s_chUa, s_chUb, s_chUc, s_chIa, s_chIb, s_chIc, s_chTheta;
 
 void foc_Init(void) {
-    s_chUa    = gwaveform.AddChannel("Ua",    100.0f);  // 单位 0.01V
-    s_chUb    = gwaveform.AddChannel("Ub",    100.0f);
-    s_chUc    = gwaveform.AddChannel("Uc",    100.0f);
-    s_chIa    = gwaveform.AddChannel("Ia",   1000.0f);  // 单位 0.001A
-    s_chIb    = gwaveform.AddChannel("Ib",   1000.0f);
-    s_chIc    = gwaveform.AddChannel("Ic",   1000.0f);
-    s_chTheta = gwaveform.AddChannel("Theta", 100.0f);  // 单位 0.01rad
-    gwaveform.Start();
+    s_chUa    = mwaveform.AddChannel("Ua",    100.0f);  // 单位 0.01V
+    s_chUb    = mwaveform.AddChannel("Ub",    100.0f);
+    s_chUc    = mwaveform.AddChannel("Uc",    100.0f);
+    s_chIa    = mwaveform.AddChannel("Ia",   1000.0f);  // 单位 0.001A
+    s_chIb    = mwaveform.AddChannel("Ib",   1000.0f);
+    s_chIc    = mwaveform.AddChannel("Ic",   1000.0f);
+    s_chTheta = mwaveform.AddChannel("Theta", 100.0f);  // 单位 0.01rad
+    mwaveform.Start();
 }
 
 // FOC PWM/ADC 中断（10~20kHz）
 void PWM_IRQHandler(void) {
     // ... FOC 计算 ...
-    gwaveform.Push(s_chUa, fUa);
-    gwaveform.Push(s_chUb, fUb);
-    gwaveform.Push(s_chUc, fUc);
-    gwaveform.Push(s_chIa, fIa);
-    gwaveform.Push(s_chIb, fIb);
-    gwaveform.Push(s_chIc, fIc);
-    gwaveform.Push(s_chTheta, fTheta);
-    gwaveform.Step();  
+    mwaveform.Push(s_chUa, fUa);
+    mwaveform.Push(s_chUb, fUb);
+    mwaveform.Push(s_chUc, fUc);
+    mwaveform.Push(s_chIa, fIa);
+    mwaveform.Push(s_chIb, fIb);
+    mwaveform.Push(s_chIc, fIc);
+    mwaveform.Push(s_chTheta, fTheta);
+    mwaveform.Step();  
 }
 ```
 
@@ -133,14 +133,14 @@ void PWM_IRQHandler(void) {
 
 ```
 FOC ISR (10~20kHz)
-  gwaveform_Push() × N
-  gwaveform_Commit()
+  mwaveform_Push() × N
+  mwaveform_Commit()
        │  抽取计数
        │  打包帧到 frame_buf[]
        ▼
   ring_buffer[] (RAM, lock-free SPSC)
        │
-       │  主循环 gwaveform_Poll()
+       │  主循环 mwaveform_Poll()
        ▼
   SEGGER_RTT_Write(channel 1)
        │
@@ -149,7 +149,7 @@ FOC ISR (10~20kHz)
   TCP:9091
        │
        ▼
-  tools/gwaveform/viewer.py (Host)
+  tools/mwaveform/viewer.py (Host)
 ```
 
 - ISR 为唯一写入方，主循环为唯一读取方
@@ -187,9 +187,9 @@ Host 收到描述帧后即可知道各通道名称和缩放系数，用于坐标
 
 ---
 
-## gshell 集成（可选）
+## mshell 集成（可选）
 
-当 `GWAVEFORM_ENABLE=1` 且 `GSHELL_ENABLE=1` 时，自动注册 `wave` 命令：
+当 `MWAVEFORM_ENABLE=1` 且 `MSHELL_ENABLE=1` 时，自动注册 `wave` 命令：
 
 | 命令 | 说明 |
 |------|------|
@@ -200,11 +200,11 @@ Host 收到描述帧后即可知道各通道名称和缩放系数，用于坐标
 | `wave drop clear` | 清零统计计数 |
 | `wave list` | 列出已注册通道及 ID |
 
-实现方式：在 `gwaveform.c` 中用 `GMSI_SHELL_CMD()` 宏注册，与 gshell 零耦合。
+实现方式：在 `mwaveform.c` 中用 `MODUS_SHELL_CMD()` 宏注册，与 mshell 零耦合。
 
 ---
 
-## Host 工具（tools/gwaveform/）
+## Host 工具（tools/mwaveform/）
 
 ### 依赖
 
@@ -216,10 +216,10 @@ pip install pyqtgraph pyserial
 
 ```bash
 # 默认连接 OpenOCD RTT TCP:9091
-python tools/gwaveform/viewer.py
+python tools/mwaveform/viewer.py
 
 # 指定地址和端口
-python tools/gwaveform/viewer.py --host localhost --port 9091
+python tools/mwaveform/viewer.py --host localhost --port 9091
 ```
 
 ### 功能
@@ -243,19 +243,19 @@ python tools/gwaveform/viewer.py --host localhost --port 9091
 
 | 项目 | 大小 |
 |------|------|
-| `gwaveform_cb_t` 结构体（16通道） | ~500 字节 RAM |
+| `mwaveform_cb_t` 结构体（16通道） | ~500 字节 RAM |
 | 乒乓帧缓冲 | ~80 字节 RAM |
 | RTT up-buffer（默认） | 512 字节 RAM |
 | 代码段（估算） | ~600 字节 Flash |
 | **合计** | **~1.1 KB RAM + ~600 字节 Flash** |
 
-`GWAVEFORM_ENABLE=0` 时以上全部为零。
+`MWAVEFORM_ENABLE=0` 时以上全部为零。
 
 ---
 
 ## 与现有模块的关系
 
-- `gshell`：独立，可选集成 `wave` 命令
-- `util_debug`（GLOG/GLOGF）：无依赖，两者使用不同 RTT 通道
-- `gmsi_Run()`：`gwaveform_Poll()` 可挂入主循环，也可由用户手动调用
+- `mshell`：独立，可选集成 `wave` 命令
+- `util_debug`（MLOG/MLOGF）：无依赖，两者使用不同 RTT 通道
+- `modus_Run()`：`mwaveform_Poll()` 可挂入主循环，也可由用户手动调用
 - `segger_rtt`：直接依赖，调用 `SEGGER_RTT_Write()` 和 `SEGGER_RTT_AllocUpBuffer()`

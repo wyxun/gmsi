@@ -8,7 +8,7 @@ int pcuart_Run(uintptr_t wObjectAddr);
 int pcuart_Write(pcuart_t *ptThis, uint8_t *pchData, uint16_t hwLength);
 int pcuart_Clock(uintptr_t addr);
 
-gmsi_base_cfg_t tUartBaseCfg = {
+modus_base_cfg_t tUartBaseCfg = {
     .wId = PC_UART,
     .wParent = 0,
     .FcnInterface = {
@@ -17,28 +17,28 @@ gmsi_base_cfg_t tUartBaseCfg = {
     },
 };
 
-gcoroutine_handle_t tGcoroutineUartHandle = {
+mcoroutine_handle_t tGcoroutineUartHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
 
-static gmsi_base_t tBase;
+static modus_base_t tBase;
 
-GMSI_MSG_ITEM_DECLARE(PC_UART, Uartreceive, 100);
+MODUS_MSG_ITEM_DECLARE(PC_UART, Uartreceive, 100);
 
 uint8_t chReceiveData[100];
 
-fsm_rt_t pcuart_gcoroutine(void *pvParam)
+fsm_rt_t pcuart_mcoroutine(void *pvParam)
 {
     pcuart_t *ptThis = (pcuart_t *)pvParam;
 
 PERFC_PT_BEGIN(tGcoroutineUartHandle.chState)
     do {
-        GLOG_PRINTF("get uart data");
+        MLOG_PRINTF("get uart data");
         //GVAL_PRINTF(ptThis->chBufferData);
         pcuart_Write(ptThis, ptThis->chBufferData, ptThis->hwBufferLength);
         PERFC_PT_YIELD(fsm_rt_on_going);
-        GLOG_PRINTF("finish get uart data handle");
+        MLOG_PRINTF("finish get uart data handle");
     } while (1);
 
 PERFC_PT_END()
@@ -84,9 +84,9 @@ int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
     tUartBaseCfg.wParent = wObjectAddr;
     ptThis->ptBase = &tBase;
-    if(GMSI_SUCCESS != gbase_Init(ptThis->ptBase, &tUartBaseCfg))
+    if(MODUS_SUCCESS != mbase_Init(ptThis->ptBase, &tUartBaseCfg))
         printf("pcuart_Init fail\n");
-    GMSI_MSG_ITEM_INITIALISE_LIST(Uartreceive);
+    MODUS_MSG_ITEM_INITIALISE_LIST(Uartreceive);
 
     return 0;
 }
@@ -98,7 +98,7 @@ int pcuart_Read(pcuart_t *ptThis, uint8_t *pchData, uint16_t hwMaxLength)
     {
         memcpy((void *)&ptThis->chBufferData[0], (void *)pchData, bytesRead);
         ptThis->hwBufferLength = bytesRead;
-        gcoroutine_Insert(&tGcoroutineUartHandle, (void *)ptThis, pcuart_gcoroutine);
+        mcoroutine_Insert(&tGcoroutineUartHandle, (void *)ptThis, pcuart_mcoroutine);
     }
     else if (bytesRead < 0 && errno != EAGAIN)
     {
@@ -119,21 +119,21 @@ int pcuart_Run(uintptr_t wObjectAddr)
     int16_t hwLength = 0;
     uint32_t wEvent;
     pcuart_t *ptThis = (pcuart_t *)wObjectAddr;
-    GMSI_ASSERT(NULL != ptThis);
+    MODUS_ASSERT(NULL != ptThis);
 
     hwLength = pcuart_Read(ptThis, chReceiveData, 100);
     if(hwLength > 0)
     {
-        GMSI_MSG_ITEM_UPDATE(Uartreceive, ptThis->chBufferData, hwLength);
-        gbase_MessagePost(PC_CLOCK, GMSI_MSG_ITEM_GET_HANDLE(Uartreceive));
+        MODUS_MSG_ITEM_UPDATE(Uartreceive, ptThis->chBufferData, hwLength);
+        mbase_MessagePost(PC_CLOCK, MODUS_MSG_ITEM_GET_HANDLE(Uartreceive));
     }
 
-    wEvent = gbase_EventPend(ptThis->ptBase);
-    if(wEvent & Gmsi_Event00)
+    wEvent = mbase_EventPend(ptThis->ptBase);
+    if(wEvent & Modus_Event00)
     {
         printf("get clock event00\n");
     }
-    if(wEvent & Gmsi_Event_Transition)
+    if(wEvent & Modus_Event_Transition)
     {
 
     }
@@ -153,11 +153,11 @@ int pcuart_Clock(uintptr_t wObjectAddr)
     s_count++;
     if(s_count > 5000)
     {
-        GLOG_PRINTF("pc_uart clock");
+        MLOG_PRINTF("pc_uart clock");
         s_count = 0;
-        gbase_EventPost(GMSI_STORAGE, Event_GetData);
-        GMSI_MSG_ITEM_UPDATE(Uartreceive, chTestBuffer, 3);
-        gbase_MessagePost(PC_CLOCK, GMSI_MSG_ITEM_GET_HANDLE(Uartreceive));
+        mbase_EventPost(MODUS_STORAGE, Event_GetData);
+        MODUS_MSG_ITEM_UPDATE(Uartreceive, chTestBuffer, 3);
+        mbase_MessagePost(PC_CLOCK, MODUS_MSG_ITEM_GET_HANDLE(Uartreceive));
     }
     return 0;
 }

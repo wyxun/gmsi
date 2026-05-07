@@ -13,16 +13,16 @@ int template_Run(uintptr_t wObjectAddr);
 
 /*============================ GLOBAL VARIABLES ==============================*/
 
-gcoroutine_handle_t tGcoroutineTemplateHandle = {
+mcoroutine_handle_t tGcoroutineTemplateHandle = {
     .bIsRunning = false,
     .pfcn = NULL,
 };
 
 /*============================ LOCAL VARIABLES ===============================*/
 
-static gmsi_base_t s_tTemplateBase;
+static modus_base_t s_tTemplateBase;
 
-static gmsi_base_cfg_t s_tTemplateBaseCfg = {
+static modus_base_cfg_t s_tTemplateBaseCfg = {
     .wId    = TEMPLATE,
     .wParent = 0,
     .FcnInterface = {
@@ -34,10 +34,10 @@ static gmsi_base_cfg_t s_tTemplateBaseCfg = {
 /*============================ IMPLEMENTATION ================================*/
 
 /* coroutine triggered by Event_SyncButtonPushed */
-fsm_rt_t template_gcoroutine(void *pvParam)
+fsm_rt_t template_mcoroutine(void *pvParam)
 {
     template_t *ptObject = (template_t *)pvParam;
-    gcoroutine_handle_t *ptThis = (gcoroutine_handle_t *)&tGcoroutineTemplateHandle;
+    mcoroutine_handle_t *ptThis = (mcoroutine_handle_t *)&tGcoroutineTemplateHandle;
 
 PERFC_PT_BEGIN(this.chState)
     do {
@@ -45,11 +45,11 @@ PERFC_PT_BEGIN(this.chState)
         (ptObject != NULL),
         ptObject = (template_t *)pvParam;
     )
-    GLOG(I, "Template Coroutine Running");
+    MLOG(I, "Template Coroutine Running");
     PERFC_PT_DELAY_MS(1000);
-    GLOG(D, "Template Coroutine delay 1s");
+    MLOG(D, "Template Coroutine delay 1s");
     PERFC_PT_DELAY_MS(500);
-    GLOG(D, "Template Coroutine delay 0.5s");
+    MLOG(D, "Template Coroutine delay 0.5s");
     } while(0);
 PERFC_PT_END()
 
@@ -59,22 +59,22 @@ PERFC_PT_END()
 /* handle events posted to the template object */
 static void template_EventHandle(template_t *ptThis, uint32_t wEvent)
 {
-    GMSI_MSG_DECLARE(TemplateTestBuffer, 20);
+    MODUS_MSG_DECLARE(TemplateTestBuffer, 20);
 
     if (ptThis == NULL) {
-        GLOG(E, "ptThis is NULL.");
+        MLOG(E, "ptThis is NULL.");
         return;
     }
 
     if (wEvent & Event_SyncMissed) {
-        GLOG(D, "get event Event_SyncMissed");
+        MLOG(D, "get event Event_SyncMissed");
     }
 
     if (wEvent & Event_SyncButtonPushed) {
-        if (GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle,
+        if (MODUS_SUCCESS != mcoroutine_Insert(&tGcoroutineTemplateHandle,
                                               (void *)ptThis,
-                                              template_gcoroutine)) {
-            GLOG(E, "Error: gcoroutine_Insert failed.");
+                                              template_mcoroutine)) {
+            MLOG(E, "Error: mcoroutine_Insert failed.");
         }
     }
 
@@ -83,10 +83,10 @@ static void template_EventHandle(template_t *ptThis, uint32_t wEvent)
     }
 }
 
-/* called in the GMSI while(1) main loop */
+/* called in the MODUS while(1) main loop */
 int template_Run(uintptr_t wObjectAddr)
 {
-    int      wRet = GMSI_SUCCESS;
+    int      wRet = MODUS_SUCCESS;
     uint32_t wEvent;
     uint8_t  chTemplateBufferTest[] = {
         11, 22, 33, 44, 55, 66, 77, 88, 99,
@@ -96,30 +96,30 @@ int template_Run(uintptr_t wObjectAddr)
 
     template_t *ptThis = (template_t *)wObjectAddr;
     if (ptThis == NULL) {
-        GLOG(E, "ptThis is NULL.");
-        return GMSI_EFAIL;
+        MLOG(E, "ptThis is NULL.");
+        return MODUS_EFAIL;
     }
 
     if (perfc_is_time_out_ms(3000)) {
-        gbase_MessagePostToRing(EXAMPLE,
+        mbase_MessagePostToRing(EXAMPLE,
                                 (uint8_t *)chTemplateBufferTest,
                                 sizeof(chTemplateBufferTest));
     }
 
-    share_mem_t *ptShareMem = gbase_ShareMemRead(EXAMPLE);
+    share_mem_t *ptShareMem = mbase_ShareMemRead(EXAMPLE);
     if (ptShareMem != NULL) {
         const example_share_mem_t *ptGetExampleShareData =
             (example_share_mem_t *)ptShareMem->pchBuffer;
         if (ptGetExampleShareData->value2 != 5) {
-            //GLOG(E, "Error: Shared memory values are not as expected.");
+            //MLOG(E, "Error: Shared memory values are not as expected.");
         } else {
-            GLOG(I, "Shared memory values are correct.");
+            MLOG(I, "Shared memory values are correct.");
         }
     } else {
-        GLOG(E, "Error: ptShareMem is NULL.");
+        MLOG(E, "Error: ptShareMem is NULL.");
     }
 
-    wEvent = gbase_EventPend(ptThis->ptBase);
+    wEvent = mbase_EventPend(ptThis->ptBase);
     if (wEvent) {
         template_EventHandle(ptThis, wEvent);
     }
@@ -133,29 +133,29 @@ int template_Run(uintptr_t wObjectAddr)
 int template_Clock(uintptr_t wObjectAddr)
 {
     template_t *ptThis = (template_t *)wObjectAddr;
-    int wRet = GMSI_SUCCESS;
+    int wRet = MODUS_SUCCESS;
 
     /* perform periodic operations on ptThis */
 
     return wRet;
 }
 
-/* initialize template object and register it in the GMSI list */
+/* initialize template object and register it in the MODUS list */
 int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
     template_t     *ptThis = (template_t *)wObjectAddr;
     template_cfg_t *ptCfg  = (template_cfg_t *)wObjectCfgAddr;
 
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG(E, "Error: ptThis or ptCfg is NULL.");
-        return GMSI_EFAIL;
+        MLOG(E, "Error: ptThis or ptCfg is NULL.");
+        return MODUS_EFAIL;
     }
 
     /* initialize the hardware */
 
     ptThis->ptBase = &s_tTemplateBase;
     if (ptThis->ptBase == NULL) {
-        return GMSI_EAGAIN;
+        return MODUS_EAGAIN;
     }
 
     s_tTemplateBaseCfg.wParent = wObjectAddr;
@@ -168,10 +168,10 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
         };
     }
 
-    return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
+    return mbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
 }
 
-GMSI_DECLARE_OBJECT(template, Template, 
+MODUS_DECLARE_OBJECT(template, Template, 
     .hwRingSize = 0,
     .pchRingBuffer = NULL,
 );

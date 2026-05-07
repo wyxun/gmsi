@@ -4,8 +4,8 @@
 
 ```mermaid
 graph TB
-    subgraph "gmsi库"
-        GBLINFO[gblinfo.h/.c]
+    subgraph "modus库"
+        MBLINFO[mblinfo.h/.c]
         GDEF[global_define.h]
     end
     
@@ -18,8 +18,8 @@ graph TB
     SHARED[(共享区域)]
     
     BLM --> PROTO
-    BLM --> GBLINFO
-    GBLINFO --> SHARED
+    BLM --> MBLINFO
+    MBLINFO --> SHARED
 ```
 
 ---
@@ -112,16 +112,16 @@ typedef struct {
     uint8_t  chUpgradeFlag;  // 串口命令可设置
     uint8_t  chBootCount, chLastBootStatus, chHwVersion;
     uint32_t wDeviceId;
-} gblinfo_shared_t;
+} mblinfo_shared_t;
 ```
 
 ---
 
 ## 文件清单
 
-### gmsi库
-- `global_define.h` - 新增GBLINFO_SHARED_ADDR
-- `gblinfo.h/.c` - 共享信息模块
+### modus库
+- `global_define.h` - 新增MBLINFO_SHARED_ADDR
+- `mblinfo.h/.c` - 共享信息模块
 
 ### example/blm
 - `main.c`, `userconfig.h`

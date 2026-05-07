@@ -2,7 +2,7 @@
 #define __EXAMPLE_H__
 
 /*============================ INCLUDES ======================================*/
-#include "gmsi.h"
+#include "modus.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -16,7 +16,7 @@ typedef struct {
 
 /* example object */
 typedef struct {
-    gmsi_base_t *ptBase;
+    modus_base_t *ptBase;
 } example_t;
 
 /*============================ GLOBAL VARIABLES ==============================*/

@@ -10,10 +10,10 @@
 #include "blm_protocol.h"
 #include "../port/blm_port.h"
 #include "../cmsis/cmsis_compiler.h"
-#include "gblinfo.h"
+#include "mblinfo.h"
 #include "cmsis/at32f407xx.h"
-#include "../port/gdi_hw.h"
-#include "gdebug/util_debug.h"
+#include "../port/mdi_hw.h"
+#include "mdebug/util_debug.h"
 #include <string.h>
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
@@ -26,14 +26,14 @@
 
 /*============================ GLOBAL VARIABLES ==============================*/
 extern uint32_t SystemCoreClock;
-static gmsi_base_t s_tBlmBase;
+static modus_base_t s_tBlmBase;
 static blm_protocol_cb_t s_tProtocol;
 
 /* Buffer for receive operations */
 static uint8_t s_achRecvData[YMODEM_DATA_SIZE];
 static uint16_t s_hwRecvLen;
 
-static gmsi_base_cfg_t s_tBlmBaseCfg = {
+static modus_base_cfg_t s_tBlmBaseCfg = {
     .wId = BLM,
     .wParent = 0,
     .FcnInterface = {
@@ -55,8 +55,8 @@ static int blm_ShouldEnterUpgrade(blm_cb_t *ptThis)
     }
     
     /* Check upgrade flag from shared info */
-    gblinfo_shared_t *ptShared = (gblinfo_shared_t *)(this.wSharedInfoAddr);
-    if (ptShared->wMagic == GBLINFO_MAGIC && ptShared->chUpgradeFlag != 0) {
+    mblinfo_shared_t *ptShared = (mblinfo_shared_t *)(this.wSharedInfoAddr);
+    if (ptShared->wMagic == MBLINFO_MAGIC && ptShared->chUpgradeFlag != 0) {
         /* Clear the flag */
         ptShared->chUpgradeFlag = 0;
         return 1;
@@ -120,7 +120,7 @@ PERFC_PT_BEGIN(this.chState)
         /* ============ STATE: IDLE ============ */
         if (blm_ShouldEnterUpgrade(ptThis)) {
             /* Enter upgrade mode */
-            GLOGF(I, "BLM Bootloader Started\r\n"
+            MLOGF(I, "BLM Bootloader Started\r\n"
                      "Clock: %u\r\n"
                      "CRM CTRL: 0x%08X\r\n"
                      "CRM CFG: 0x%08X\r\n",
@@ -135,12 +135,12 @@ PERFC_PT_BEGIN(this.chState)
             blm_protocol_Init(&s_tProtocol, this.pchRxBuffer, this.hwRxBufferSize);
         } else if (blm_IsAppValid(ptThis)) {
             /* Jump to application */
-            GLOG(I, "ValidApp Jump\r\n");
+            MLOG(I, "ValidApp Jump\r\n");
             this.tMainState = BLM_STATE_JUMP_APP;
             goto label_jump_app;
         } else {
             /* No valid app, wait for upgrade */
-            GLOG(I, "NoApp Wait\r\n");
+            MLOG(I, "NoApp Wait\r\n");
             this.tMainState = BLM_STATE_WAIT_CONNECT;
             this.wStartTime = blm_port_GetTickMs();
             this.chRetryCount = 0;
@@ -176,18 +176,18 @@ PERFC_PT_BEGIN(this.chState)
                     goto label_error;
                 } else {
                     /* Start receiving */
-                    GLOG(I, "A0\r\n");
+                    MLOG(I, "A0\r\n");
                     blm_protocol_SendAck();
                     
                     /* Erase app region */
-                    GLOG(W, "Er...\r\n");
-                    gdi_flash_Unlock(HW.ptAppFlash);
-                    gdi_flash_Erase(HW.ptAppFlash, this.wAppAddr, s_tProtocol.wFileSize);
-                    GLOG(I, "ED\r\n");
+                    MLOG(W, "Er...\r\n");
+                    mdi_flash_Unlock(HW.ptAppFlash);
+                    mdi_flash_Erase(HW.ptAppFlash, this.wAppAddr, s_tProtocol.wFileSize);
+                    MLOG(I, "ED\r\n");
                     
                 PERFC_PT_DELAY_MS(10);
                     
-                    GLOG(I, "C1\r\n");
+                    MLOG(I, "C1\r\n");
                     blm_protocol_SendC();  /* Request first data packet */
                     
                     this.wReceivedSize = 0;
@@ -198,15 +198,15 @@ PERFC_PT_BEGIN(this.chState)
                 }
             } else if (s_tProtocol.tResult == PROTO_TIMEOUT) {
                 this.chRetryCount++;
-                GLOG(T, "C");
+                MLOG(T, "C");
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
                     /* If no connection, stay in bootloader for debug */
                     this.chRetryCount = 0; 
-                    GLOG(W, "Retry Wrap\r\n");
+                    MLOG(W, "Retry Wrap\r\n");
                     goto label_start;
                 }
             } else if (s_tProtocol.tResult == PROTO_CANCEL) {
-                GLOG(I, "Cancel\r\n");
+                MLOG(I, "Cancel\r\n");
                 this.tMainState = BLM_STATE_IDLE;
                 break;
             } else {
@@ -238,7 +238,7 @@ PERFC_PT_BEGIN(this.chState)
                         wWriteLen = this.wFileSize - this.wReceivedSize;
                     }
                     if (wWriteLen > 0) {
-                        gdi_flash_Write(HW.ptAppFlash, this.wAppAddr + this.wReceivedSize, 
+                        mdi_flash_Write(HW.ptAppFlash, this.wAppAddr + this.wReceivedSize, 
                                             s_achRecvData, wWriteLen);
                         this.wReceivedSize += wWriteLen;
                     }
@@ -258,7 +258,7 @@ PERFC_PT_BEGIN(this.chState)
                 
                 if (s_tProtocol.tResult == PROTO_EOT) {
                     blm_protocol_SendAck();
-                    gdi_flash_Lock(HW.ptAppFlash);
+                    mdi_flash_Lock(HW.ptAppFlash);
                     
                     PERFC_PT_DELAY_MS(10);
                     
@@ -279,13 +279,13 @@ PERFC_PT_BEGIN(this.chState)
                     this.tMainState = BLM_STATE_VERIFY;
                 }
             } else if (s_tProtocol.tResult == PROTO_CANCEL) {
-                gdi_flash_Lock(HW.ptAppFlash);
+                mdi_flash_Lock(HW.ptAppFlash);
                 this.tMainState = BLM_STATE_IDLE;
             } else {
                 /* TIMEOUT, CRC_ERROR, SEQ_ERROR */
                 if (s_tProtocol.chExpectedSeq == 1) {
                     /* If error on first packet, retry 'C' to keep CRC mode */
-                    GLOG(E, "Err1->C\r\n");
+                    MLOG(E, "Err1->C\r\n");
                     blm_protocol_SendC();
                 } else {
                     blm_protocol_SendNak();
@@ -293,7 +293,7 @@ PERFC_PT_BEGIN(this.chState)
                 this.chRetryCount++;
                 if (this.chRetryCount >= BLM_MAX_RETRY) {
                     blm_protocol_SendCancel();
-                    gdi_flash_Lock(HW.ptAppFlash);
+                    mdi_flash_Lock(HW.ptAppFlash);
                     this.tMainState = BLM_STATE_ERROR;
                 }
                 PERFC_PT_DELAY_MS(50);
@@ -303,8 +303,8 @@ PERFC_PT_BEGIN(this.chState)
         /* ============ STATE: VERIFY ============ */
         if (this.tMainState == BLM_STATE_VERIFY) {
             if (blm_IsAppValid(ptThis)) {
-                gblinfo_UpdateAppInfo(0, 1, 0, this.wReceivedSize, 0);
-                gblinfo_IncrementBootCount();
+                mblinfo_UpdateAppInfo(0, 1, 0, this.wReceivedSize, 0);
+                mblinfo_IncrementBootCount();
                 this.tMainState = BLM_STATE_COMPLETE;
             } else {
                 this.tMainState = BLM_STATE_ERROR;
@@ -321,14 +321,14 @@ PERFC_PT_BEGIN(this.chState)
 label_jump_app:
         /* ============ STATE: JUMP_APP ============ */
         if (this.tMainState == BLM_STATE_JUMP_APP) {
-            GLOG(I, "JumpApp\r\n");
+            MLOG(I, "JumpApp\r\n");
             blm_JumpToApp(ptThis);
             /* Should not return */
         }
 
 label_error:
         /* ============ STATE: ERROR ============ */
-        GLOG(E, "ERR Reset\r\n");
+        MLOG(E, "ERR Reset\r\n");
         /* Stay in error, wait for reset */
     PERFC_PT_DELAY_MS(1000);
         
@@ -352,7 +352,7 @@ int blm_JumpToApp(blm_cb_t *ptThis)
     __disable_irq();
     
     /* Update boot status */
-    gblinfo_UpdateBootStatus(1);
+    mblinfo_UpdateBootStatus(1);
     
     /* Jump to app */
     blm_port_JumpToApp(this.wAppAddr);
@@ -392,44 +392,44 @@ int blm_StartUpgrade(blm_cb_t *ptThis)
 }
 
 /**
- * @brief GMSI Run function - calls PT task
+ * @brief MODUS Run function - calls PT task
  */
 int blm_Run(uintptr_t wObjectAddr)
 {
     blm_cb_t *ptThis = (blm_cb_t *)wObjectAddr;
     
     if (NULL == ptThis) {
-        return GMSI_EFAIL;
+        return MODUS_EFAIL;
     }
     
     blm_task(ptThis);
     
-    return GMSI_SUCCESS;
+    return MODUS_SUCCESS;
 }
 
 
 
 /**
- * @brief GMSI Clock function
+ * @brief MODUS Clock function
  */
 int blm_Clock(uintptr_t wObjectAddr)
 {
     (void)wObjectAddr;
-    return GMSI_SUCCESS;
+    return MODUS_SUCCESS;
 }
 
 /**
- * @brief Initialize bootloader (GMSI interface)
+ * @brief Initialize bootloader (MODUS interface)
  */
 int blm_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 {
-    int wRet = GMSI_SUCCESS;
+    int wRet = MODUS_SUCCESS;
     
     blm_cb_t *ptThis = (blm_cb_t *)wObjectAddr;
     blm_cfg_t *ptCfg = (blm_cfg_t *)wObjectCfgAddr;
     
     if (NULL == ptThis || NULL == ptCfg) {
-        return GMSI_EFAIL;
+        return MODUS_EFAIL;
     }
     
     /* Copy configuration */
@@ -447,13 +447,13 @@ int blm_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
     blm_port_UartInit(BLM_UART_BAUDRATE);
     
     /* Update bootloader info in shared region */
-    gblinfo_UpdateBlInfo(BLM_VERSION_MAJOR, BLM_VERSION_MINOR, 0);
+    mblinfo_UpdateBlInfo(BLM_VERSION_MAJOR, BLM_VERSION_MINOR, 0);
     
-    /* Register with GMSI */
+    /* Register with MODUS */
 
     this.ptBase = &s_tBlmBase;
     s_tBlmBaseCfg.wParent = wObjectAddr;
-    wRet = gbase_Init(this.ptBase, &s_tBlmBaseCfg);
+    wRet = mbase_Init(this.ptBase, &s_tBlmBaseCfg);
     
     return wRet;
 }

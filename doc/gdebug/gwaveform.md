@@ -1,12 +1,12 @@
-# GMSI 实时波形采集 (gwaveform) 深度指南
+# MODUS 实时波形采集 (mwaveform) 深度指南
 
-`gwaveform` 是 GMSI 为高性能控制算法（如 FOC 电机控制）打造的高采样率数据传输方案。其设计的核心挑战在于：如何在不阻塞实时算法的前提下，尽可能实时地传输二进制数据流。
+`mwaveform` 是 MODUS 为高性能控制算法（如 FOC 电机控制）打造的高采样率数据传输方案。其设计的核心挑战在于：如何在不阻塞实时算法的前提下，尽可能实时地传输二进制数据流。
 
 ---
 
 ## 1. 核心架构：多级帧 FIFO 模型
 
-为了解决主循环抖动（Jitter）导致的波形断裂，`gwaveform` 采用了 **保护型多级帧 FIFO (Block FIFO)** 架构。该设计在保证实时性的同时，提供了极强的抖动吸收能力。
+为了解决主循环抖动（Jitter）导致的波形断裂，`mwaveform` 采用了 **保护型多级帧 FIFO (Block FIFO)** 架构。该设计在保证实时性的同时，提供了极强的抖动吸收能力。
 
 ```mermaid
 graph TD
@@ -35,20 +35,20 @@ graph TD
 
 ## 2. 内存与带宽配置 (RAM Configuration)
 
-`gwaveform` 的内存占用主要由 FIFO 深度和 RTT 物理缓冲区决定。用户可以通过在 `userconfig.h` 中定义以下宏进行优化：
+`mwaveform` 的内存占用主要由 FIFO 深度和 RTT 物理缓冲区决定。用户可以通过在 `userconfig.h` 中定义以下宏进行优化：
 
 | 宏定义 | 默认值 | 建议范围 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **`GWAVEFORM_FIFO_DEPTH`** | 16 | 8 ~ 64 | FIFO 帧数量。由于主循环抖动大时，可调大此值（如64）以吸收延迟。 |
-| **`GWAVEFORM_RTT_BUFFER_SIZE`** | 1024 | 512 ~ 8192 | RTT 物理环形缓冲区大小。1kHz 全速采样建议使用 4096 以上。 |
-| **`GWAVEFORM_MAX_CHANNELS`** | 16 | 1 ~ 32 | 最大支持通道数。减小此值可显著降低每一帧的 RAM 占用。 |
+| **`MWAVEFORM_FIFO_DEPTH`** | 16 | 8 ~ 64 | FIFO 帧数量。由于主循环抖动大时，可调大此值（如64）以吸收延迟。 |
+| **`MWAVEFORM_RTT_BUFFER_SIZE`** | 1024 | 512 ~ 8192 | RTT 物理环形缓冲区大小。1kHz 全速采样建议使用 4096 以上。 |
+| **`MWAVEFORM_MAX_CHANNELS`** | 16 | 1 ~ 32 | 最大支持通道数。减小此值可显著降低每一帧的 RAM 占用。 |
 
 ### 2.1 典型 RAM 瘦身方案 (示例)
 ```c
 /* 在 userconfig.h 中根据实际需求降低占用 */
-#define GWAVEFORM_MAX_CHANNELS      4       // 仅支持 4 通道
-#define GWAVEFORM_FIFO_DEPTH        8       // 减小 FIFO 深度
-#define GWAVEFORM_RTT_BUFFER_SIZE   512     // 最小化 RTT 占用
+#define MWAVEFORM_MAX_CHANNELS      4       // 仅支持 4 通道
+#define MWAVEFORM_FIFO_DEPTH        8       // 减小 FIFO 深度
+#define MWAVEFORM_RTT_BUFFER_SIZE   512     // 最小化 RTT 占用
 ```
 
 
@@ -58,12 +58,12 @@ graph TD
 
 | 函数 | 推荐位置 | 频率/触发 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **`gwaveform.Init`** | `main()` 初始化段 | 仅一次 | 分配 RTT 缓冲区，绑定协议。 |
-| **`gwaveform.AddChannel`** | `app_init()` 阶段 | 仅一次 | 注册通道名和缩放系数。 |
-| **`gwaveform.Start`** | 业务准备就绪后 | 仅一次 | 开启传输开关。 |
-| **`gwaveform.Push`** | 高频中断 (ISR) | 业务频率 | 写入当前瞬时物理值到缓存。 |
-| **`gwaveform.Step`** | 高频中断 (ISR) | 采样频率 | 将所有缓存的数据打包并提交至双缓冲。 |
-| **`gwaveform.Poll`** | 主循环 | 尽力而为 | 实际执行内存到 RTT 驱动的数据拷贝。 |
+| **`mwaveform.Init`** | `main()` 初始化段 | 仅一次 | 分配 RTT 缓冲区，绑定协议。 |
+| **`mwaveform.AddChannel`** | `app_init()` 阶段 | 仅一次 | 注册通道名和缩放系数。 |
+| **`mwaveform.Start`** | 业务准备就绪后 | 仅一次 | 开启传输开关。 |
+| **`mwaveform.Push`** | 高频中断 (ISR) | 业务频率 | 写入当前瞬时物理值到缓存。 |
+| **`mwaveform.Step`** | 高频中断 (ISR) | 采样频率 | 将所有缓存的数据打包并提交至双缓冲。 |
+| **`mwaveform.Poll`** | 主循环 | 尽力而为 | 实际执行内存到 RTT 驱动的数据拷贝。 |
 
 ---
 
@@ -72,23 +72,23 @@ graph TD
 ```c
 /* 1. 初始化与注册 (main 入口或 app_init) */
 void sys_init(void) {
-    gwaveform.Init(NULL);                             // RTT 通道建立
-    s_chU = gwaveform.AddChannel("Phase_U", 10.0f);   // 注册通道
-    gwaveform.Start();                                // 开启传输
+    mwaveform.Init(NULL);                             // RTT 通道建立
+    s_chU = mwaveform.AddChannel("Phase_U", 10.0f);   // 注册通道
+    mwaveform.Start();                                // 开启传输
 }
 
 /* 2. 数据采集 (高频中断，如 PWM 10kHz) */
 void PWM_IRQHandler(void) {
     float fVal = read_current_sensor();
-    gwaveform.Push(s_chU, fVal);                      // 写入缓存 (极速)
-    gwaveform.Step();                                 // 封包并切换双缓冲 (ISR安全)
+    mwaveform.Push(s_chU, fVal);                      // 写入缓存 (极速)
+    mwaveform.Step();                                 // 封包并切换双缓冲 (ISR安全)
 }
 
 /* 3. 后台搬运 (主循环) */
 int main(void) {
     sys_init();
     while(1) {
-        gmsi_Run(); // 内部调用 gwaveform.Poll() 完成 RTT 发送
+        modus_Run(); // 内部调用 mwaveform.Poll() 完成 RTT 发送
     }
 }
 ```
@@ -98,7 +98,7 @@ int main(void) {
 
 ## 5. 自定义协议扩展 (Custom Protocol)
 
-`gwaveform` 的核心逻辑与具体的字节打包方式是分离的。你可以通过实现 `gwaveform_protocol_t` 接口来定义自己的私有传输协议。
+`mwaveform` 的核心逻辑与具体的字节打包方式是分离的。你可以通过实现 `mwaveform_protocol_t` 接口来定义自己的私有传输协议。
 
 ### 5.1 实现协议接口
 你需要实现 `pack_data` (打包采样数据) 和 `pack_desc` (打包描述符) 两个函数：
@@ -115,7 +115,7 @@ static uint16_t my_pack_data(uint8_t *pchBuffer,
     return frame_len;
 }
 
-static const gwaveform_protocol_t s_tMyProtocol = {
+static const mwaveform_protocol_t s_tMyProtocol = {
     .pack_data = my_pack_data,
     .pack_desc = default_waveform_protocol.pack_desc, // 也可以直接复用默认的描述符打包
 };
@@ -125,7 +125,7 @@ static const gwaveform_protocol_t s_tMyProtocol = {
 在初始化时，将自定义协议对象的指针传入即可：
 ```c
 void sys_init(void) {
-    gwaveform.Init(&s_tMyProtocol); // 注入自定义协议
+    mwaveform.Init(&s_tMyProtocol); // 注入自定义协议
     // ...
 }
 ```
@@ -148,7 +148,7 @@ void sys_init(void) {
 5. **CRC8 (1B)**：整帧校验。
 
 ### 6.2 热插拔同步
-`gwaveform` 每一秒会自动向 RTT 发送一帧 **描述符帧 (Descriptor Frame)**。这意味着即便上位机工具是在系统运行中途打开的，也能在 1 秒内自动获取通道配置并开始绘图。
+`mwaveform` 每一秒会自动向 RTT 发送一帧 **描述符帧 (Descriptor Frame)**。这意味着即便上位机工具是在系统运行中途打开的，也能在 1 秒内自动获取通道配置并开始绘图。
 
 ---
 
@@ -167,4 +167,4 @@ void sys_init(void) {
 ---
 
 > [!TIP]
-> **性能分频**：通过 `gwaveform.SetRate(n)` 设置。例如算法运行在 10kHz，设置 `SetRate(10)` 可以输出 1kHz 的降采样波形，极大地减轻带宽压力。
+> **性能分频**：通过 `mwaveform.SetRate(n)` 设置。例如算法运行在 10kHz，设置 `SetRate(10)` 可以输出 1kHz 的降采样波形，极大地减轻带宽压力。

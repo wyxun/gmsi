@@ -1,11 +1,11 @@
 ### object
 
-![](gbase.assets/base_t.png)
+![](mbase.assets/base_t.png)
 
 #### register
 
 ```c
-gmsi_base_cfg_t s_tTemplateBaseCfg = {
+modus_base_cfg_t s_tTemplateBaseCfg = {
     .wId = TEMPLATE,                        // Set the ID to TEMPLATE
     .wParent = 0,                           // Set the parent to 0
     .FcnInterface = {
@@ -22,34 +22,34 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
     // Check if the pointers are not NULL
     if (ptThis == NULL || ptCfg == NULL) {
-        GLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
-        return GMSI_EFAIL;
+        MLOG_PRINTF("Error: ptThis or ptCfg is NULL.");
+        return MODUS_EFAIL;
     }
 
     /* Copy the configuration members to the object */
 
     /* Initialize the hardware */
 
-    // Register the object in the GMSI list
+    // Register the object in the MODUS list
     ptThis->ptBase = &s_tTemplateBase;
     if (ptThis->ptBase == NULL) {
-        return GMSI_EAGAIN;
+        return MODUS_EAGAIN;
     } else {
         s_tTemplateBaseCfg.wParent = wObjectAddr;
-        return gbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
+        return mbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
     }
 }
 ```
 
 ### message
 
-![](gbase.assets/message.png)
+![](mbase.assets/message.png)
 
 #### create
 
 ```c
 // 创建一个有限长度的消息项
-#define GMSI_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
+#define MODUS_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                             \
         uint8_t ch##NAME##_Buffer[SIZE] = {0};                              \
         message_item_t t##NAME##item = {                                    \
             .tListItem.xItemValue = OBJECT,                                 \
@@ -62,7 +62,7 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 #### update data
 
 ```c
-#define GMSI_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                         \
+#define MODUS_MSG_ITEM_UPDATE(NAME, MESSAGE, LENGTH)                         \
     do{                                                                     \
         if((t##NAME##item).hwMaxSize >= LENGTH)                             \
         {                                                                   \
@@ -80,20 +80,20 @@ int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr)
 
 ```c
 // 发送消息
-int gbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
+int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
 {
     // 根据id遍历object链表
     
     // 找到对应id的object后，将ptMsgItem挂在目标object上；
     /* 注意：该ptMsgItem所有权在post方源object，目标object只有读权限*/
     
-    // 同时置位公共事件Gmsi_Event_Transition；这个是保留设计，当前不对该事件处理
+    // 同时置位公共事件Modus_Event_Transition；这个是保留设计，当前不对该事件处理
 }
 // 接收消息
-if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TemplateBufferGet)) > 0)
+if(mbase_MessagePend(ptThis->ptBase, MODUS_MSG_GET_HANDLE(TemplateBufferGet)) > 0)
 {
-    uint16_t hwLength = GMSI_MSG_ITEM_GET_LENGTH(TemplateBufferGet);
-    uint8_t *pchData = GMSI_MSG_ITEM_GET_BUFFER(TemplateBufferGet);
+    uint16_t hwLength = MODUS_MSG_ITEM_GET_LENGTH(TemplateBufferGet);
+    uint8_t *pchData = MODUS_MSG_ITEM_GET_BUFFER(TemplateBufferGet);
     // 处理数据
 }
 ```
@@ -102,12 +102,12 @@ if(gbase_MessagePend(ptThis->ptBase, GMSI_MSG_GET_HANDLE(TemplateBufferGet)) > 0
 
 ### event
 
-![img](gbase.assets/event-17200177187851.png)
+![img](mbase.assets/event-17200177187851.png)
 
 #### post
 
 ```c
-int gbase_EventPost(uint32_t wId, uint32_t wEvent)
+int mbase_EventPost(uint32_t wId, uint32_t wEvent)
 {
     // 根据id遍历对象链表
     
@@ -120,7 +120,7 @@ int gbase_EventPost(uint32_t wId, uint32_t wEvent)
 #### pend
 
 ```C
-uint32_t gbase_EventPend(gmsi_base_t *ptBase)
+uint32_t mbase_EventPend(modus_base_t *ptBase)
 {
     // 读取自身的wEvent是否有值
     
@@ -128,7 +128,7 @@ uint32_t gbase_EventPend(gmsi_base_t *ptBase)
 }
 
 // 对事件值做响应处理
-wEvent = gbase_EventPend(ptThis->ptBase);
+wEvent = mbase_EventPend(ptThis->ptBase);
 if(wEvent & Event_SyncButtonPushed)
 {}
 if(wEvent & Event_SyncMissed)
@@ -137,12 +137,12 @@ if(wEvent & Event_SyncMissed)
 
 ### coroutine
 
-![coroutine](gbase.assets/coroutine.png)
+![coroutine](mbase.assets/coroutine.png)
 
 #### create
 
 ```c
-gcoroutine_handle_t tGcoroutineTemplateHandle = {
+mcoroutine_handle_t tGcoroutineTemplateHandle = {
     // 记录运行状态，当其运行时不可再次挂入协程链表
     .bIsRunning = false,
     .pfcn = NULL,
@@ -153,10 +153,10 @@ gcoroutine_handle_t tGcoroutineTemplateHandle = {
 
 ```c
 // 将协程函数挂载到协程链表运行
-if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle, \
-                                     (void *)ptThis, template_gcoroutine))
+if(MODUS_SUCCESS != mcoroutine_Insert(&tGcoroutineTemplateHandle, \
+                                     (void *)ptThis, template_mcoroutine))
 {
-    GLOG_PRINTF("Error: gcoroutine_Insert failed.");
+    MLOG_PRINTF("Error: mcoroutine_Insert failed.");
 }
 
 ```
@@ -164,13 +164,13 @@ if(GMSI_SUCCESS != gcoroutine_Insert(&tGcoroutineTemplateHandle, \
 #### delete
 
 ```c
-int gcoroutine_Run(void)
+int mcoroutine_Run(void)
 {
     // ...
     if(fsm_rt_cpl == tFsm)
     {
         // 当其运行结束时删除节点
-        gcoroutine_Delete(ptHandle);
+        mcoroutine_Delete(ptHandle);
     }
 }
 ```

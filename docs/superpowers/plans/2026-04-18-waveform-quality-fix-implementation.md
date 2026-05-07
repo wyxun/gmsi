@@ -12,7 +12,7 @@
 
 ### Task 1: Update LUT and Phase Accumulator logic in blm_waveform_test.c
 **Files:**
-- Modify: `e:/Project/gmsi/example/blm/blm_waveform_test.c`
+- Modify: `e:/Project/modus/example/blm/blm_waveform_test.c`
 
 - [ ] **Step 1: Replace s_ahwSinTable with corrected 256-point data**
 ```c
@@ -50,8 +50,8 @@ void blm_waveform_test_step(void)
     s_wPhaseAcc += s_wPhaseStep;
     uint8_t index = (uint8_t)(s_wPhaseAcc >> 24);
     
-    gwaveform_PushRaw(s_chIdSine, s_ahwSinTable[index]);
-    gwaveform_PushRaw(s_chIdCosine, s_ahwSinTable[(uint8_t)(index + 64)]);
-    gwaveform_Commit();
+    mwaveform_PushRaw(s_chIdSine, s_ahwSinTable[index]);
+    mwaveform_PushRaw(s_chIdCosine, s_ahwSinTable[(uint8_t)(index + 64)]);
+    mwaveform_Commit();
 }
 ```

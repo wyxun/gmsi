@@ -2,7 +2,7 @@
 #define __TEMPLATE_H__
 
 /*============================ INCLUDES ======================================*/
-#include "gmsi.h"
+#include "modus.h"
 
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
@@ -16,7 +16,7 @@ typedef struct {
 
 /* template object */
 typedef struct {
-    gmsi_base_t *ptBase;
+    modus_base_t *ptBase;
 
     int    wFd;
     void (*write)(int wFd, uint8_t *pchBuffer, uint16_t hwLength);

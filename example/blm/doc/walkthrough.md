@@ -2,18 +2,18 @@
 
 ## 实现概览
 
-为gmsi库实现了一个Cortex-M系列MCU的Bootloader示例，支持Ymodem协议串口固件升级。
+为modus库实现了一个Cortex-M系列MCU的Bootloader示例，支持Ymodem协议串口固件升级。
 
 ## 目录结构
 
 ```
-gmsi/
-├── gmsi/
-│   ├── gblinfo.h/.c      ✅ 共享信息模块 (新增)
-│   └── global_define.h   ✅ 添加GBLINFO_SHARED_ADDR
+modus/
+├── modus/
+│   ├── mblinfo.h/.c      ✅ 共享信息模块 (新增)
+│   └── global_define.h   ✅ 添加MBLINFO_SHARED_ADDR
 │
 └── example/blm/
-    ├── main.c            ✅ 入口(GMSI_DECLARE_OBJECT)
+    ├── main.c            ✅ 入口(MODUS_DECLARE_OBJECT)
     ├── userconfig.h      ✅ 用户配置
     ├── makefile          ✅ 通用Cortex-M makefile
     ├── linker.ld         ✅ 链接脚本(8KB布局)
@@ -29,7 +29,7 @@ gmsi/
 
 | 模块 | 位置 | 说明 |
 |------|------|------|
-| gblinfo | gmsi/ | 共享信息模块，App/BL都可访问 |
+| mblinfo | modus/ | 共享信息模块，App/BL都可访问 |
 | blm | example/blm/core/ | Bootloader核心状态机 |
 | blm_protocol | example/blm/core/ | Ymodem协议实现 |
 | blm_port | example/blm/port/ | 硬件抽象层接口 |
@@ -50,19 +50,19 @@ make
 make check-size  # 验证 < 8KB
 ```
 
-### 3. 固件端使用gblinfo
+### 3. 固件端使用mblinfo
 
 ```c
-GMSI_DECLARE_OBJECT(gblinfo, Gblinfo,
-    .wSharedInfoAddr = GBLINFO_SHARED_ADDR,
+MODUS_DECLARE_OBJECT(mblinfo, Gblinfo,
+    .wSharedInfoAddr = MBLINFO_SHARED_ADDR,
 );
 
 // 读取版本
 uint8_t chMajor, chMinor;
-gblinfo_GetBlVersion(&chMajor, &chMinor);
+mblinfo_GetBlVersion(&chMajor, &chMinor);
 
 // 请求升级
-gblinfo_SetUpgradeFlag(1);
+mblinfo_SetUpgradeFlag(1);
 NVIC_SystemReset();
 ```
 

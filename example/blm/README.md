@@ -1,6 +1,6 @@
 # BLM (Bootloader Manager)
 
-BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader。它实现了通过 **Ymodem** 协议进行串口固件升级的功能，代码体积极小（< 16KB）。
+BLM 是一个基于 [MODUS](https://github.com/wyxun/modus) 和 [perf_counter](https://github.com/GorgonMeducer/perf_counter) 的轻量级 Cortex-M Bootloader。它实现了通过 **Ymodem** 协议进行串口固件升级的功能，代码体积极小（< 16KB）。
 
 > 💡 **开发者注意**：关于环境搭建、编译烧录、调试及芯片移植的详细指南，请移步 [开发与移植指南](doc/porting_guide.md)。
 
@@ -17,7 +17,7 @@ BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](htt
 +-------------------+ 0x08000000
 |   Bootloader      |  16KB (0x4000)
 +-------------------+ 0x08004000
-|   Shared Info     |  1KB  (gblinfo)
+|   Shared Info     |  1KB  (mblinfo)
 +-------------------+ 0x08004400
 |   Application     |  剩余空间
 |                   |
@@ -27,7 +27,7 @@ BLM 是一个基于 [GMSI](https://github.com/wyxun/gmsi) 和 [perf_counter](htt
 | 区域 | 起始地址 | 大小 | 说明 |
 |:-----|:---------|:-----|:-----|
 | Bootloader | `0x08000000` | 16KB | BLM 固件 |
-| Shared Info | `0x08004000` | 1KB | 版本信息 / 升级标志 (gblinfo) |
+| Shared Info | `0x08004000` | 1KB | 版本信息 / 升级标志 (mblinfo) |
 | Application | `0x08004400` | 视芯片而定 | 用户应用固件 |
 
 > ⚠️ **APP 固件编译时，链接脚本的 FLASH 起始地址必须设为 `0x08004400`**，否则 Bootloader 无法正确跳转。
@@ -162,12 +162,12 @@ sb --ymodem your_app.bin > /dev/ttyUSB0 < /dev/ttyUSB0
 在应用程序中通过写入升级标志来触发 Bootloader 升级：
 
 ```c
-#include "gblinfo.h"
+#include "mblinfo.h"
 
 void app_request_upgrade(void)
 {
     /* 获取共享信息区指针 */
-    gblinfo_shared_t *ptShared = (gblinfo_shared_t *)GBLINFO_SHARED_ADDR;
+    mblinfo_shared_t *ptShared = (mblinfo_shared_t *)MBLINFO_SHARED_ADDR;
     
     /* 设置升级标志 */
     ptShared->chUpgradeFlag = 1;

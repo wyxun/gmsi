@@ -9,8 +9,8 @@
 #include "blm_protocol.h"
 #include "../port/blm_port.h"
 #include <string.h>
-#include "gdebug/util_debug.h"
-#include "../port/gdi_hw.h"
+#include "mdebug/util_debug.h"
+#include "../port/mdi_hw.h"
 
 #if defined(__IS_COMPILER_ARM_COMPILER_5__)
 #   pragma diag_suppress 550, 546, 111
@@ -47,7 +47,7 @@ blm_protocol_cb_t *blm_protocol_Init(blm_protocol_cb_t *ptThis,
 int blm_protocol_SendC(void)
 {
     uint8_t chC = YMODEM_C;
-    return GDI_Write(HW.ptSerialDebug, &chC, 1);
+    return MDI_Write(HW.ptSerialDebug, &chC, 1);
 }
 
 /**
@@ -56,7 +56,7 @@ int blm_protocol_SendC(void)
 int blm_protocol_SendAck(void)
 {
     uint8_t chAck = YMODEM_ACK;
-    return GDI_Write(HW.ptSerialDebug, &chAck, 1);
+    return MDI_Write(HW.ptSerialDebug, &chAck, 1);
 }
 
 /**
@@ -65,7 +65,7 @@ int blm_protocol_SendAck(void)
 int blm_protocol_SendNak(void)
 {
     uint8_t chNak = YMODEM_NAK;
-    return GDI_Write(HW.ptSerialDebug, &chNak, 1);
+    return MDI_Write(HW.ptSerialDebug, &chNak, 1);
 }
 
 /**
@@ -74,7 +74,7 @@ int blm_protocol_SendNak(void)
 int blm_protocol_SendCancel(void)
 {
     uint8_t achCan[2] = {YMODEM_CAN, YMODEM_CAN};
-    return GDI_Write(HW.ptSerialDebug, achCan, 2);
+    return MDI_Write(HW.ptSerialDebug, achCan, 2);
 }
 
 /**
@@ -124,7 +124,7 @@ PERFC_PT_BEGIN(this.chState)
     /* Wait for packet header byte (with overall timeout) */
 PERFC_PT_WAIT_UNTIL(
     (wRet > 0 || (get_system_ms() - this.lRecvStartMs) >= BLM_PACKET_TIMEOUT_MS),
-    wRet = GDI_Read(HW.ptSerialDebug, &this.achFrame[0], 1);
+    wRet = MDI_Read(HW.ptSerialDebug, &this.achFrame[0], 1);
 )
     
     /* Check if timed out without data */
@@ -144,7 +144,7 @@ PERFC_PT_WAIT_UNTIL(
     PERFC_PT_WAIT_UNTIL(
         (this.hwFrameIdx >= (YMODEM_FRAME_SIZE - 1)
             || (get_system_ms() - this.lRecvStartMs) >= BLM_PACKET_TIMEOUT_MS),
-        wRet = GDI_Read(HW.ptSerialDebug,
+        wRet = MDI_Read(HW.ptSerialDebug,
                         &this.achFrame[this.hwFrameIdx],
                         YMODEM_FRAME_SIZE - 1 - this.hwFrameIdx);
         if (wRet > 0) { this.hwFrameIdx += wRet; }
@@ -163,7 +163,7 @@ PERFC_PT_WAIT_UNTIL(
         /* Check for second CAN */
         PERFC_PT_WAIT_UNTIL(
             (wRet != 0),
-            wRet = GDI_Read(HW.ptSerialDebug, &this.achFrame[1], 1);
+            wRet = MDI_Read(HW.ptSerialDebug, &this.achFrame[1], 1);
         )
         if (wRet > 0 && this.achFrame[1] == YMODEM_CAN) {
             this.tResult = PROTO_CANCEL;
@@ -231,12 +231,12 @@ int blm_protocol_ParseFileInfo(blm_protocol_cb_t *ptThis, const uint8_t *pchData
     /* Packet 0 format: filename\0filesize\0 */
     const char *pchFileName = (const char *)pchData;
     
-    GLOGF(I, "FI%02X%02X\r\n", (unsigned)pchData[0], (unsigned)pchData[1]);
+    MLOGF(I, "FI%02X%02X\r\n", (unsigned)pchData[0], (unsigned)pchData[1]);
 
     uint16_t hwNameLen = strlen(pchFileName);
     
     if (hwNameLen == 0) {
-        GLOG(I, "EN\r\n");
+        MLOG(I, "EN\r\n");
         /* Empty filename - end of batch */
         this.wFileSize = 0;
         return 0;
@@ -255,7 +255,7 @@ int blm_protocol_ParseFileInfo(blm_protocol_cb_t *ptThis, const uint8_t *pchData
         pchSizeStr++;
     }
     
-    GLOGF(I, "SZ%d\r\n", (int)this.wFileSize);
+    MLOGF(I, "SZ%d\r\n", (int)this.wFileSize);
     
     return 0;
 }

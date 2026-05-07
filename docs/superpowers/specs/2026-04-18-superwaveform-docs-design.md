@@ -9,7 +9,7 @@ Create a comprehensive documentation suite for the SuperWaveform utility to ensu
 - **Overview**: High-level purpose of the tool.
 - **Visuals**: Placeholder for screenshots.
 - **Quick Build**: Steps for MSYS2/MinGW environments.
-- **License**: GMSI standard.
+- **License**: MODUS standard.
 
 ### 2. `tools/superwaveform/docs/user_manual.md` (Target: A)
 - **UI Components**: Detail the Oscilloscope, Terminal, and Dashboard.
@@ -18,12 +18,12 @@ Create a comprehensive documentation suite for the SuperWaveform utility to ensu
 - **Troubleshooting**: Connection status meanings.
 
 ### 3. `tools/superwaveform/docs/mcu_integration.md` (Target: B)
-- **Pre-requisites**: RTT setup and GMSI utilities.
+- **Pre-requisites**: RTT setup and MODUS utilities.
 - **API Reference**: 
-    - `gwaveform_Init()`
-    - `gwaveform_AddChannel()`
-    - `gwaveform_PushRaw()`
-    - `gwaveform_Commit()`
+    - `mwaveform_Init()`
+    - `mwaveform_AddChannel()`
+    - `mwaveform_PushRaw()`
+    - `mwaveform_Commit()`
 - **Code Snippet**: Full boilerplate for initialization and SysTick data pushing.
 - **Protocol Spec**: Brief frame format for non-RTT transport porting.
 
@@ -37,4 +37,4 @@ Create a comprehensive documentation suite for the SuperWaveform utility to ensu
 
 ## Verification Plan
 - Verify all links in README.md are correct.
-- Ensure C code snippets in `mcu_integration.md` are syntactically correct and match current GMSI APIs.
+- Ensure C code snippets in `mcu_integration.md` are syntactically correct and match current MODUS APIs.

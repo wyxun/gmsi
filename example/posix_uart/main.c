@@ -2,22 +2,22 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include "gmsi.h"
-#include "gstorage.h"
+#include "modus.h"
+#include "mstorage.h"
 #include "pc_clock.h"
 #include "pc_uart.h"
-#include "gdebug/util_debug.h"
+#include "mdebug/util_debug.h"
 
 #define BUFFER_SIZE 100
 
-GMSI_DECLARE_OBJECT(pcuart, PcUart, 
+MODUS_DECLARE_OBJECT(pcuart, PcUart, 
     .pchCom = "/dev/ttyS5",
     .wOflag = O_RDWR | O_NOCTTY | O_NONBLOCK,
 );
 
 uint8_t ReceiveData[100];
 
-GMSI_DECLARE_OBJECT(pcclock, Pcclock, 
+MODUS_DECLARE_OBJECT(pcclock, Pcclock, 
     .chClockbase = 5,
 );
 
@@ -48,7 +48,7 @@ static int32_t pc_flash_read(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint3
 static int32_t pc_flash_unlock(void *pPriv) { return 0; }
 static int32_t pc_flash_lock(void *pPriv)   { return 0; }
 
-static gdi_flash_t s_tFlash = {
+static mdi_flash_t s_tFlash = {
     .pPriv    = NULL,
     .fnErase  = pc_flash_erase,
     .fnWrite  = pc_flash_write,
@@ -58,40 +58,40 @@ static gdi_flash_t s_tFlash = {
 };
 
 /*============================ STORAGE OBJECT ================================*/
-/* Note: gstorage appends 2 bytes of CRC at the end of the buffer, 
+/* Note: mstorage appends 2 bytes of CRC at the end of the buffer, 
    so we need 16 * uint16_t + 2 bytes */
 uint16_t g_hwSystemDataArrary[16 + 1] = {0}; 
 
-gstorage_data_t tSysData = {
+mstorage_data_t tSysData = {
     .ptFlash             = &s_tFlash,
     .wFlashAddr          = 0,
     .pchStorageStartAddr = (uint8_t *)g_hwSystemDataArrary,
     .hwStorageLength     = 16 * sizeof(uint16_t),
 };
 
-GMSI_DECLARE_OBJECT(gstorage, GStorage, 
+MODUS_DECLARE_OBJECT(mstorage, GStorage, 
     .ptStorageObject  = &tSysData,
     .hwStorageTimeOut = 100, // 100ms cycle
 );
 
-/* GLOBAL GMSI CONFIGURATION */
-gmsi_t tGmsi = {
+/* GLOBAL MODUS CONFIGURATION */
+modus_t tModus = {
     .ptAppFlash = &s_tFlash,
 };
 
 int main()
 {   
-    GLOG(I, "Starting POSIX UART Example...\n");
+    MLOG(I, "Starting POSIX UART Example...\n");
     
     /* Using (uintptr_t) then (uint32_t) to avoid warning on 64-bit systems */
-    GLOG(D, "System Data Address: 0x", (uint32_t)(uintptr_t)g_hwSystemDataArrary, "\n");
+    MLOG(D, "System Data Address: 0x", (uint32_t)(uintptr_t)g_hwSystemDataArrary, "\n");
     
-    gmsi_Init(&tGmsi);
+    modus_Init(&tModus);
 
-    GLOG(I, "Entering main loop.\n");
+    MLOG(I, "Entering main loop.\n");
     while (1)
     {
-        gmsi_Run();
+        modus_Run();
     }
 
     return 0;
@@ -99,6 +99,6 @@ int main()
 
 void timer_handler(int signum)
 {
-    gmsi_Clock();
+    modus_Clock();
 }
 

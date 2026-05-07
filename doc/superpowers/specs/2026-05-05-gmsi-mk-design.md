@@ -1,8 +1,8 @@
-# GMSI.MK — Unified Build Include Design
+# MODUS.MK — Unified Build Include Design
 
 ## Overview
 
-Provide a single `gmsi.mk` at the repository root so external projects can include GMSI via
+Provide a single `modus.mk` at the repository root so external projects can include MODUS via
 one line. All optional modules default to OFF (conservative). Projects opt in by setting
 `?= 1` variables before or after the include.
 
@@ -11,28 +11,28 @@ one line. All optional modules default to OFF (conservative). Projects opt in by
 ### File location
 
 ```
-gmsi/
-├── gmsi.mk          ← NEW: root-level build include
-├── gmsi/
-│   ├── gmsi.c ...
-│   ├── gdebug/ ...
-│   ├── gdi/ ...
+modus/
+├── modus.mk          ← NEW: root-level build include
+├── modus/
+│   ├── modus.c ...
+│   ├── mdebug/ ...
+│   ├── mdi/ ...
 │   └── utilities/ ...
 ```
 
 ### Usage pattern (external project Makefile)
 
 ```makefile
-GMSI_ROOT ?= lib/gmsi
-include $(GMSI_ROOT)/gmsi.mk
+MODUS_ROOT ?= lib/modus
+include $(MODUS_ROOT)/modus.mk
 
 # Opt-in to needed modules
-GBLINFO_ENABLE  = 1
-GSTORAGE_ENABLE = 1
+MBLINFO_ENABLE  = 1
+MSTORAGE_ENABLE = 1
 
-C_SOURCES += $(GMSI_SRCS)
-C_INCLUDES += $(GMSI_INCLUDES)
-CFLAGS += $(GMSI_CFLAGS)
+C_SOURCES += $(MODUS_SRCS)
+C_INCLUDES += $(MODUS_INCLUDES)
+CFLAGS += $(MODUS_CFLAGS)
 ```
 
 ### Configuration variables
@@ -41,24 +41,24 @@ CFLAGS += $(GMSI_CFLAGS)
 
 | Variable | Default | Effect when `1` |
 |----------|:------:|-----------------|
-| `GSHELL_ENABLE` | 0 | Compile gshell + trace + SEGGER_RTT; requires framework guards in gmsi.c |
-| `GWAVEFORM_ENABLE` | 0 | Compile gwaveform + gwaveform_protocol; requires framework guards in gmsi.c |
-| `GSTORAGE_ENABLE` | 0 | Compile gstorage.c (init-section registration, no framework guards needed) |
-| `GBLINFO_ENABLE` | 0 | Compile gblinfo.c (init-section registration, no framework guards needed) |
-| `GMSI_USE_LOG` | 0 | Enable `GLOG`/`GLOGF` macros at compile time (`0` → `-D__NO_USE_LOG__`) |
-| `GMSI_USE_ASSERT` | 0 | Enable `GMSI_ASSERT` macro (`0` → `-D__NO_USE_ASSERT`) |
+| `MSHELL_ENABLE` | 0 | Compile mshell + trace + SEGGER_RTT; requires framework guards in modus.c |
+| `MWAVEFORM_ENABLE` | 0 | Compile mwaveform + mwaveform_protocol; requires framework guards in modus.c |
+| `MSTORAGE_ENABLE` | 0 | Compile mstorage.c (init-section registration, no framework guards needed) |
+| `MBLINFO_ENABLE` | 0 | Compile mblinfo.c (init-section registration, no framework guards needed) |
+| `MODUS_USE_LOG` | 0 | Enable `MLOG`/`MLOGF` macros at compile time (`0` → `-D__NO_USE_LOG__`) |
+| `MODUS_USE_ASSERT` | 0 | Enable `MODUS_ASSERT` macro (`0` → `-D__NO_USE_ASSERT`) |
 
 #### Size-tuning overrides (have defaults, optional)
 
 | Variable | Default | Maps to |
 |----------|---------|---------|
-| `GWAVEFORM_MAX_CHANNELS` | 16 | `-DGWAVEFORM_MAX_CHANNELS=N` |
-| `GWAVEFORM_RTT_BUFFER_SIZE` | 1024 | `-DGWAVEFORM_RTT_BUFFER_SIZE=N` |
-| `GWAVEFORM_FIFO_DEPTH` | 16 | `-DGWAVEFORM_FIFO_DEPTH=N` |
-| `GWAVEFORM_DECIMATION` | 1 | `-DGWAVEFORM_DECIMATION=N` |
-| `GLOG_MASK_DEFAULT` | 0x1F | `-DGLOG_MASK_DEFAULT=N` |
+| `MWAVEFORM_MAX_CHANNELS` | 16 | `-DMWAVEFORM_MAX_CHANNELS=N` |
+| `MWAVEFORM_RTT_BUFFER_SIZE` | 1024 | `-DMWAVEFORM_RTT_BUFFER_SIZE=N` |
+| `MWAVEFORM_FIFO_DEPTH` | 16 | `-DMWAVEFORM_FIFO_DEPTH=N` |
+| `MWAVEFORM_DECIMATION` | 1 | `-DMWAVEFORM_DECIMATION=N` |
+| `MLOG_MASK_DEFAULT` | 0x1F | `-DMLOG_MASK_DEFAULT=N` |
 
-Lower-level overrides (`GSHELL_LINE_SIZE`, `SEGGER_RTT_MAX_NUM_UP_BUFFERS`, etc.) stay in
+Lower-level overrides (`MSHELL_LINE_SIZE`, `SEGGER_RTT_MAX_NUM_UP_BUFFERS`, etc.) stay in
 `userconfig.h` to keep the `.mk` lean.
 
 ### Output variables
@@ -66,123 +66,123 @@ Lower-level overrides (`GSHELL_LINE_SIZE`, `SEGGER_RTT_MAX_NUM_UP_BUFFERS`, etc.
 #### Source file groups
 
 ```
-GMSI_SRCS_CORE       ← gmsi.c gbase.c gcoroutine.c glog.c
-                        utilities/list.c util_queue.c gringbuf.c
-GMSI_SRCS_DEBUG      ← gshell.c trace.c trace_fmt.c util_debug.c SEGGER_RTT.c
-GMSI_SRCS_WAVEFORM   ← gwaveform.c gwaveform_protocol.c
-GMSI_SRCS_STORAGE    ← gstorage.c
-GMSI_SRCS_BLINFO     ← gblinfo.c
+MODUS_SRCS_CORE       ← modus.c mbase.c mcoroutine.c mlog.c
+                        utilities/list.c util_queue.c mringbuf.c
+MODUS_SRCS_DEBUG      ← mshell.c trace.c trace_fmt.c util_debug.c SEGGER_RTT.c
+MODUS_SRCS_WAVEFORM   ← mwaveform.c mwaveform_protocol.c
+MODUS_SRCS_STORAGE    ← mstorage.c
+MODUS_SRCS_BLINFO     ← mblinfo.c
 ```
 
 #### Aggregated by switches
 
 ```makefile
-GMSI_SRCS = $(GMSI_SRCS_CORE)
-ifneq ($(GSHELL_ENABLE),0)
-  GMSI_SRCS += $(GMSI_SRCS_DEBUG)
+MODUS_SRCS = $(MODUS_SRCS_CORE)
+ifneq ($(MSHELL_ENABLE),0)
+  MODUS_SRCS += $(MODUS_SRCS_DEBUG)
 endif
-ifneq ($(GWAVEFORM_ENABLE),0)
-  GMSI_SRCS += $(GMSI_SRCS_WAVEFORM)
+ifneq ($(MWAVEFORM_ENABLE),0)
+  MODUS_SRCS += $(MODUS_SRCS_WAVEFORM)
 endif
-ifneq ($(GSTORAGE_ENABLE),0)
-  GMSI_SRCS += $(GMSI_SRCS_STORAGE)
+ifneq ($(MSTORAGE_ENABLE),0)
+  MODUS_SRCS += $(MODUS_SRCS_STORAGE)
 endif
-ifneq ($(GBLINFO_ENABLE),0)
-  GMSI_SRCS += $(GMSI_SRCS_BLINFO)
+ifneq ($(MBLINFO_ENABLE),0)
+  MODUS_SRCS += $(MODUS_SRCS_BLINFO)
 endif
 ```
 
 #### Include paths (fixed)
 
 ```makefile
-GMSI_INCLUDES = -I$(GMSI_ROOT) -I$(GMSI_ROOT)/gmsi
+MODUS_INCLUDES = -I$(MODUS_ROOT) -I$(MODUS_ROOT)/modus
 ```
 
 #### C flags (generated from switches)
 
 ```makefile
 # Module enable flags
-ifneq ($(GSHELL_ENABLE),0)
-  GMSI_CFLAGS += -DGSHELL_ENABLE=1
+ifneq ($(MSHELL_ENABLE),0)
+  MODUS_CFLAGS += -DMSHELL_ENABLE=1
 endif
-ifneq ($(GWAVEFORM_ENABLE),0)
-  GMSI_CFLAGS += -DGWAVEFORM_ENABLE=1
+ifneq ($(MWAVEFORM_ENABLE),0)
+  MODUS_CFLAGS += -DMWAVEFORM_ENABLE=1
 endif
 
 # Feature macros
-ifeq ($(GMSI_USE_LOG),0)
-  GMSI_CFLAGS += -D__NO_USE_LOG__
+ifeq ($(MODUS_USE_LOG),0)
+  MODUS_CFLAGS += -D__NO_USE_LOG__
 endif
-ifeq ($(GMSI_USE_ASSERT),0)
-  GMSI_CFLAGS += -D__NO_USE_ASSERT
+ifeq ($(MODUS_USE_ASSERT),0)
+  MODUS_CFLAGS += -D__NO_USE_ASSERT
 endif
 
 # Size overrides (only inject if user changed from default)
-ifneq ($(GWAVEFORM_MAX_CHANNELS),16)
-  GMSI_CFLAGS += -DGWAVEFORM_MAX_CHANNELS=$(GWAVEFORM_MAX_CHANNELS)
+ifneq ($(MWAVEFORM_MAX_CHANNELS),16)
+  MODUS_CFLAGS += -DMWAVEFORM_MAX_CHANNELS=$(MWAVEFORM_MAX_CHANNELS)
 endif
 # ... same pattern for other size vars
 ```
 
 ### Framework prerequisites (already done)
 
-The following guards exist in gmsi.c to support the `GSHELL_ENABLE`/`GWAVEFORM_ENABLE=0` path:
+The following guards exist in modus.c to support the `MSHELL_ENABLE`/`MWAVEFORM_ENABLE=0` path:
 
 ```c
-// gmsi.c — conditional includes
-#if GSHELL_ENABLE
-#   include "gdebug/gshell.h"
+// modus.c — conditional includes
+#if MSHELL_ENABLE
+#   include "mdebug/mshell.h"
 #endif
-#if GWAVEFORM_ENABLE
-#   include "gdebug/gwaveform.h"
-#endif
-
-// gmsi_Run()
-#if GSHELL_ENABLE
-    gshell_Poll();
+#if MWAVEFORM_ENABLE
+#   include "mdebug/mwaveform.h"
 #endif
 
-// gmsi_Clock()
-#if GWAVEFORM_ENABLE
-    extern void gwaveform_Default_Step_Callback(void);
-    gwaveform_Default_Step_Callback();
+// modus_Run()
+#if MSHELL_ENABLE
+    mshell_Poll();
+#endif
+
+// modus_Clock()
+#if MWAVEFORM_ENABLE
+    extern void mwaveform_Default_Step_Callback(void);
+    mwaveform_Default_Step_Callback();
 #endif
 ```
 
-`gshell.h` provides:
+`mshell.h` provides:
 ```c
-#ifndef GSHELL_ENABLE
-#define GSHELL_ENABLE 1
+#ifndef MSHELL_ENABLE
+#define MSHELL_ENABLE 1
 #endif
-#if GSHELL_ENABLE == 0
-#define GMSI_SHELL_CMD(name, handler, help_str)  /* empty */
+#if MSHELL_ENABLE == 0
+#define MODUS_SHELL_CMD(name, handler, help_str)  /* empty */
 #endif
 ```
 
-GSTORAGE and GBLINFO use init-section registration — no framework guards needed.
+MSTORAGE and MBLINFO use init-section registration — no framework guards needed.
 
 ### BLM example refactoring
 
-The BLM Makefile will be changed to `include $(GMSI_ROOT)/gmsi.mk` and replace its
-hard-coded C_SOURCES list with `$(GMSI_SRCS)` plus project-specific sources.
+The BLM Makefile will be changed to `include $(MODUS_ROOT)/modus.mk` and replace its
+hard-coded C_SOURCES list with `$(MODUS_SRCS)` plus project-specific sources.
 
 For the debug target, the BLM project enables:
 ```
-GSHELL_ENABLE = 1
-GWAVEFORM_ENABLE = 1
-GMSI_USE_LOG = 1
-GMSI_USE_ASSERT = 1
-GBLINFO_ENABLE = 1
-GSTORAGE_ENABLE = 1
+MSHELL_ENABLE = 1
+MWAVEFORM_ENABLE = 1
+MODUS_USE_LOG = 1
+MODUS_USE_ASSERT = 1
+MBLINFO_ENABLE = 1
+MSTORAGE_ENABLE = 1
 ```
 
-The currently-commented `GMSI_DECLARE_OBJECT(gstorage, ...)` in `main.c` will be
-uncommented to validate gstorage end-to-end.
+The currently-commented `MODUS_DECLARE_OBJECT(mstorage, ...)` in `main.c` will be
+uncommented to validate mstorage end-to-end.
 
 ## File list
 
 | File | Action |
 |------|--------|
-| `gmsi.mk` | **CREATE** — root-level build include |
-| `example/blm/makefile` | **REFACTOR** — use `include gmsi.mk`, split debug/release |
-| `example/blm/main.c` | **EDIT** — uncomment `GMSI_DECLARE_OBJECT(gstorage, ...)` |
+| `modus.mk` | **CREATE** — root-level build include |
+| `example/blm/makefile` | **REFACTOR** — use `include modus.mk`, split debug/release |
+| `example/blm/main.c` | **EDIT** — uncomment `MODUS_DECLARE_OBJECT(mstorage, ...)` |

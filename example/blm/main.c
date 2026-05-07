@@ -8,20 +8,20 @@
 /*============================ INCLUDES ======================================*/
 #include "core/blm.h"
 #include "port/blm_port.h"
-#include "gstorage.h"
-#include "gblinfo.h"
+#include "mstorage.h"
+#include "mblinfo.h"
 #include <perf_counter.h>
-#include "gdebug/util_debug.h"
-#include "port/gdi_hw.h"
-#if GWAVEFORM_ENABLE
-#include "gdebug/gwaveform.h"
+#include "mdebug/util_debug.h"
+#include "port/mdi_hw.h"
+#if MWAVEFORM_ENABLE
+#include "mdebug/mwaveform.h"
 #include "blm_waveform_test.h"
 #endif
 
 
 
-/* blm_shell_test.h 已不再需要，通过 GMSI_SHELL_CMD 自动发现 */
-
+/* blm_shell_test.h 已不再需要，通过 MODUS_SHELL_CMD 自动发现 */
+#include "mdebug/mshell.h"
 #if defined(AT32F407xx)
 #   include "cmsis/at32f407xx.h"
 #elif defined(STM32G431xx)
@@ -69,19 +69,19 @@ static led_blink_cb_t s_tLedBlink;
 bool    s_bPerfMonitorEnable = false;
 static int64_t s_lMaxLoopCycles = 0;
 
-static int64_t s_lMaxGmsiCycles = 0;
+static int64_t s_lMaxModusCycles = 0;
 static int64_t s_lMaxBlinkCycles = 0;
 static int64_t s_lMaxLogCycles = 0;
 
-/* Detailed GMSI Sub-Section Trackers */
-int64_t s_lMaxGmsiSubListCycles = 0;
-int64_t s_lMaxGmsiSubShellCycles = 0;
-int64_t s_lMaxGmsiSubWaveCycles = 0;
+/* Detailed MODUS Sub-Section Trackers */
+int64_t s_lMaxModusSubListCycles = 0;
+int64_t s_lMaxModusSubShellCycles = 0;
+int64_t s_lMaxModusSubWaveCycles = 0;
 int64_t s_lMaxSysTickCycles = 0;      /* Total time in SysTick ISR */
-int64_t s_lMaxGmsiClockCycles = 0;    /* Time in gmsi_Clock() */
+int64_t s_lMaxModusClockCycles = 0;    /* Time in modus_Clock() */
 int64_t s_lMaxWaveStepCycles = 0;     /* Time in blm_waveform_test_step() */
 
-/* Specific Module Trackers (replaces GMSI_List general view) */
+/* Specific Module Trackers (replaces MODUS_List general view) */
 
 int64_t s_lMaxBlmCycles = 0;
 int64_t s_lMaxGinfoCycles = 0;
@@ -101,7 +101,7 @@ static test_app_data_t s_tAppData = {
 
 /*============================ OBJECT DECLARATION ============================*/
 
-GMSI_DECLARE_OBJECT(blm, Blm,
+MODUS_DECLARE_OBJECT(blm, Blm,
     .wAppAddr = BLM_APP_ADDR,
     .wAppMaxSize = BLM_APP_MAX_SIZE,
     .wSharedInfoAddr = BLM_SHARED_INFO_ADDR,
@@ -111,22 +111,22 @@ GMSI_DECLARE_OBJECT(blm, Blm,
 );
 
 
-GMSI_DECLARE_OBJECT(gblinfo, Gblinfo,
-    .wSharedInfoAddr = GBLINFO_SHARED_ADDR,
+MODUS_DECLARE_OBJECT(mblinfo, Gblinfo,
+    .wSharedInfoAddr = MBLINFO_SHARED_ADDR,
 );
 
 /* Flash Storage Address (Page for storing app config) */
-#define GMSI_STORAGE_FLASH_ADDR     0x0800F800
+#define MODUS_STORAGE_FLASH_ADDR     0x0800F800
 
-/* Storage data descriptor — ptFlash filled at runtime before gmsi_Init() */
-static gstorage_data_t s_tStorageData = {
+/* Storage data descriptor — ptFlash filled at runtime before modus_Init() */
+static mstorage_data_t s_tStorageData = {
     .ptFlash             = NULL,
-    .wFlashAddr          = GMSI_STORAGE_FLASH_ADDR,
+    .wFlashAddr          = MODUS_STORAGE_FLASH_ADDR,
     .pchStorageStartAddr = (uint8_t *)&s_tAppData,
     .hwStorageLength     = sizeof(test_app_data_t) - 2,
 };
 
-GMSI_DECLARE_OBJECT(gstorage, GStorage,
+MODUS_DECLARE_OBJECT(mstorage, GStorage,
     .ptStorageObject = &s_tStorageData,
     .hwStorageTimeOut = 65000,
 );
@@ -157,12 +157,12 @@ PERFC_PT_BEGIN(this.chState)
 
     do {
         /* LED ON */
-        GDI_Write(HW.ptLedStatus, GDI_GPIO_HIGH);
+        MDI_Write(HW.ptLedStatus, MDI_GPIO_HIGH);
         
     PERFC_PT_DELAY_MS(500);
         
         /* LED OFF */
-        GDI_Write(HW.ptLedStatus, GDI_GPIO_LOW);
+        MDI_Write(HW.ptLedStatus, MDI_GPIO_LOW);
         
     PERFC_PT_DELAY_MS(500);
 
@@ -204,9 +204,9 @@ static void System_Init(void)
 
 
 
-/*============================ GMSI CONFIG ===================================*/
+/*============================ MODUS CONFIG ===================================*/
 
-static gmsi_t s_tGmsi;  /* ptAppFlash assigned at runtime before gmsi_Init */
+static modus_t s_tModus;  /* ptAppFlash assigned at runtime before modus_Init */
 
 /*============================ MAIN ==========================================*/
 
@@ -218,19 +218,19 @@ int main(void)
     /* System initialization */
     System_Init();
     
-#if GSHELL_ENABLE
+#if MSHELL_ENABLE
     /* Initialize TRACE */
     TRACE.Init(NULL);
 #endif
-    GLOG(I, "BLM Bootloader Started (Optimizing Waveform)\r\n");
+    MLOG(I, "BLM Bootloader Started (Optimizing Waveform)\r\n");
     
-    /* Initialize GMSI framework — ptAppFlash is bound internally */
-    s_tGmsi.ptAppFlash = HW.ptAppFlash;
-    gmsi_Init(&s_tGmsi);
+    /* Initialize MODUS framework — ptAppFlash is bound internally */
+    s_tModus.ptAppFlash = HW.ptAppFlash;
+    modus_Init(&s_tModus);
     /* Initialize LED blink task */
     led_blink_init(&s_tLedBlink);
     
-#if GWAVEFORM_ENABLE
+#if MWAVEFORM_ENABLE
     /* Initialize Waveform Test */
     blm_waveform_test_init();
 #endif
@@ -252,11 +252,11 @@ int main(void)
         
         lTickStart = get_system_ms();
         lSectionStart = get_system_ticks();
-        gmsi_Run();
-        int64_t lGmsiUsed = get_system_ticks() - lSectionStart;
+        modus_Run();
+        int64_t lModusUsed = get_system_ticks() - lSectionStart;
         lTickEnd = get_system_ms();
-        if (s_bPerfMonitorEnable && (lTickStart == lTickEnd) && (lGmsiUsed > s_lMaxGmsiCycles)) 
-            s_lMaxGmsiCycles = lGmsiUsed;
+        if (s_bPerfMonitorEnable && (lTickStart == lTickEnd) && (lModusUsed > s_lMaxModusCycles)) 
+            s_lMaxModusCycles = lModusUsed;
 
         lTickStart = get_system_ms();
         lSectionStart = get_system_ticks();
@@ -272,16 +272,16 @@ int main(void)
             wCounter++;
             // trigger save value
             // s_tAppData.chVar1 += 1;
-            GLOGF(T, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
+            MLOGF(T, "[TICK] %lu s  SYSCLK=%lu Hz\r\n",
                 (unsigned long)wCounter,
                 (unsigned long)SystemCoreClock);
             
             float fTemp = 36.5f + (float)(wCounter % 10) * 0.1f;
 
             /* T-level verification: placed inside timer callback to confirm
-             * periodic trigger. Use 'log -T' in gshell to toggle visibility. */
-            GLOG(T, "[timer] 1s tick reached\r\n");
-            GLOGF(T, "[timer] counter=%lu temp=%.1f\r\n",
+             * periodic trigger. Use 'log -T' in mshell to toggle visibility. */
+            MLOG(T, "[timer] 1s tick reached\r\n");
+            MLOGF(T, "[timer] counter=%lu temp=%.1f\r\n",
                 (unsigned long)wCounter, fTemp);
         }
         int64_t lLogUsed = get_system_ticks() - lSectionStart;
@@ -299,14 +299,6 @@ int main(void)
         }
     }
 
-
-
-
-
-
-
-
-    
     return 0;
 }
 
@@ -315,35 +307,35 @@ static void cmd_perf(const char *args)
     if (strncmp(args, "on", 2) == 0) {
         s_bPerfMonitorEnable = true;
         s_lMaxLoopCycles = 0;
-        s_lMaxGmsiCycles = 0;
+        s_lMaxModusCycles = 0;
         s_lMaxBlinkCycles = 0;
         s_lMaxLogCycles = 0;
-        s_lMaxGmsiSubListCycles = 0;
-        s_lMaxGmsiSubShellCycles = 0;
-        s_lMaxGmsiSubWaveCycles = 0;
+        s_lMaxModusSubListCycles = 0;
+        s_lMaxModusSubShellCycles = 0;
+        s_lMaxModusSubWaveCycles = 0;
         s_lMaxBlmCycles = 0;
         s_lMaxGinfoCycles = 0;
-        GLOG(I, "Perf Monitor: ON (Max cleared)\r\n");
+        MLOG(I, "Perf Monitor: ON (Max cleared)\r\n");
     } else if (strncmp(args, "off", 3) == 0) {
         s_bPerfMonitorEnable = false;
-        GLOG(I, "Perf Monitor: OFF\r\n");
+        MLOG(I, "Perf Monitor: OFF\r\n");
     } else if (strncmp(args, "status", 6) == 0) {
-        GLOGF(I, "Perf: %s\r\n", s_bPerfMonitorEnable ? "ON" : "OFF");
-        GLOGF(I, " - Max Loop : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxLoopCycles));
-        GLOGF(I, " - Max GMSI : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxGmsiCycles));
-        GLOGF(I, " - Max Blink: %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxBlinkCycles));
-        GLOGF(I, " - Max Log  : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxLogCycles));
-        GLOGF(I, " - Max ISR  : %d us (Clock %d, Wave %d)\r\n", 
+        MLOGF(I, "Perf: %s\r\n", s_bPerfMonitorEnable ? "ON" : "OFF");
+        MLOGF(I, " - Max Loop : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxLoopCycles));
+        MLOGF(I, " - Max MODUS : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxModusCycles));
+        MLOGF(I, " - Max Blink: %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxBlinkCycles));
+        MLOGF(I, " - Max Log  : %d us\r\n", (int)perfc_convert_ticks_to_us(s_lMaxLogCycles));
+        MLOGF(I, " - Max ISR  : %d us (Clock %d, Wave %d)\r\n", 
             (int)perfc_convert_ticks_to_us(s_lMaxSysTickCycles),
-            (int)perfc_convert_ticks_to_us(s_lMaxGmsiClockCycles),
+            (int)perfc_convert_ticks_to_us(s_lMaxModusClockCycles),
             (int)perfc_convert_ticks_to_us(s_lMaxWaveStepCycles));
         
-#if GWAVEFORM_ENABLE
-        GLOGF(I, " - Wave Drop: %lu (Cumulative), %lu (Last 1s)\r\n",
-            (unsigned long)gwaveform.GetDropCount(),
-            (unsigned long)gwaveform.GetLastIntervalDrops());
-        extern uint32_t gwaveform_GetRTTFullCount(void);
-        GLOGF(I, " - RTT Congest: %lu times\r\n", (unsigned long)gwaveform_GetRTTFullCount());
+#if MWAVEFORM_ENABLE
+        MLOGF(I, " - Wave Drop: %lu (Cumulative), %lu (Last 1s)\r\n",
+            (unsigned long)mwaveform.GetDropCount(),
+            (unsigned long)mwaveform.GetLastIntervalDrops());
+        extern uint32_t mwaveform_GetRTTFullCount(void);
+        MLOGF(I, " - RTT Congest: %lu times\r\n", (unsigned long)mwaveform_GetRTTFullCount());
 #endif
 
 
@@ -352,28 +344,28 @@ static void cmd_perf(const char *args)
 
 
         s_lMaxLoopCycles = 0;
-        s_lMaxGmsiCycles = 0;
+        s_lMaxModusCycles = 0;
         s_lMaxBlinkCycles = 0;
         s_lMaxLogCycles = 0;
-        s_lMaxGmsiSubListCycles = 0;
-        s_lMaxGmsiSubShellCycles = 0;
-        s_lMaxGmsiSubWaveCycles = 0;
+        s_lMaxModusSubListCycles = 0;
+        s_lMaxModusSubShellCycles = 0;
+        s_lMaxModusSubWaveCycles = 0;
         s_lMaxBlmCycles = 0;
         s_lMaxGinfoCycles = 0;
         s_lMaxSysTickCycles = 0;
-        s_lMaxGmsiClockCycles = 0;
+        s_lMaxModusClockCycles = 0;
         s_lMaxWaveStepCycles = 0;
-#if GWAVEFORM_ENABLE
-        gwaveform.ClearDropCount();
-        GLOG(I, "Perf: Max cycles and Wave drops cleared.\r\n");
+#if MWAVEFORM_ENABLE
+        mwaveform.ClearDropCount();
+        MLOG(I, "Perf: Max cycles and Wave drops cleared.\r\n");
 #endif
     } else {
-        GLOG(I, "Usage: perf <on|off|status|clear>\r\n");
+        MLOG(I, "Usage: perf <on|off|status|clear>\r\n");
     }
 }
 
 
-GMSI_SHELL_CMD(perf, cmd_perf, "Performance monitor (on/off/status/clear)");
+MODUS_SHELL_CMD(perf, cmd_perf, "Performance monitor (on/off/status/clear)");
 
 
 /*============================ INTERRUPTS ====================================*/
@@ -385,10 +377,10 @@ void SysTick_Handler(void)
 {
     int64_t lStart = get_system_ticks();
 
-    /* GMSI clock tick (1ms) */
-    gmsi_Clock();
+    /* MODUS clock tick (1ms) */
+    modus_Clock();
     
-#if GWAVEFORM_ENABLE
+#if MWAVEFORM_ENABLE
     /* Waveform test step (1ms) */
     blm_waveform_test_step();
 #endif

@@ -1,6 +1,6 @@
 # SuperWaveform
 
-高性能 GMSI 示波器与终端上位机工具。基于 SDL2 + ImGui + ImPlot 开发，旨在为嵌入式开发提供极致流畅的波形观察与调试体验。
+高性能 MODUS 示波器与终端上位机工具。基于 SDL2 + ImGui + ImPlot 开发，旨在为嵌入式开发提供极致流畅的波形观察与调试体验。
 
 ## 核心特性
 - **双通道融合**：同时监控 RTT Channel 0 (Shell) 和 Channel 1 (Waveform)。

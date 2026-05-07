@@ -1,7 +1,7 @@
 #ifndef __PC_UART_H__
 #define __PC_UART_H__
 
-#include "gmsi.h"
+#include "modus.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -17,11 +17,11 @@ typedef struct{
     int wOflag;
 }pcuart_cfg_t;
 typedef struct{
-    gmsi_base_t *ptBase;
+    modus_base_t *ptBase;
     int fd;
     uint8_t chBufferData[100];
     uint16_t hwBufferLength;
-    gmsi_interface_t impl;
+    modus_interface_t impl;
 }pcuart_t;
 
 int pcuart_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);

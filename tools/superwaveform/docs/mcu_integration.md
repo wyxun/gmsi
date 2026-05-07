@@ -1,14 +1,14 @@
 # 下位机集成指南
 
-本指南介绍如何在您的嵌入式固件中集成 `gwaveform` 组件，以便将实时数据推送到 SuperWaveform 上位机。
+本指南介绍如何在您的嵌入式固件中集成 `mwaveform` 组件，以便将实时数据推送到 SuperWaveform 上位机。
 
 ## 1. 软件依赖
 
-在您的工程中，需要包含以下 GMSI 组件：
-- `gmsi/gdebug/gwaveform.c/h`：波形协议核心。
-- `gmsi/gdebug/gwaveform_protocol.c/h`：波形协议编解码（帧同步、校验）。
-- `gmsi/gdebug/segger_rtt/`：底层 RTT 传输通道。
-- `gmsi/utilities/gringbuf.c/h`：环形缓冲区支持。
+在您的工程中，需要包含以下 MODUS 组件：
+- `modus/mdebug/mwaveform.c/h`：波形协议核心。
+- `modus/mdebug/mwaveform_protocol.c/h`：波形协议编解码（帧同步、校验）。
+- `modus/mdebug/segger_rtt/`：底层 RTT 传输通道。
+- `modus/utilities/mringbuf.c/h`：环形缓冲区支持。
 
 ## 2. 快速集成示例
 
@@ -19,20 +19,20 @@
 在系统启动时，配置 RTT 通道并定义波形参数：
 
 ```c
-#include "gwaveform.h"
+#include "mwaveform.h"
 
 void board_init(void) {
     // 1. 初始化波形组件
     // 它会自动配置 SEGGER_RTT 的 Channel 1 作为数据上传通道
-    gwaveform_Init();
+    mwaveform_Init();
 
     // 2. 注册波形通道
     // 参数 1: 通道名称 (最多 8 字符)
     // 参数 2: 缩放因子 (Scale)。上位机显示值 = 下位机原始值 / Scale
     // 示例：如果推送电压，单位为 mV，希望显示 V，则 Scale 设为 1000.0f
-    gwaveform_AddChannel("Sine", 100.0f);
-    gwaveform_AddChannel("Cos", 100.0f);
-    gwaveform_AddChannel("Voltage", 1000.0f);
+    mwaveform_AddChannel("Sine", 100.0f);
+    mwaveform_AddChannel("Cos", 100.0f);
+    mwaveform_AddChannel("Voltage", 1000.0f);
 }
 ```
 
@@ -48,12 +48,12 @@ void SysTick_Handler(void) {
     int16_t cos_val = cos_table[angle];
 
     // 3. 压入原始数据 (按注册顺序，索引从 0 开始)
-    gwaveform_PushRaw(0, sine_val);
-    gwaveform_PushRaw(1, cos_val);
+    mwaveform_PushRaw(0, sine_val);
+    mwaveform_PushRaw(1, cos_val);
     
     // 4. 提交当前帧
     // 该操作会将当前这一时刻的所有通道数据打包并写入 RTT 缓冲区
-    gwaveform_Commit();
+    mwaveform_Commit();
 
     angle = (angle + 1) % 360;
 }
@@ -80,4 +80,4 @@ OPENOCD_CMD += -c "rtt server start 9090 0" -c "rtt server start 9091 1"
 - **掩码**：N 字节 (标志哪些通道有数据)
 - **数据**：2 字节 * 通道数 (小端)
 - **校验**：1 字节 (CRC8)
-- **详情参考**：`gwaveform.c` 中的 `_gwaveform_SendFrame` 实现。
+- **详情参考**：`mwaveform.c` 中的 `_mwaveform_SendFrame` 实现。

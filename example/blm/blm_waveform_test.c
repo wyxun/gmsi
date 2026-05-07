@@ -1,9 +1,9 @@
-#include "gdebug/gwaveform.h"
+#include "mdebug/mwaveform.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#if GWAVEFORM_ENABLE
+#if MWAVEFORM_ENABLE
 
 /* Sine LUT: 256 points, range -32767 to 32767 */
 static const int16_t s_ahwSinTable[256] = {
@@ -31,12 +31,12 @@ static uint32_t s_wPhaseStep = 42949673; // 10Hz @ 1kHz
 
 void blm_waveform_test_init(void)
 {
-    gwaveform.Init(NULL); // Use default protocol
-    s_chU = gwaveform.AddChannel("U_Phase", 1.0f);
-    s_chV = gwaveform.AddChannel("V_Phase", 1.0f);
-    s_chW = gwaveform.AddChannel("W_Phase", 1.0f);
+    mwaveform.Init(NULL); // Use default protocol
+    s_chU = mwaveform.AddChannel("U_Phase", 1.0f);
+    s_chV = mwaveform.AddChannel("V_Phase", 1.0f);
+    s_chW = mwaveform.AddChannel("W_Phase", 1.0f);
     
-    gwaveform.Start();
+    mwaveform.Start();
 }
 
 void blm_waveform_test_step(void)
@@ -52,10 +52,10 @@ void blm_waveform_test_step(void)
     float valV = (float)s_ahwSinTable[(uint8_t)(chIndex + 85)];
     float valW = (float)s_ahwSinTable[(uint8_t)(chIndex + 170)];
     
-    gwaveform.Push(s_chU, valU);
-    gwaveform.Push(s_chV, valV);
-    gwaveform.Push(s_chW, valW);
-    // Note: gwaveform.Step() is called automatically via gmsi_Clock()
+    mwaveform.Push(s_chU, valU);
+    mwaveform.Push(s_chV, valV);
+    mwaveform.Push(s_chW, valW);
+    // Note: mwaveform.Step() is called automatically via modus_Clock()
 }
 
 #else
@@ -63,4 +63,4 @@ void blm_waveform_test_step(void)
 void blm_waveform_test_init(void) {}
 void blm_waveform_test_step(void) {}
 
-#endif /* GWAVEFORM_ENABLE */
+#endif /* MWAVEFORM_ENABLE */

@@ -8,7 +8,7 @@
 #define __BLM_H__
 
 /*============================ INCLUDES ======================================*/
-#include "gmsi.h"
+#include "modus.h"
 #include "../userconfig.h"
 #include <perf_counter.h>
 
@@ -47,8 +47,8 @@ typedef struct {
     /* PT state machine (must be first for convention) */
     uint8_t chState;
     
-    /* GMSI base */
-    gmsi_base_t *ptBase;
+    /* MODUS base */
+    modus_base_t *ptBase;
     
     /* Configuration */
     uint32_t wAppAddr;
@@ -67,12 +67,12 @@ typedef struct {
     uint16_t chRetryCount;
 } blm_cb_t;
 
-/* Alias for GMSI_DECLARE_OBJECT macro compatibility */
+/* Alias for MODUS_DECLARE_OBJECT macro compatibility */
 typedef blm_cb_t blm_t;
 
 /*============================ PROTOTYPES ====================================*/
 
-/* GMSI Interface */
+/* MODUS Interface */
 extern int blm_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr);
 extern int blm_Run(uintptr_t wObjectAddr);
 extern int blm_Clock(uintptr_t wObjectAddr);

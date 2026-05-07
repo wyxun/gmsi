@@ -43,33 +43,33 @@ LD = $(LLVM_PATH)clang
 TARGET = blm
 
 # Directories
-GMSI_ROOT = ../..
+MODUS_ROOT = ../..
 LIB_DIR = ../../lib
 
 # ---------------------------------------------------------------------------
-# Module enables — set BEFORE include so gmsi.mk can evaluate conditions
+# Module enables — set BEFORE include so modus.mk can evaluate conditions
 # ---------------------------------------------------------------------------
 
-# BLM always needs gblinfo (bootloader shared info)
-GBLINFO_ENABLE  = 1
-# Enable gstorage for testing
-GSTORAGE_ENABLE = 1
+# BLM always needs mblinfo (bootloader shared info)
+MBLINFO_ENABLE  = 1
+# Enable mstorage for testing
+MSTORAGE_ENABLE = 1
 
 # Default: debug features enabled (F5 debugging)
-GSHELL_ENABLE    = 1
-GWAVEFORM_ENABLE = 1
-GMSI_USE_LOG     = 1
-GMSI_USE_ASSERT  = 1
+MSHELL_ENABLE    = 1
+MWAVEFORM_ENABLE = 1
+MODUS_USE_LOG     = 1
+MODUS_USE_ASSERT  = 1
 
 # Release target — strip all debug
 ifeq ($(filter release,$(MAKECMDGOALS)),release)
-    GSHELL_ENABLE    = 0
-    GWAVEFORM_ENABLE = 0
-    GMSI_USE_LOG     = 0
-    GMSI_USE_ASSERT  = 0
+    MSHELL_ENABLE    = 0
+    MWAVEFORM_ENABLE = 0
+    MODUS_USE_LOG     = 0
+    MODUS_USE_ASSERT  = 0
 endif
 
-include $(GMSI_ROOT)/gmsi.mk
+include $(MODUS_ROOT)/modus.mk
 
 # Project-specific source files (platform-independent)
 C_SOURCES = \
@@ -80,15 +80,15 @@ C_SOURCES = \
     $(LIB_DIR)/perf_counter/perf_counter.c
 
 # Debug-only sources
-ifneq ($(GSHELL_ENABLE),0)
+ifneq ($(MSHELL_ENABLE),0)
     C_SOURCES += blm_shell_test.c
 endif
-ifneq ($(GWAVEFORM_ENABLE),0)
+ifneq ($(MWAVEFORM_ENABLE),0)
     C_SOURCES += blm_waveform_test.c
 endif
 
-# GMSI framework sources
-C_SOURCES += $(GMSI_SRCS)
+# MODUS framework sources
+C_SOURCES += $(MODUS_SRCS)
 
 # Assembly sources (perf_counter SysTick wrapper)
 ASM_SOURCES = \
@@ -145,14 +145,14 @@ C_DEFS = \
     -D__COMPILER_HAS_GNU_EXTENSIONS__=1 \
     -DTRACE_USE_LIBC_PRINTF=0
 
-# TRACE_MCU macros — only needed when trace.c is compiled (GSHELL_ENABLE=1)
-ifneq ($(GSHELL_ENABLE),0)
+# TRACE_MCU macros — only needed when trace.c is compiled (MSHELL_ENABLE=1)
+ifneq ($(MSHELL_ENABLE),0)
     C_DEFS += -DTRACE_MCU_WRITE_STRING(s)=SEGGER_RTT_WriteString(0,(s))
     C_DEFS += -DTRACE_MCU_WRITE_BUFFER(p,l)=SEGGER_RTT_Write(0,(p),(l))
 endif
 
-# GMSI module flags from gmsi.mk
-C_DEFS += $(GMSI_CFLAGS)
+# MODUS module flags from modus.mk
+C_DEFS += $(MODUS_CFLAGS)
 
 # Include paths
 C_INCLUDES = \
@@ -163,13 +163,13 @@ C_INCLUDES = \
     -I$(LIB_DIR)/perf_counter \
     -I$(LIB_DIR)/plooc
 
-# GMSI include paths from gmsi.mk
-C_INCLUDES += $(GMSI_INCLUDES)
+# MODUS include paths from modus.mk
+C_INCLUDES += $(MODUS_INCLUDES)
 
 # Compiler flags
 CFLAGS = $(TARGET_TRIPLE) $(CPU_FLAGS) $(C_DEFS) $(C_INCLUDES) $(OPT) -g
 CFLAGS += -Wall -Wextra
-C_DEFS += -DGMSI_CFG_USER_CONFIG_INCLUSION="\"userconfig.h\""
+C_DEFS += -DMODUS_CFG_USER_CONFIG_INCLUSION="\"userconfig.h\""
 CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -fno-exceptions -fno-rtti
 CFLAGS += -std=gnu11

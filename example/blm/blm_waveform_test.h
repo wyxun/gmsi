@@ -7,7 +7,7 @@
 void blm_waveform_test_init(void);
 
 /**
- * @brief Push sine/cosine samples to gwaveform
+ * @brief Push sine/cosine samples to mwaveform
  *        Should be called in a 1ms interrupt
  */
 void blm_waveform_test_step(void);

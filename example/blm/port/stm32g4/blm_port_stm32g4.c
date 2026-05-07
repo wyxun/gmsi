@@ -492,108 +492,108 @@ void blm_port_LedSet(int nState)
  * GDI 适配层
  *===========================================================================*/
 
-#include "../gdi_hw.h"
+#include "../mdi_hw.h"
 
 /* ---- GPIO (LED) ---- */
 
-static int32_t gdi_led_Set(void *pPriv, gdi_gpio_level_t eLevel)
+static int32_t mdi_led_Set(void *pPriv, mdi_gpio_level_t eLevel)
 {
     (void)pPriv;
     blm_port_LedSet((int)eLevel);
     return 0;
 }
 
-static int32_t gdi_led_Get(void *pPriv)
+static int32_t mdi_led_Get(void *pPriv)
 {
     (void)pPriv;
-    return (BLM_LED_GPIO->ODR & (1UL << BLM_LED_PIN)) ? GDI_GPIO_HIGH : GDI_GPIO_LOW;
+    return (BLM_LED_GPIO->ODR & (1UL << BLM_LED_PIN)) ? MDI_GPIO_HIGH : MDI_GPIO_LOW;
 }
 
-static int32_t gdi_led_Toggle(void *pPriv)
+static int32_t mdi_led_Toggle(void *pPriv)
 {
     (void)pPriv;
     BLM_LED_GPIO->ODR ^= (1UL << BLM_LED_PIN);
     return 0;
 }
 
-static gdi_gpio_t s_tLedGpio = {
+static mdi_gpio_t s_tLedGpio = {
     .pPriv    = NULL,
-    .fnSet    = gdi_led_Set,
-    .fnGet    = gdi_led_Get,
-    .fnToggle = gdi_led_Toggle,
+    .fnSet    = mdi_led_Set,
+    .fnGet    = mdi_led_Get,
+    .fnToggle = mdi_led_Toggle,
 };
 
 /* ---- Stream (UART) ---- */
 
-static int32_t gdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen)
+static int32_t mdi_uart_Write(void *pPriv, const uint8_t *pchData, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_UartSend(pchData, (uint16_t)wLen);
 }
 
-static int32_t gdi_uart_Read(void *pPriv, uint8_t *pchBuf, uint32_t wLen)
+static int32_t mdi_uart_Read(void *pPriv, uint8_t *pchBuf, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_UartRecv(pchBuf, (uint16_t)wLen, 3);
 }
 
-static int32_t gdi_uart_IsBusy(void *pPriv)
+static int32_t mdi_uart_IsBusy(void *pPriv)
 {
     (void)pPriv;
     return (BLM_USART->ISR & USART_ISR_TC) ? 0 : 1;
 }
 
-static gdi_stream_t s_tUartDebug = {
+static mdi_stream_t s_tUartDebug = {
     .pPriv    = NULL,
-    .fnWrite  = gdi_uart_Write,
-    .fnRead   = gdi_uart_Read,
-    .fnIsBusy = gdi_uart_IsBusy,
+    .fnWrite  = mdi_uart_Write,
+    .fnRead   = mdi_uart_Read,
+    .fnIsBusy = mdi_uart_IsBusy,
 };
 
 /* ---- Flash ---- */
 
-static int32_t gdi_flash_Erase_wrapper(void *pPriv, uint32_t wAddr, uint32_t wSize)
+static int32_t mdi_flash_Erase_wrapper(void *pPriv, uint32_t wAddr, uint32_t wSize)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashErase(wAddr, wSize);
 }
 
-static int32_t gdi_flash_Write_wrapper(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
+static int32_t mdi_flash_Write_wrapper(void *pPriv, uint32_t wAddr, const uint8_t *pchData, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashWrite(wAddr, pchData, wLen);
 }
 
-static int32_t gdi_flash_Read_wrapper(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
+static int32_t mdi_flash_Read_wrapper(void *pPriv, uint32_t wAddr, uint8_t *pchBuf, uint32_t wLen)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashRead(wAddr, pchBuf, wLen);
 }
 
-static int32_t gdi_flash_Unlock_wrapper(void *pPriv)
+static int32_t mdi_flash_Unlock_wrapper(void *pPriv)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashUnlock();
 }
 
-static int32_t gdi_flash_Lock_wrapper(void *pPriv)
+static int32_t mdi_flash_Lock_wrapper(void *pPriv)
 {
     (void)pPriv;
     return (int32_t)blm_port_FlashLock();
 }
 
-static gdi_flash_t s_tFlashApp = {
+static mdi_flash_t s_tFlashApp = {
     .pPriv    = NULL,
-    .fnErase  = gdi_flash_Erase_wrapper,
-    .fnWrite  = gdi_flash_Write_wrapper,
-    .fnRead   = gdi_flash_Read_wrapper,
-    .fnUnlock = gdi_flash_Unlock_wrapper,
-    .fnLock   = gdi_flash_Lock_wrapper,
+    .fnErase  = mdi_flash_Erase_wrapper,
+    .fnWrite  = mdi_flash_Write_wrapper,
+    .fnRead   = mdi_flash_Read_wrapper,
+    .fnUnlock = mdi_flash_Unlock_wrapper,
+    .fnLock   = mdi_flash_Lock_wrapper,
 };
 
 /* ---- 全局硬件资源池 ---- */
 
-const gdi_hardware_t HW = {
+const mdi_hardware_t HW = {
     .ptLedStatus   = &s_tLedGpio,
     .ptSerialDebug = &s_tUartDebug,
     .ptAppFlash    = &s_tFlashApp,
