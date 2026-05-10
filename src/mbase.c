@@ -9,7 +9,7 @@
 #include <assert.h>
 #endif
 
-static mlist_t tListObject;
+static mlist_t tListObject = MLIST_STATIC_INIT(tListObject);
 
 int mbase_ShareMemInit(modus_base_t *ptBase, share_mem_t *ptShareMem);
 
@@ -31,16 +31,11 @@ int mbase_ShareMemInit(modus_base_t *ptBase, share_mem_t *ptShareMem);
 int mbase_Init(modus_base_t *ptBase, modus_base_cfg_t *ptCfg)
 {
     int wRet = MODUS_SUCCESS;
-    static uint8_t chInitCount = 0;
 
     // Check for null pointers
     if (NULL == ptBase || NULL == ptCfg) {
         return MODUS_EINVAL;
     }
-    // Initialise list object on first call
-    if(!chInitCount)
-        mlist_Init(&tListObject);
-    chInitCount++;
 
     // Set base ID and clear event
     ptBase->wId = ptCfg->wId;

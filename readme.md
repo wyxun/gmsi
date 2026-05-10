@@ -218,7 +218,7 @@ MLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
 - `MODUS_LOG_LEVEL_DEBUG` (4) - 简写 `D`
 
 #### 4. 设计详情
-更多关于 MLog 的零缓存设计与实现细节，请参考 [MLog 设计文档](doc/superpowers/LOG_design.md)。
+更多关于 MLog 的零缓存设计与实现细节，请参考 [MLog 设计文档](docs/superpowers/LOG_design.md)。
 
 ---
 
@@ -254,7 +254,7 @@ MODUS_SHELL_CMD(burn, cmd_burn, "Burn-in test");
 `g_chGLogMask` 默认由 `MLOG_MASK_DEFAULT`（全开，0x0F）初始化。
 可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
 
-详细配置、UART 后端替换及注意事项参考 [MShell 使用指南](doc/mshell.md)。
+详细配置、UART 后端替换及注意事项参考 [MShell 使用指南](docs/mshell.md)。
 
 ---
 

@@ -70,6 +70,17 @@ typedef struct mlist
 #define MLIST_GET_OWNER_OF_HEAD_ENTRY(ptList)                                   \
     ( (&((ptList)->tListEnd))->ptNext->pvOwner )
 
+#define MLIST_STATIC_INIT(name) {                                               \
+    .wNumberOfItems = 0,                                                        \
+    .ptIndex = &(name).tListEnd,                                                \
+    .tListEnd = {                                                               \
+        .wItemValue = 0xFFFFFFFFUL,                                             \
+        .ptNext = &(name).tListEnd,                                             \
+        .ptPrevious = &(name).tListEnd,                                         \
+        .ptContainer = &(name),                                                 \
+    }                                                                           \
+}
+
 /* API Functions */
 void mlist_Init(mlist_t * const ptList);
 void mlist_ItemInit(mlist_item_t * const ptItem);
