@@ -1,7 +1,7 @@
 # Modus — 嵌入式 MCU 软件框架
 
 Modus 是一个轻量级、面向对象且高度可移植的嵌入式软件框架。它致力于通过
-抽象硬件接口（GDI）与业务逻辑，提供一套统一的对象管理机制，支持任务
+抽象硬件接口（MDI）与业务逻辑，提供一套统一的对象管理机制，支持任务
 的自动发现、初始化和事件驱动运行。
 ![framework](.assets/framework.jpg)
 
@@ -10,9 +10,9 @@ Modus 是一个轻量级、面向对象且高度可移植的嵌入式软件框�
 - **自动初始化机制**：引入链接脚本段（Linker Section），利用 `MODUS_DECLARE_OBJECT`
   宏实现模块的零修改自动注册，无需手动更新 `main.c` 中的初始化列表。
 - **非阻塞事件机制**：内置事件挂起（Pend）与发布（Post）机制，极大简化了异步任务逻辑。
-- **协程/状态机支持**：无缝集成 `plooc` (Protected Low-overhead Object-Oriented 
+- **协程/状态机支持**：无缝集成 `plooc` (Protected Low-overhead Object-Oriented
   Programming in C) 与 `perf_counter` 的协程能力，让复杂的时序逻辑编写如同顺序代码。
-- **跨平台一致性**：完美适配 **Keil (AC6)**, **LLVM (Clang)**, **GCC**，支持嵌入式裸机与 
+- **跨平台一致性**：完美适配 **Keil (AC6)**, **LLVM (Clang)**, **GCC**，支持嵌入式裸机与
   **POSIX (Linux/WSL)** 环境。
 
 ---
@@ -40,140 +40,35 @@ make
   - `__NO_USE_ASSERT`：禁用断言检测。
 - **语言扩展**：MODUS 强依赖 `plooc` 实现对象封装，请确保包含路径中含有 `lib/plooc`。
 
-![image-20240514190553036](.assets/image-20240514190553036.png)
+![keil-config](.assets/image-20240514190553036.png)
 
 ---
 
-## MODUS 日志系统 (LOG)
-
-MODUS 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景。
-
-### 1. `MLOG` — 类型自动分发（高效、零缓存）
-通过 `plooc` 变参技术将每个参数的类型自动映射到底层 `TRACE` 接口处理函数。它不需要格式化解析，性能最高，且类型安全。
-
-```c
-#include "mdebug/util_debug.h"
-
-// 简单字符串
-MLOG(I, "System startup.\n");
-
-// 混合字符串与变量 (自动按类型分发)
-MLOG(W, "Sensor alert! ID: ", wID, ", Val: ", hwVal, "\n");
-
-// 十六进制输出 (手动带 0x)
-MLOG(D, "Buffer Head: 0x", wHead, "\n");
-```
-
-### 2. `MLOGF` — 格式化输出（标准风格、轻量级）
-内部调用手写格式化解析器（无 `snprintf` 依赖），支持常用的格式符：`%d %u %x %s %c` 以及补零和宽度（如 `%08x`）。
-
-```c
-// 常用整数格式化
-MLOGF(I, "Current tick: %d\n", wTicks);
-
-// 带补零的十六进制
-MLOGF(D, "Address: 0x%08x\n", (uintptr_t)ptThis);
-
-// 组合字符串与字符
-MLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
-```
-
-### 3. 日志级别 (Severity Levels)
-可以通过在 `userconfig.h` 中定义 `MODUS_LOG_LEVEL` 来控制编译期过滤级别：
-- `MODUS_LOG_LEVEL_NONE`  (0)
-- `MODUS_LOG_LEVEL_ERROR` (1) - 简写 `E`
-- `MODUS_LOG_LEVEL_WARN`  (2) - 简写 `W`
-- `MODUS_LOG_LEVEL_INFO`  (3) - 简写 `I` (默认级别)
-- `MODUS_LOG_LEVEL_DEBUG` (4) - 简写 `D`
-
-### 4. 设计详情
-更多关于 LOG 的零缓存设计与实现细节，请参考 [LOG 设计文档](doc/superpowers/LOG_design.md)。
-
----
-
-## mshell — 极简调试 Shell
-
-MODUS 内置轻量级 RTT 调试 Shell，随 `modus_Run()` 自动轮询，**无需修改主循环**，连接
-J-Link RTT Viewer 即用。可通过 `mshell_SetIO()` 将 I/O 后端从默认 RTT 替换为 UART。
-
-### 内置命令
-
-| 命令 | 说明 |
-|------|------|
-| `help` | 列出所有命令 |
-| `ver`  | 打印 MODUS 版本 |
-| `list` | 查看所有注册的 mbase 对象（id、event） |
-| `post <id_hex> <event_hex>` | 向指定对象投递事件 |
-| `log [-E][-W][-I][-D]` | 运行期开关 MLOG 各级别（无参数 = 显示当前状态） |
-
-### 注册自定义命令
-
-```c
-#include "mdebug/mshell.h"
-
-static void cmd_burn(const char *args) {
-    MLOGF(I, "Burn-in started\r\n");
-}
-/* 零代码初始化：在 .c 中定义宏即可自动注册 */
-MODUS_SHELL_CMD(burn, cmd_burn, "Burn-in test");
-```
-
-### 运行期 Log 级别控制
-
-`g_chGLogMask` 默认由 `MLOG_MASK_DEFAULT`（全开，0x0F）初始化。
-可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
-
-详细配置、UART 后端替换及注意事项参考 [mshell 使用指南](doc/mshell.md)。
-
----
-
-## mwaveform — 实时波形采集与可视化
-
-MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用于 FOC 电机、PID 调试等高频信号可视化场景。
-
-### 核心优势
-- **极致性能**：底层采用 SPSC 无锁环形缓冲区，20kHz 采样下 CPU 占用极低。
-- **上位机支持**：配套 Python 可视化工具，基于 `pyqtgraph` 实现，支持 OpenGL 加速。
-
-### 快速使用
-1. **MCU 侧注册通道**：
-   ```c
-   uint8_t s_chIa = mwaveform_AddChannel("Motor_Ia", 1000.0f);
-   mwaveform_Start();
-   ```
-2. **在中断中推送数据**：
-   ```c
-   mwaveform_Push(s_chIa, fCurrentIa);
-   mwaveform_Commit();
-   ```
-3. **PC 侧启动查看器**：
-   ```bash
-   python tools/mwaveform/viewer.py
-   ```
-
-详细设计、协议格式及性能数据请参考 [mwaveform 完整文档](doc/mwaveform.md)。
-
----
-
-## MODUS 命名规范 (Naming Convention)
+## 命名规范 (Naming Convention)
 
 为了保持代码库的统一与整洁，请严格遵守以下命名规范：
 
 1. **类型定义（Type Definition）**：全小写加下划线，必须以 `_t` 结尾。
    例如 `modus_t`, `mbase_t`, `mlist_t`。
-2. **函数接口（Function API）**：模块名前缀（全小写） + 下划线 + 
+2. **函数接口（Function API）**：模块名前缀（全小写）+ 下划线 +
    帕斯卡命名法（首字母大写）。例如 `modus_Init()`, `mbase_EventPost()`。
-3. **宏定义（Macros）**：全大写加下划线。例如 `MODUS_DECLARE_OBJECT()`, 
+3. **宏定义（Macros）**：全大写加下划线。例如 `MODUS_DECLARE_OBJECT()`,
    `MLOG()`, `MLIST_IS_EMPTY()`。
 4. **全局变量（Global Variables）**：通常使用 `g_` 前缀（如 `g_hwSystemDataArrary`）。
    此规则属于用户业务层全局习惯，不受核心框架名称影响。
 5. **变量前缀（Hungarian Notation）**：遵循以下规则确保代码意图一目了然：
 
-| 前缀 | 原始含义 | 示例 | 备注 |
-|:---|:---|:---|:---|
-| `ch` | `char / uint8_t` | `chState` | 单字节状态或数据 |
-| `hw` | `uint16_t` | `hwBufferSize` | 半字 (Half-Word), 16位长度 |
-| `w` | `uint32_t` | `wEvent` | 字 (Word), 32位变量 |
+| 前缀  | 原始含义                  | 示例                     | 备注                        |
+|:------|:--------------------------|:-------------------------|:----------------------------|
+| `ch`  | `char / uint8_t`          | `chState`                | 单字节状态或数据            |
+| `hw`  | `uint16_t`                | `hwBufferSize`           | 半字 (Half-Word), 16位长度  |
+| `w`   | `uint32_t`                | `wEvent`                 | 字 (Word), 32位变量         |
+| `b`   | `bool`                    | `bIsRunning`             | 布尔标志                    |
+| `pt`  | `Pointer to Type`         | `ptThis`, `ptMotor`      | 指向结构体或自定义类型的指针 |
+| `pch` | `uint8_t *`               | `pchBuffer`              | 指向字节流的指针            |
+| `pfcn`| `Function Ptr`            | `pfcnCallback`           | 函数指针                    |
+| `s_`  | `Static`                  | `s_tModusBase`           | 静态变量（文件作用域）      |
+| `g_`  | `Global`                  | `g_hwCount`              | 全局变量                    |
 
 6. **代码风格（Coding Style）**：
    - **行长限制**：单行不得超过 **81** 个字符。
@@ -183,7 +78,7 @@ MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适�
 
 ## 模块开发指南 (Object Template)
 
-MODUS 将每个功能单元抽象为“对象”。参考 `example/template` 目录，一个标准的 
+MODUS 将每个功能单元抽象为"对象"。参考 `example/template` 目录，一个标准的
 MODUS 对象由以下部分组成：
 
 ### 1. 结构定义 (`template.h`)
@@ -218,12 +113,12 @@ static modus_base_cfg_t s_tTemplateBaseCfg = {
 int template_Init(uintptr_t wObjectAddr, uintptr_t wObjectCfgAddr) {
     template_t *ptThis = (template_t *)wObjectAddr;
     template_cfg_t *ptCfg = (template_cfg_t *)wObjectCfgAddr;
-    
+
     ptThis->ptBase = &s_tTemplateBase;
     s_tTemplateBaseCfg.wParent = wObjectAddr; // 记录父对象指针
-    
+
     // 初始化私有资源...
-    
+
     return mbase_Init(ptThis->ptBase, &s_tTemplateBaseCfg);
 }
 
@@ -244,7 +139,7 @@ int template_Run(uintptr_t wObjectAddr) {
 #include "template.h"
 
 /* 声明对象及初始参数 */
-MODUS_DECLARE_OBJECT(template, MyTemplate, 
+MODUS_DECLARE_OBJECT(template, MyTemplate,
     .hwRingSize = 64,
     .pchRingBuffer = s_chBuffer
 );
@@ -252,31 +147,143 @@ MODUS_DECLARE_OBJECT(template, MyTemplate,
 
 ---
 
+## 调试工具链 (Debug Toolchain)
 
+MODUS 提供一套完整的调试工具链，包含 **MLog**、**MShell**、**MWaveform** 三个组件，
+由 **MStudio**（统一调试工作台）整合呈现，实现从日志输出、命令行交互到实时波形
+可视化的全链路调试体验。
 
-## 核心组件与工具
+### MStudio — 统一调试工作台
 
-### 🛠️ SuperWaveform 分析工具
-位于 `tools/superwaveform`，这是一个高性能的波形可视化利器：
-*   **实时分析**：支持多通道实时采集，具备波形锁定、时间窗口缩放功能。
-*   **精密测量**：按 `Space` 键开启虚线十字测量，支持频率、时间差、幅值差实时计算。
-*   **数据归档**：一键保存符合年月日时分秒格式的规范 CSV 实验报告。
-*   **离线回放**：专业的多窗口离线查看器，支持对历史数据进行缩放和平移。
+基于 SDL2 + ImGui + ImPlot 开发，集成波形分析、Shell 终端、日志查看与变量检测功能。
 
-### 📦 MODUS 框架核心
-*   **MLOG**: 分级日志系统。
-*   **GWaveform**: 极简的嵌入式波形上传协议。
-*   **GShell**: 交互式 RTT/串口命令行。
+**核心特性**
 
-| `b` | `bool` | `bIsRunning` | 布尔标志 |
-|:---|:---|:---|:---|
-| `pt` | `Pointer to Type`| `ptThis`, `ptMotor`| 指向结构体或自定义类型的指针 |
-| `pch`| `uint8_t *` | `pchBuffer` | 指向字节流的指针 |
-| `pfcn`| `Function Ptr` | `pfcnCallback` | 函数指针 |
-| `s_` | `Static` | `s_tModusBase` | 静态变量 (文件作用域) |
-| `g_` | `Global` | `g_hwCount` | 全局变量 |
+- **多面板融合**：波形 (Waveform)、Shell 终端、日志查看、寄存器/变量检测。
+- **深度缓存**：本地支持百万级点位存储，上电瞬间数据不再丢失。
+- **专业交互**：支持时间轴滚动缩放、鼠标平移查看历史数据。
+- **自定义宏**：集成常用调试指令按钮，提升调试效率。
 
-- **行宽限制**：所有源代码行的最大长度不得超过 **86个字符**。
+| 链接 | 说明 |
+|:---|:---|
+| [用户使用手册](./docs/mstudio/user_manual.md) | 界面功能与操作说明 |
+| [下位机集成指南](./docs/mstudio/mcu_integration.md) | 如何在 MCU 侧推送波形数据 |
+| [架构设计说明](./docs/mstudio/architecture_design.md) | 软件设计原理与二次开发 |
+| [源码仓库](https://github.com/wyxun/mstudio) | GitHub 开源地址 |
+
+---
+
+### MLog — 分级日志系统
+
+MODUS 提供两个互补的日志宏，以覆盖嵌入式开发中的不同场景。
+
+#### 1. `MLOG` — 类型自动分发（高效、零缓存）
+通过 `plooc` 变参技术将每个参数的类型自动映射到底层 `TRACE` 接口处理函数。它不需要格式
+化解析，性能最高，且类型安全。
+
+```c
+#include "mdebug/util_debug.h"
+
+// 简单字符串
+MLOG(I, "System startup.\n");
+
+// 混合字符串与变量 (自动按类型分发)
+MLOG(W, "Sensor alert! ID: ", wID, ", Val: ", hwVal, "\n");
+
+// 十六进制输出 (手动带 0x)
+MLOG(D, "Buffer Head: 0x", wHead, "\n");
+```
+
+#### 2. `MLOGF` — 格式化输出（标准风格、轻量级）
+内部调用手写格式化解析器（无 `snprintf` 依赖），支持常用的格式符：`%d %u %x %s %c`
+以及补零和宽度（如 `%08x`）。
+
+```c
+// 常用整数格式化
+MLOGF(I, "Current tick: %d\n", wTicks);
+
+// 带补零的十六进制
+MLOGF(D, "Address: 0x%08x\n", (uintptr_t)ptThis);
+
+// 组合字符串与字符
+MLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
+```
+
+#### 3. 日志级别 (Severity Levels)
+可以通过在 `userconfig.h` 中定义 `MODUS_LOG_LEVEL` 来控制编译期过滤级别：
+- `MODUS_LOG_LEVEL_NONE`  (0)
+- `MODUS_LOG_LEVEL_ERROR` (1) - 简写 `E`
+- `MODUS_LOG_LEVEL_WARN`  (2) - 简写 `W`
+- `MODUS_LOG_LEVEL_INFO`  (3) - 简写 `I` (默认级别)
+- `MODUS_LOG_LEVEL_DEBUG` (4) - 简写 `D`
+
+#### 4. 设计详情
+更多关于 MLog 的零缓存设计与实现细节，请参考 [MLog 设计文档](doc/superpowers/LOG_design.md)。
+
+---
+
+### MShell — 极简调试 Shell
+
+MODUS 内置轻量级 RTT 调试 Shell，随 `modus_Run()` 自动轮询，**无需修改主循环**，连接
+J-Link RTT Viewer 即用。可通过 `mshell_SetIO()` 将 I/O 后端从默认 RTT 替换为 UART。
+
+#### 内置命令
+
+| 命令 | 说明 |
+|------|------|
+| `help` | 列出所有命令 |
+| `ver`  | 打印 MODUS 版本 |
+| `list` | 查看所有注册的 mbase 对象（id、event） |
+| `post <id_hex> <event_hex>` | 向指定对象投递事件 |
+| `log [-E][-W][-I][-D]` | 运行期开关 MLog 各级别（无参数 = 显示当前状态） |
+
+#### 注册自定义命令
+
+```c
+#include "mdebug/mshell.h"
+
+static void cmd_burn(const char *args) {
+    MLOGF(I, "Burn-in started\r\n");
+}
+/* 零代码初始化：在 .c 中定义宏即可自动注册 */
+MODUS_SHELL_CMD(burn, cmd_burn, "Burn-in test");
+```
+
+#### 运行期日志级别控制
+
+`g_chGLogMask` 默认由 `MLOG_MASK_DEFAULT`（全开，0x0F）初始化。
+可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
+
+详细配置、UART 后端替换及注意事项参考 [MShell 使用指南](doc/mshell.md)。
+
+---
+
+### MWaveform — 实时波形采集与可视化
+
+MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适用于 FOC 电机、PID 调试
+等高频信号可视化场景。
+
+#### 核心优势
+- **极致性能**：底层采用 SPSC 无锁环形缓冲区，20kHz 采样下 CPU 占用极低。
+- **上位机支持**：配套 Python 可视化工具，基于 `pyqtgraph` 实现，支持 OpenGL 加速。
+
+#### 快速使用
+1. **MCU 侧注册通道**：
+   ```c
+   uint8_t s_chIa = mwaveform_AddChannel("Motor_Ia", 1000.0f);
+   mwaveform_Start();
+   ```
+2. **在中断中推送数据**：
+   ```c
+   mwaveform_Push(s_chIa, fCurrentIa);
+   mwaveform_Commit();
+   ```
+3. **PC 侧启动查看器**：
+   ```bash
+   python tools/mwaveform/viewer.py
+   ```
+
+详细设计、协议格式及性能数据请参考 [MWaveform 完整文档](docs/mdebug/mwaveform.md)。
 
 ---
 
@@ -393,11 +400,11 @@ CFLAGS += $(MODUS_CFLAGS)
 
 | 变量 | 默认 | 作用 |
 |------|:----:|------|
-| `MSHELL_ENABLE` | 0 | mshell + trace + SEGGER_RTT 调试 Shell |
-| `MWAVEFORM_ENABLE` | 0 | mwaveform 实时波形采集 |
-| `MSTORAGE_ENABLE` | 0 | mstorage 持久化存储 |
-| `MBLINFO_ENABLE` | 0 | mblinfo Bootloader 共享信息 |
-| `MODUS_USE_LOG` | 0 | MLOG / MLOGF 日志宏 |
+| `MSHELL_ENABLE` | 0 | MShell + trace + SEGGER_RTT 调试 Shell |
+| `MWAVEFORM_ENABLE` | 0 | MWaveform 实时波形采集 |
+| `MSTORAGE_ENABLE` | 0 | MStorage 持久化存储 |
+| `MBLINFO_ENABLE` | 0 | MBlInfo Bootloader 共享信息 |
+| `MODUS_USE_LOG` | 0 | MLog / MLOGF 日志宏 |
 | `MODUS_USE_ASSERT` | 0 | MODUS_ASSERT 断言宏 |
 
 **输出变量：**
@@ -437,7 +444,8 @@ C_INCLUDES += -I. $(MODUS_INCLUDES)
 C_DEFS += $(MODUS_CFLAGS)
 ```
 
-> 完整示例参考 `example/blm/makefile`：`make` 默认 `-O0` + 全调试，`make release` 剥离所有调试模块。
+> 完整示例参考 `example/blm/makefile`：`make` 默认 `-O0` + 全调试，`make release`
+> 剥离所有调试模块。
 
 ### 核心初始化流
 `modus_Init()` 会解析链接器生成的 `init_infos` 数据段，动态执行所有已声明对象的
@@ -445,10 +453,10 @@ C_DEFS += $(MODUS_CFLAGS)
 ```c
 int main(void) {
     modus_t tModus = { 0 };
-    
+
     modus_Init(&tModus); // 自动初始化所有模块
     while (1) {
-        modus_Run();    // 轮训调度所有模块的 Run() 与协程
+        modus_Run();    // 轮询调度所有模块的 Run() 与协程
     }
 }
 
@@ -461,6 +469,7 @@ void SysTick_Handler(void) {
 ---
 
 ## Git 子模块管理 (Git Submodules Configuration)
+
 由于外设底层、核心 CMSIS、MODUS 均属于独立外链依赖仓库。
 **首次克隆本仓库架构：**
 务必带上 `--recursive` 参数，拉取所有依赖：
