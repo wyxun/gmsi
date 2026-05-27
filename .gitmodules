@@ -1,12 +1,6 @@
 [submodule "lib/perf_counter"]
 	path = lib/perf_counter
-	url = https://github.com/GorgonMeducer/perf_counter.git
+	url = https://mirror.ghproxy.com/github.com/GorgonMeducer/perf_counter.git
 [submodule "lib/plooc"]
 	path = lib/plooc
-	url = https://github.com/GorgonMeducer/PLOOC.git
-[submodule "tools/superwaveform/thirdparty/implot"]
-	path = tools/superwaveform/thirdparty/implot
-	url = https://github.com/epezent/implot.git
-[submodule "tools/superwaveform/thirdparty/imgui"]
-	path = tools/superwaveform/thirdparty/imgui
-	url = https://github.com/ocornut/imgui.git
+	url = https://mirror.ghproxy.com/github.com/GorgonMeducer/PLOOC.git
