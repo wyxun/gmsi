@@ -18,7 +18,7 @@ typedef struct{
 }mcoroutine_handle_t;
 
 // Function prototypes
-void mcoroutine_Init(void);
+int mcoroutine_Init(void);
 int mcoroutine_Run(void);
 
 int mcoroutine_Insert(mcoroutine_handle_t *ptHandle, void *pvParam, fcnCoroutine pfcn);

@@ -85,25 +85,23 @@ int mbase_Init(modus_base_t *ptBase, modus_base_cfg_t *ptCfg)
  */
 int mbase_EventPost(uint32_t wId, uint32_t wEvent)
 {
-    int wRet = MODUS_SUCCESS;
-    uint8_t chErgodicTime = 1;
-    mlist_item_t *ptListItemDes = tListObject.tListEnd.ptPrevious;;
-    modus_base_t *ptBaseDes;
-
     // Check for valid input
     if (wId == 0 || wEvent == 0) {
         return MODUS_EINVAL;
     }
 
+    int wRet = MODUS_SUCCESS;
+    mlist_item_t *ptListItemDes = tListObject.tListEnd.ptPrevious;
+    modus_base_t *ptBaseDes;
+
     // Find the list item with the given ID
-    for (; ptListItemDes != &tListObject.tListEnd; ptListItemDes = ptListItemDes->ptPrevious, \
-            chErgodicTime++) {
+    for (; ptListItemDes != &tListObject.tListEnd; ptListItemDes = ptListItemDes->ptPrevious) {
         if(ptListItemDes->wItemValue == wId)
             break;
     }
 
     // If the item was found, update its event
-    if(chErgodicTime <= tListObject.wNumberOfItems)
+    if(ptListItemDes != &tListObject.tListEnd)
     {
         ptBaseDes = ptListItemDes->pvOwner;
         MODUS_ASSERT(NULL != ptBaseDes);
@@ -168,21 +166,18 @@ int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem)
         return MODUS_EINVAL;
     }
 
-    int wRet = 0;
+    int wRet = MODUS_SUCCESS;
     mlist_item_t *ptListItemDes = tListObject.tListEnd.ptPrevious;
-    uint8_t chErgodicTime = 1;
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                             \
-            ptListItemDes != &tListObject.tListEnd;                             \
-            ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
+    for (; ptListItemDes != &tListObject.tListEnd; ptListItemDes = ptListItemDes->ptPrevious) {
         if(ptListItemDes->wItemValue == wId)
             break;
     }
 
     // If the item was found, update its message and length, and set a transition event
-    if(chErgodicTime <= tListObject.wNumberOfItems)
+    if(ptListItemDes != &tListObject.tListEnd)
     {
         ptBaseDes = ptListItemDes->pvOwner;
         ptMsgItem->tListItem.pvOwner = ptMsgItem;
@@ -275,21 +270,18 @@ int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, uint16_t hwLeng
         return MODUS_EINVAL;
     }
 
-    int wRet = 0;
+    int wRet = MODUS_SUCCESS;
     mlist_item_t *ptListItemDes = tListObject.tListEnd.ptPrevious;
-    uint8_t chErgodicTime = 1;
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                             \
-            ptListItemDes != &tListObject.tListEnd;                             \
-            ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
+    for (; ptListItemDes != &tListObject.tListEnd; ptListItemDes = ptListItemDes->ptPrevious) {
         if(ptListItemDes->wItemValue == wId)
             break;
     }
 
     // If the item was found, update its message and length, and set a transition event
-    if(chErgodicTime <= tListObject.wNumberOfItems)
+    if(ptListItemDes != &tListObject.tListEnd)
     {
         ptBaseDes = ptListItemDes->pvOwner;
         MODUS_ASSERT(NULL != ptBaseDes);
@@ -403,20 +395,16 @@ share_mem_t* mbase_ShareMemRead(uint32_t wId)
         return NULL;
     }
 
-    int wRet = 0;
     mlist_item_t *ptListItemDes = tListObject.tListEnd.ptPrevious;
-    uint8_t chErgodicTime = 1;
     modus_base_t *ptBaseDes;
 
     // Find the list item with the given ID
-    for (uint8_t chErgodicTime = 1;                                             \
-            ptListItemDes != &tListObject.tListEnd;                             \
-            ptListItemDes = ptListItemDes->ptPrevious, chErgodicTime++) {
+    for (; ptListItemDes != &tListObject.tListEnd; ptListItemDes = ptListItemDes->ptPrevious) {
         if(ptListItemDes->wItemValue == wId)
             break;
     }
 
-    if(chErgodicTime <= tListObject.wNumberOfItems)
+    if(ptListItemDes != &tListObject.tListEnd)
     {
         ptBaseDes = ptListItemDes->pvOwner;
         MODUS_ASSERT(NULL != ptBaseDes);
