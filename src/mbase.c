@@ -42,6 +42,14 @@ int mbase_Init(modus_base_t *ptBase, modus_base_cfg_t *ptCfg)
     ptBase->wId = ptCfg->wId;
     ptBase->wEvent = 0;
 
+    // Automatically bind RingBuffer if provided
+    if (ptCfg->pchRingBuffer != NULL && ptCfg->hwRingSize > 0) {
+        ptBase->tRingBuffer.buffer       = ptCfg->pchRingBuffer;
+        ptBase->tRingBuffer.hwBufferSize = ptCfg->hwRingSize;
+        ptBase->tRingBuffer.hwWriteIndex = 0;
+        ptBase->tRingBuffer.hwReadIndex  = 0;
+    }
+
     // Initialise list item and set its value and owner
     mlist_ItemInit(&ptBase->tListItem);
     ptBase->tListItem.wItemValue = ptBase->wId;

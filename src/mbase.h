@@ -46,6 +46,11 @@ typedef struct {
     uint32_t wId;
     uintptr_t wParent;
     share_mem_t *ptShareMem;
+    
+    /* 新增的 RingBuffer 框架自动绑定参数 */
+    uint8_t  *pchRingBuffer;
+    uint16_t  hwRingSize;
+    
     modus_interface_t FcnInterface;
 } modus_base_cfg_t;
 
@@ -64,13 +69,13 @@ typedef struct {
 int mbase_Init(modus_base_t *ptBase, modus_base_cfg_t *ptCfg);
 int mbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t mbase_EventPend(modus_base_t *ptBase);
-int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem);
-int mbase_MessagePend(modus_base_t *ptBase, message_t *ptMsg);
+int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem) __attribute__((deprecated("Use RingBuffer IPC instead")));
+int mbase_MessagePend(modus_base_t *ptBase, message_t *ptMsg) __attribute__((deprecated("Use RingBuffer IPC instead")));
 int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, 
                             uint16_t hwLength);
 int mbase_MessagePendFromRing(modus_base_t *ptBase, uint8_t *pchMsgBuffer, 
                               uint16_t hwMaxSize);
-share_mem_t* mbase_ShareMemRead(uint32_t wId);
+share_mem_t* mbase_ShareMemRead(uint32_t wId) __attribute__((deprecated("Use strong-typed DI pointer instead")));
 mlist_t* mbase_GetBaseList(void);
 void mbase_DebugListBase(void);
 
