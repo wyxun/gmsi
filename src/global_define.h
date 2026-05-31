@@ -6,7 +6,7 @@
 #define MODUS_PURPOSE                    GENERAL_PURPOSE //!< MODUS purpose   
 #define MODUS_INTERFACE_VERSION          4               //!< MODUS interface version
 #define MODUS_MAJOR_VERSION              0               //!< MODUS major version
-#define MODUS_MINOR_VERSION              4
+#define MODUS_MINOR_VERSION              5
 
 #define MODUS_VERSION                 {                                         \
                                         MODUS_PURPOSE,                          \
@@ -140,5 +140,12 @@ typedef struct {
     uintptr_t wObjectAddr;
     uintptr_t wConfigAddr;
 } modus_init_info_t;
+
+#if defined(__riscv)
+#undef __disable_irq
+#define __disable_irq()   __asm__ __volatile__("csrc mstatus, 8")
+#undef __enable_irq
+#define __enable_irq()    __asm__ __volatile__("csrs mstatus, 8")
+#endif
 
 #endif
