@@ -37,9 +37,20 @@ typedef struct {
 } message_item_t;
 
 typedef struct {
+    int64_t  lTargetMs;  /* 目标溢出系统时间戳 (ms) */
+    uint32_t wInterval;  /* 定时周期 (ms, 0 表示单次) */
+    bool     bActive;    /* 定时器激活状态 */
+} msoft_timer_t;
+
+typedef struct {
     uint32_t wId;
     uintptr_t wParent;
     share_mem_t *ptShareMem;
+    
+    /* 新增的 RingBuffer 框架自动绑定参数 */
+    uint8_t  *pchRingBuffer;
+    uint16_t  hwRingSize;
+    
     modus_interface_t FcnInterface;
 } modus_base_cfg_t;
 
@@ -58,15 +69,19 @@ typedef struct {
 int mbase_Init(modus_base_t *ptBase, modus_base_cfg_t *ptCfg);
 int mbase_EventPost(uint32_t wId, uint32_t wEvent);
 uint32_t mbase_EventPend(modus_base_t *ptBase);
-int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem);
-int mbase_MessagePend(modus_base_t *ptBase, message_t *ptMsg);
+int mbase_MessagePost(uint32_t wId, message_item_t *ptMsgItem) __attribute__((deprecated("Use RingBuffer IPC instead")));
+int mbase_MessagePend(modus_base_t *ptBase, message_t *ptMsg) __attribute__((deprecated("Use RingBuffer IPC instead")));
 int mbase_MessagePostToRing(uint32_t wId, uint8_t *pchMsgBuffer, 
                             uint16_t hwLength);
 int mbase_MessagePendFromRing(modus_base_t *ptBase, uint8_t *pchMsgBuffer, 
                               uint16_t hwMaxSize);
-share_mem_t* mbase_ShareMemRead(uint32_t wId);
+share_mem_t* mbase_ShareMemRead(uint32_t wId) __attribute__((deprecated("Use strong-typed DI pointer instead")));
 mlist_t* mbase_GetBaseList(void);
 void mbase_DebugListBase(void);
+
+void mbase_TimerInit(msoft_timer_t *ptTimer);
+void mbase_TimerStart(msoft_timer_t *ptTimer, uint32_t wDelayMs);
+bool mbase_TimerPoll(msoft_timer_t *ptTimer);
 
 // msg item macros
 #define MODUS_MSG_ITEM_DECLARE(OBJECT,NAME,SIZE)                                \
