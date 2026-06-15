@@ -7,6 +7,10 @@
 
 /*============================ COMPILE-TIME SWITCH ===========================*/
 
+#ifdef MODUS_CFG_USER_CONFIG_INCLUSION
+#   include MODUS_CFG_USER_CONFIG_INCLUSION
+#endif
+
 #ifndef MSHELL_ENABLE
 #   define MSHELL_ENABLE            1
 #endif
@@ -17,7 +21,7 @@
 
 /* 命令行缓冲区大小（含 '\0'），可在 userconfig.h 中覆盖 */
 #ifndef MSHELL_LINE_SIZE
-#   define MSHELL_LINE_SIZE     32
+#   define MSHELL_LINE_SIZE     64
 #endif
 
 /* 最大注册命令数（含内置命令），可在 userconfig.h 中覆盖 */

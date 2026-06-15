@@ -290,11 +290,13 @@ void mshell_Poll(void)
         }
 #endif
         /* 内置命令排在用户命令之后（用户命令优先显示在 help 列表中） */
-        s_aptCmds[s_chCmdCount++] = &s_tCmdHelp;
-        s_aptCmds[s_chCmdCount++] = &s_tCmdVer;
-        s_aptCmds[s_chCmdCount++] = &s_tCmdList;
-        s_aptCmds[s_chCmdCount++] = &s_tCmdPost;
-        s_aptCmds[s_chCmdCount++] = &s_tCmdLog;
+        #define SAFE_REG_CMD(cmd) if (s_chCmdCount < MSHELL_MAX_CMDS) s_aptCmds[s_chCmdCount++] = &cmd
+        SAFE_REG_CMD(s_tCmdHelp);
+        SAFE_REG_CMD(s_tCmdVer);
+        SAFE_REG_CMD(s_tCmdList);
+        SAFE_REG_CMD(s_tCmdPost);
+        SAFE_REG_CMD(s_tCmdLog);
+        #undef SAFE_REG_CMD
 
         shell_puts("\r\n[mshell] ready. Type 'help'.\r\n> ");
     }
