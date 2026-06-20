@@ -1,6 +1,11 @@
 #ifndef SEGGER_RTT_CONF_H
 #define SEGGER_RTT_CONF_H
 
+#ifdef MODUS_CFG_USER_CONFIG_INCLUSION
+#   include MODUS_CFG_USER_CONFIG_INCLUSION
+#endif
+
+
 /*********************************************************************
 *
 *       Defines, configurable
@@ -21,7 +26,7 @@
 #endif
 
 #ifndef   BUFFER_SIZE_DOWN
-  #define BUFFER_SIZE_DOWN                          (16)    // Size of the buffer for terminal input to target from host (Usually keyboard input)
+  #define BUFFER_SIZE_DOWN                          (64)    // Size of the buffer for terminal input to target from host (Usually keyboard input)
 #endif
 
 #ifndef   SEGGER_RTT_PRINTF_BUFFER_SIZE
