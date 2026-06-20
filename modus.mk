@@ -71,8 +71,6 @@ MODUS_SRCS_DEBUG = \
     $(MODUS_ROOT)/src/mdebug/trace.c \
     $(MODUS_ROOT)/src/mdebug/trace_fmt.c \
     $(MODUS_ROOT)/src/mdebug/util_debug.c \
-    $(MODUS_ROOT)/src/mdebug/perfc_port.c \
-    $(MODUS_ROOT)/src/mdebug/mdebug_riscv.c \
     $(MODUS_ROOT)/src/mdebug/segger_rtt/SEGGER_RTT.c
 
 ifeq ($(MODUS_USE_DEFAULT_PERFC_PORT),1)
