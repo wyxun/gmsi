@@ -60,6 +60,10 @@ MODUS_SRCS_CORE = \
     $(MODUS_ROOT)/src/utilities/mringbuf.c
 
 # ---------------------------------------------------------------------------
+# 默认启用 MODUS 内置的 perf_counter 移植 (包含 perfc_port.c 和 mdebug_riscv.c)
+# 若外部工程已自定义移植（如 example/blm），需在 include 本文件前设置 MODUS_USE_DEFAULT_PERFC_PORT = 0
+MODUS_USE_DEFAULT_PERFC_PORT ?= 1
+
 # Source files — debug (mshell + trace + SEGGER_RTT)
 # ---------------------------------------------------------------------------
 MODUS_SRCS_DEBUG = \
@@ -70,6 +74,12 @@ MODUS_SRCS_DEBUG = \
     $(MODUS_ROOT)/src/mdebug/perfc_port.c \
     $(MODUS_ROOT)/src/mdebug/mdebug_riscv.c \
     $(MODUS_ROOT)/src/mdebug/segger_rtt/SEGGER_RTT.c
+
+ifeq ($(MODUS_USE_DEFAULT_PERFC_PORT),1)
+MODUS_SRCS_DEBUG += \
+    $(MODUS_ROOT)/src/mdebug/perfc_port.c \
+    $(MODUS_ROOT)/src/mdebug/mdebug_riscv.c
+endif
 
 # ---------------------------------------------------------------------------
 # Source files — waveform

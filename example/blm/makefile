@@ -69,6 +69,9 @@ ifeq ($(filter release,$(MAKECMDGOALS)),release)
     MODUS_USE_ASSERT  = 0
 endif
 
+# 使用 BLM 自带的 perfc_port_user.c 移植，关闭 MODUS 默认内置移植
+MODUS_USE_DEFAULT_PERFC_PORT = 0
+
 include $(MODUS_ROOT)/modus.mk
 
 # Project-specific source files (platform-independent)
