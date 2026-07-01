@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 状态 | 核心变更 |
 | :--- | :--- | :--- | :--- |
+| **v0.5.0.2** | 2026-07-01 | 稳定 | arch 目录重构：perfc_port 迁移、riscv_shim 解耦、mdebug_riscv 去硬编码 |
 | v0.5.0.1 | 2026-06-20 | 稳定 | 支持 userconfig.h 包含配置以及 mshell 内置命令溢出保护机制 |
 | v0.5.0.0 | 2026-06-02 | 稳定 | 引入对 RISC-V 双架构支持，并统一 perf_counter 移植文件 |
 | v0.4.0.4 | 2026-05-31 | 稳定 | 彻底消除 shadowed variable 隐患；实现 Poll 被动软定时器 MTimer 并支持 RingBuffer 自动静默绑定 |
@@ -18,6 +19,18 @@
 | **v0.2.0.1** | 2026-04-08 | 稳定 | MLOGF 支持 %lu 格式化打印 |
 | **v0.2.0.0** | 2026-04-07 | 稳定 | 新增 MStorage 持久化存储模块 |
 | **v0.1.0.0** | 2026-03-15 | 稳定 | 初始版本发布 |
+
+## [0.5.0.2] - 2026-07-01
+
+### 新增与重构
+- **arch 目录体系**: 新建 `src/arch/` 平台架构抽象层，集中存放内核架构相关的底层移植代码。
+  - `perfc_port.c/h` 从 `src/mdebug/` 迁移至 `src/arch/`，与 debug 子系统解耦。
+  - `riscv/` 子目录存放 RISC-V 通用移植，`cortex-m/` 存放 Cortex-M debug（mdebug_cm、fault_cm）。
+  - `cmsis_compiler.h` 作为架构感知的编译器抽象 shim（RISC-V + ARM）。
+- **riscv_shim 模块**: 新增 `src/arch/riscv/riscv_shim.c`，提供 RISC-V bare-metal compiler-rt builtin 及 libc 替代函数。支持 `MODUS_NO_RISCV_SHIM` 外部 opt-out。
+- **mdebug_riscv 去硬编码**: 芯片内存地址范围改用链接脚本导出符号 `__flash_start/__flash_end/__sram_start/__sram_end`，消除 CH592 特判。
+- **perfc_port 双方案**: RISC-V 默认软件 SysTick 64 位拓展计数器（兼容 mcycle 未实现的芯片），可通过 `MODUS_PERFC_USE_MCYCLE` 切换到硬件 cycle CSR 方案。
+- **外部库路径**: `modus.mk` 新增 `$(MODUS_ROOT)/src/arch` 到 include path。
 
 ## [0.5.0.1] - 2026-06-20
 

@@ -75,9 +75,16 @@ MODUS_SRCS_DEBUG = \
 
 ifeq ($(MODUS_USE_DEFAULT_PERFC_PORT),1)
 MODUS_SRCS_DEBUG += \
-    $(MODUS_ROOT)/src/mdebug/perfc_port.c \
-    $(MODUS_ROOT)/src/mdebug/mdebug_riscv.c
+    $(MODUS_ROOT)/src/arch/perfc_port.c \
+    $(MODUS_ROOT)/src/arch/riscv/riscv_shim.c
 endif
+
+MODUS_SRCS_ARCH_DEBUG = \
+    $(MODUS_ROOT)/src/arch/riscv/mdebug_riscv.c \
+    $(MODUS_ROOT)/src/arch/cortex-m/mdebug_cm.c \
+    $(MODUS_ROOT)/src/arch/cortex-m/fault_cm.c
+
+MODUS_SRCS_DEBUG += $(MODUS_SRCS_ARCH_DEBUG)
 
 # ---------------------------------------------------------------------------
 # Source files — waveform
@@ -122,7 +129,8 @@ endif
 MODUS_INCLUDES = \
     -I$(MODUS_ROOT) \
     -I$(MODUS_ROOT)/src \
-    -I$(MODUS_ROOT)/src/mdi
+    -I$(MODUS_ROOT)/src/mdi \
+    -I$(MODUS_ROOT)/src/arch
 
 # ---------------------------------------------------------------------------
 # Compile flags generated from switches

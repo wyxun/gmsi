@@ -6,6 +6,12 @@
 
 #if defined(__riscv)
 
+/* 由 Linker script 导出的内存范围符号 */
+extern uint8_t __flash_start[];
+extern uint8_t __flash_end[];
+extern uint8_t __sram_start[];
+extern uint8_t __sram_end[];
+
 /*============================ INLINE ASM HELPERS ==============================*/
 
 static uintptr_t get_sp(void)
@@ -72,6 +78,22 @@ static uint32_t get_mip(void)
 }
 
 /*============================ PRIVATE FUNCTIONS ==============================*/
+
+/*-- Address range helpers ----------------------------------------------------*/
+
+static bool is_likely_code_addr(uint32_t wAddr)
+{
+    uintptr_t flash_start = (uintptr_t)__flash_start;
+    uintptr_t flash_end   = (uintptr_t)__flash_end;
+    return (wAddr >= flash_start && wAddr < flash_end);
+}
+
+static bool is_valid_sram_addr(uintptr_t wAddr)
+{
+    uintptr_t sram_start = (uintptr_t)__sram_start;
+    uintptr_t sram_end   = (uintptr_t)__sram_end;
+    return (wAddr >= sram_start && wAddr < (sram_end - 4));
+}
 
 /*-- regs command: dump core registers ----------------------------------------*/
 
@@ -184,12 +206,6 @@ static void cmd_poke(const char *args)
 
 /*-- stack command: dump stack memory around current SP ------------------------*/
 
-static bool is_likely_code_addr(uint32_t wAddr)
-{
-    /* CH592 code space: 0x00000000 - 0x00080000 */
-    return (wAddr <= 0x00080000u);
-}
-
 static void cmd_stack(const char *args)
 {
     uintptr_t wSp = get_sp();
@@ -253,19 +269,19 @@ static void cmd_trap(const char *args)
     } else {
         MLOGF(E, "Type: Synchronous Exception (Fault)\r\n");
         switch (wCode) {
-            case 0:  MLOG(E, "  Instruction address misaligned (指令地址非对齐错误)\r\n"); break;
-            case 1:  MLOG(E, "  Instruction access fault (指令访问错误 - PMP限制或无效地址)\r\n"); break;
-            case 2:  MLOG(E, "  Illegal instruction (非法指令 - 译码失败或特权级冲突)\r\n"); break;
-            case 3:  MLOG(E, "  Breakpoint (断点异常 - ebreak)\r\n"); break;
-            case 4:  MLOG(E, "  Load address misaligned (数据加载地址非对齐错误)\r\n"); break;
-            case 5:  MLOG(E, "  Load access fault (数据加载错误 - PMP限制或无效物理地址)\r\n"); break;
-            case 6:  MLOG(E, "  Store/AMO address misaligned (数据存储地址非对齐错误)\r\n"); break;
-            case 7:  MLOG(E, "  Store/AMO access fault (数据存储错误 - PMP限制或无效物理地址)\r\n"); break;
-            case 8:  MLOG(E, "  Environment call from U-mode (U模式环境系统调用 - ecall)\r\n"); break;
-            case 11: MLOG(E, "  Environment call from M-mode (M模式环境系统调用 - ecall)\r\n"); break;
-            case 12: MLOG(E, "  Instruction page fault (指令虚存页故障)\r\n"); break;
-            case 13: MLOG(E, "  Load page fault (加载数据虚存页故障)\r\n"); break;
-            case 15: MLOG(E, "  Store/AMO page fault (存储数据虚存页故障)\r\n"); break;
+            case 0:  MLOG(E, "  Instruction address misaligned\r\n"); break;
+            case 1:  MLOG(E, "  Instruction access fault\r\n"); break;
+            case 2:  MLOG(E, "  Illegal instruction\r\n"); break;
+            case 3:  MLOG(E, "  Breakpoint (ebreak)\r\n"); break;
+            case 4:  MLOG(E, "  Load address misaligned\r\n"); break;
+            case 5:  MLOG(E, "  Load access fault\r\n"); break;
+            case 6:  MLOG(E, "  Store/AMO address misaligned\r\n"); break;
+            case 7:  MLOG(E, "  Store/AMO access fault\r\n"); break;
+            case 8:  MLOG(E, "  Environment call from U-mode (ecall)\r\n"); break;
+            case 11: MLOG(E, "  Environment call from M-mode (ecall)\r\n"); break;
+            case 12: MLOG(E, "  Instruction page fault\r\n"); break;
+            case 13: MLOG(E, "  Load page fault\r\n"); break;
+            case 15: MLOG(E, "  Store/AMO page fault\r\n"); break;
             default: MLOGF(E, "  Reserved / Custom Fault (%u)\r\n", (unsigned)wCode); break;
         }
     }
@@ -280,70 +296,43 @@ void mdebug_riscv_DumpException(uintptr_t sp, uint32_t mepc, uint32_t mcause, ui
     MLOG(E, "      !! RISC-V HARDWARE FAULT !!       \r\n");
     MLOG(E, "========================================\r\n");
 
-    /* Exception core info */
-    MLOGF(E, "MCAUSE   = 0x%08X  (Exception Code: %u)\r\n", (unsigned)mcause, (unsigned)(mcause & 0x7FFFFFFF));
-    MLOGF(E, "MEPC(PC) = 0x%08X  (跑飞时的指令地址)\r\n", (unsigned)mepc);
-    MLOGF(E, "MTVAL    = 0x%08X  (发生故障的内存地址/非法指令码)\r\n", (unsigned)mtval);
-    MLOGF(E, "SP (x2)  = 0x%08X  (异常发生时的栈指针)\r\n", (unsigned)sp);
+    MLOGF(E, "MCAUSE   = 0x%08X  (Exception Code: %u)\r\n",
+          (unsigned)mcause, (unsigned)(mcause & 0x7FFFFFFF));
+    MLOGF(E, "MEPC(PC) = 0x%08X\r\n", (unsigned)mepc);
+    MLOGF(E, "MTVAL    = 0x%08X\r\n", (unsigned)mtval);
+    MLOGF(E, "SP (x2)  = 0x%08X\r\n", (unsigned)sp);
 
-    /* Decode fault cause */
     uint32_t wCode = mcause & 0x7FFFFFFF;
-    MLOG(E, "\r\n[故障可读性分析与定位提示]:\r\n");
+    MLOG(E, "\r\n[Fault Decode]:\r\n");
     switch (wCode) {
-        case 0:
-            MLOG(E, "  * 指令地址非对齐错误 (Instruction address misaligned)\r\n");
-            MLOG(E, "    原因: 分支跳转目标(PC)不是2字节或4字节对齐。请检查函数指针损坏或飞线。\r\n");
-            break;
-        case 1:
-            MLOG(E, "  * 指令访问错误 (Instruction access fault)\r\n");
-            MLOG(E, "    原因: 跳转到了无效的内存地址（如空指针、外设地址），或PMP（物理内存保护）触发安全阻断。\r\n");
-            break;
-        case 2:
-            MLOG(E, "  * 非法指令 (Illegal instruction)\r\n");
-            MLOGF(E, "    原因: 尝试执行未定义/不支持的指令码（指令值: 0x%08X）。\r\n", (unsigned)mtval);
-            MLOG(E, "    常见于: 跑飞、内存溢出破坏了Flash里的代码段、或者执行了特权指令。\r\n");
-            break;
-        case 3:
-            MLOG(E, "  * 软件断点 (Breakpoint)\r\n");
-            MLOG(E, "    原因: 执行了 ebreak 断点指令。\r\n");
-            break;
-        case 4:
-            MLOG(E, "  * 数据加载地址非对齐错误 (Load address misaligned)\r\n");
-            MLOGF(E, "    原因: 对未对齐的地址(0x%08X)进行了多字节读取。\r\n", (unsigned)mtval);
-            break;
-        case 5:
-            MLOG(E, "  * 数据加载错误 (Load access fault)\r\n");
-            MLOGF(E, "    原因: 尝试从非法或受保护物理地址(0x%08X)读取数据，触发总线错误或PMP阻断。\r\n", (unsigned)mtval);
-            break;
-        case 6:
-            MLOG(E, "  * 数据存储地址非对齐错误 (Store/AMO address misaligned)\r\n");
-            MLOGF(E, "    原因: 对未对齐的地址(0x%08X)进行了多字节写操作。\r\n", (unsigned)mtval);
-            break;
-        case 7:
-            MLOG(E, "  * 数据存储错误 (Store/AMO access fault)\r\n");
-            MLOGF(E, "    原因: 尝试写入非法、受保护物理地址(0x%08X)或只读区域，触发总线错误或PMP阻断。\r\n", (unsigned)mtval);
-            break;
-        case 12: MLOG(E, "  * 指令虚存页故障 (Instruction page fault)\r\n"); break;
-        case 13: MLOG(E, "  * 加载数据虚存页故障 (Load page fault)\r\n"); break;
-        case 15: MLOG(E, "  * 存储数据虚存页故障 (Store/AMO page fault)\r\n"); break;
-        default:
-            MLOGF(E, "  * 未知/厂商自定义内核故障 (Exception Code: %u)\r\n", (unsigned)wCode);
-            break;
+        case 0:  MLOG(E, "  Instruction address misaligned\r\n"); break;
+        case 1:  MLOG(E, "  Instruction access fault\r\n"); break;
+        case 2:  MLOGF(E, "  Illegal instruction (opcode: 0x%08X)\r\n", (unsigned)mtval); break;
+        case 3:  MLOG(E, "  Breakpoint (ebreak)\r\n"); break;
+        case 4:  MLOGF(E, "  Load address misaligned (addr: 0x%08X)\r\n", (unsigned)mtval); break;
+        case 5:  MLOGF(E, "  Load access fault (addr: 0x%08X)\r\n", (unsigned)mtval); break;
+        case 6:  MLOGF(E, "  Store/AMO address misaligned (addr: 0x%08X)\r\n", (unsigned)mtval); break;
+        case 7:  MLOGF(E, "  Store/AMO access fault (addr: 0x%08X)\r\n", (unsigned)mtval); break;
+        case 12: MLOG(E, "  Instruction page fault\r\n"); break;
+        case 13: MLOG(E, "  Load page fault\r\n"); break;
+        case 15: MLOG(E, "  Store/AMO page fault\r\n"); break;
+        default: MLOGF(E, "  Unknown / Custom Fault (Code: %u)\r\n", (unsigned)wCode); break;
     }
 
-    MLOG(E, "\r\n[异常栈上下文转储 (Around SP)]:\r\n");
-    /* Print 16 words from stack pointer */
+    MLOG(E, "\r\n[Stack Context (Around SP)]:\r\n");
     for (int i = 0; i < 16; i++) {
         uintptr_t wAddr = sp + i * 4;
-        /* Simple check to avoid reading outside of SRAM */
-        if (wAddr >= 0x20000000 && wAddr <= 0x20008000) {
+        if (is_valid_sram_addr(wAddr)) {
             uint32_t wVal = *(volatile uint32_t *)wAddr;
             if (i == 0) {
-                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X <-- 发生异常时的栈顶\r\n", i*4, (unsigned)wAddr, (unsigned)wVal);
+                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X\r\n",
+                      i*4, (unsigned)wAddr, (unsigned)wVal);
             } else if (is_likely_code_addr(wVal)) {
-                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X <-- 疑似代码地址/函数返回RA?\r\n", i*4, (unsigned)wAddr, (unsigned)wVal);
+                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X <-- RA/PC?\r\n",
+                      i*4, (unsigned)wAddr, (unsigned)wVal);
             } else {
-                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X\r\n", i*4, (unsigned)wAddr, (unsigned)wVal);
+                MLOGF(E, "  sp+0x%02X [0x%08X] = 0x%08X\r\n",
+                      i*4, (unsigned)wAddr, (unsigned)wVal);
             }
         }
     }

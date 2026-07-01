@@ -22,8 +22,24 @@ __attribute__((weak)) uint32_t get_system_core_clock_hz(void)
 
 #if defined(__riscv)
 /*============================================================================
- * RISC-V 架构通用底层移植实现
+ * RISC-V (QingKe V4C) 底层移植实现
+ *
+ * 部分 RISC-V 芯片(如 CH592)的 mcycle CSR 硬件未实现, 因此使用软件方案:
+ *
+ * 1. SysTick_Handler 每 1ms 将 g_perfc_systick_overflow 递增
+ * 2. perfc_port_get_system_timer_elapsed() 返回:
+ *    g_perfc_systick_overflow + SysTick->CNT
+ *    这是一个真正的 64 位单调递增计数器, 永不回绕
+ * 3. 溢出检测和 top 均返回 "永不回绕" 值
+ *
+ * SysTick_Handler 中必须调用:
+ *   perfc_port_insert_to_system_timer_insert_ovf_handler();
+ *
+ * 若芯片正确实现了 mcycle CSR, 可定义 MODUS_PERFC_USE_MCYCLE 切换到硬件方案。
  *===========================================================================*/
+
+#if defined(MODUS_PERFC_USE_MCYCLE)
+/* 硬件 mcycle 方案 — 用于实现了 mcycle CSR 的 RISC-V 芯片 */
 
 static inline int64_t get_riscv_cycle64(void)
 {
@@ -39,9 +55,57 @@ static inline int64_t get_riscv_cycle64(void)
 bool perfc_port_init_system_timer(bool bIsTimeOccupied)
 {
     (void)bIsTimeOccupied;
-    /* RISC-V 的 cycle CSR 属于硬件硬件自启动计数 */
     return true;
 }
+
+int64_t perfc_port_get_system_timer_elapsed(void)
+{
+    return get_riscv_cycle64();
+}
+
+#else
+/* 默认: 软件 SysTick 64 位拓展计数 — 兼容所有 RISC-V 芯片 */
+
+typedef struct
+{
+    volatile uint32_t CTLR;
+    volatile uint32_t SR;
+    volatile uint64_t CNT;
+    volatile uint64_t CMP;
+} perfc_SysTick_Type;
+
+#define perfc_SysTick                 ((perfc_SysTick_Type *)0xE000F000)
+
+/*
+ * 64 位软件溢出计数器, 由 SysTick_Handler 递增
+ * 每次中断加 (SystemCoreClock / 1000), 即每 1ms 的 tick 数
+ */
+volatile uint64_t g_perfc_systick_overflow = 0;
+
+static inline int64_t get_riscv_systick_elapsed64(void)
+{
+    uint64_t ovf_before, ovf_after;
+    uint64_t cnt;
+    do {
+        ovf_before = g_perfc_systick_overflow;
+        cnt        = (uint64_t)perfc_SysTick->CNT;
+        ovf_after  = g_perfc_systick_overflow;
+    } while (ovf_before != ovf_after);
+    return (int64_t)(ovf_before + cnt);
+}
+
+bool perfc_port_init_system_timer(bool bIsTimeOccupied)
+{
+    (void)bIsTimeOccupied;
+    return true;
+}
+
+int64_t perfc_port_get_system_timer_elapsed(void)
+{
+    return get_riscv_systick_elapsed64();
+}
+
+#endif /* MODUS_PERFC_USE_MCYCLE */
 
 uint32_t perfc_port_get_system_timer_freq(void)
 {
@@ -58,21 +122,18 @@ int64_t perfc_port_get_system_timer_top(void)
     return 0x7FFFFFFFFFFFFFFFLL;
 }
 
-int64_t perfc_port_get_system_timer_elapsed(void)
-{
-    return get_riscv_cycle64();
-}
-
 void perfc_port_clear_system_timer_ovf_pending(void)
 {
 }
 
 void perfc_port_stop_system_timer_counting(void)
 {
+    perfc_SysTick->CTLR = 0;
 }
 
 void perfc_port_clear_system_timer_counter(void)
 {
+    perfc_SysTick->CNT = 0;
 }
 
 __attribute__((noinline)) uintptr_t __perfc_port_get_sp(void)
