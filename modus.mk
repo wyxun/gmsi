@@ -60,9 +60,19 @@ MODUS_SRCS_CORE = \
     $(MODUS_ROOT)/src/utilities/mringbuf.c
 
 # ---------------------------------------------------------------------------
-# 默认启用 MODUS 内置的 perf_counter 移植 (包含 perfc_port.c 和 mdebug_riscv.c)
-# 若外部工程已自定义移植（如 example/blm），需在 include 本文件前设置 MODUS_USE_DEFAULT_PERFC_PORT = 0
+# 默认启用 MODUS 内置的 perf_counter 移植
+# 若外部工程已自定义移植（如 posix_uart/template），需在 include 本文件前设置
+# MODUS_USE_DEFAULT_PERFC_PORT = 0
 MODUS_USE_DEFAULT_PERFC_PORT ?= 1
+
+# perf_counter 移植 + RISC-V bare-metal shim（独立于 debug 模块）
+MODUS_SRCS_ARCH =
+
+ifeq ($(MODUS_USE_DEFAULT_PERFC_PORT),1)
+MODUS_SRCS_ARCH += \
+    $(MODUS_ROOT)/src/arch/perfc_port.c \
+    $(MODUS_ROOT)/src/arch/riscv/riscv_shim.c
+endif
 
 # Source files — debug (mshell + trace + SEGGER_RTT)
 # ---------------------------------------------------------------------------
@@ -73,12 +83,7 @@ MODUS_SRCS_DEBUG = \
     $(MODUS_ROOT)/src/mdebug/util_debug.c \
     $(MODUS_ROOT)/src/mdebug/segger_rtt/SEGGER_RTT.c
 
-ifeq ($(MODUS_USE_DEFAULT_PERFC_PORT),1)
-MODUS_SRCS_DEBUG += \
-    $(MODUS_ROOT)/src/arch/perfc_port.c \
-    $(MODUS_ROOT)/src/arch/riscv/riscv_shim.c
-endif
-
+# 架构调试模块 (mshell 命令 + fault handler)，依赖 MSHELL_ENABLE
 MODUS_SRCS_ARCH_DEBUG = \
     $(MODUS_ROOT)/src/arch/riscv/mdebug_riscv.c \
     $(MODUS_ROOT)/src/arch/cortex-m/mdebug_cm.c \
@@ -105,7 +110,7 @@ MODUS_SRCS_BLINFO = \
 # ---------------------------------------------------------------------------
 # Aggregate source list by switches
 # ---------------------------------------------------------------------------
-MODUS_SRCS = $(MODUS_SRCS_CORE)
+MODUS_SRCS = $(MODUS_SRCS_CORE) $(MODUS_SRCS_ARCH)
 
 ifneq ($(MSHELL_ENABLE),0)
 MODUS_SRCS += $(MODUS_SRCS_DEBUG)
