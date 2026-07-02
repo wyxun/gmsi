@@ -2,7 +2,8 @@
 
 | 版本 | 日期 | 状态 | 核心变更 |
 | :--- | :--- | :--- | :--- |
-| **v0.5.0.2** | 2026-07-02 | 稳定 | arch 重构：perfc_port/MSHELL 解耦、Cortex-M debug 迁入、cmsis_compiler 抽象、riscv_shim |
+| **v0.5.0.3** | 2026-07-02 | 稳定 | debug_transport 抽象层，modus.mk arch 子目录 include path，全局 disable_irq 为 0 时 static_assert 警告 |
+| **v0.5.0.2** | 2026-07-01 | 稳定 | arch 重构：perfc_port/MSHELL 解耦、Cortex-M debug 迁入、cmsis_compiler 抽象、riscv_shim |
 | v0.5.0.1 | 2026-06-20 | 稳定 | 支持 userconfig.h 包含配置以及 mshell 内置命令溢出保护机制 |
 | v0.5.0.0 | 2026-06-02 | 稳定 | 引入对 RISC-V 双架构支持，并统一 perf_counter 移植文件 |
 | v0.4.0.4 | 2026-05-31 | 稳定 | 彻底消除 shadowed variable 隐患；实现 Poll 被动软定时器 MTimer 并支持 RingBuffer 自动静默绑定 |
@@ -19,6 +20,15 @@
 | **v0.2.0.1** | 2026-04-08 | 稳定 | MLOGF 支持 %lu 格式化打印 |
 | **v0.2.0.0** | 2026-04-07 | 稳定 | 新增 MStorage 持久化存储模块 |
 | **v0.1.0.0** | 2026-03-15 | 稳定 | 初始版本发布 |
+
+## [0.5.0.3] - 2026-07-02
+
+### 新增与重构
+- **debug_transport 抽象层**: 新增 `src/arch/debug_transport.c/h`，统一调试输出入口。
+  - 默认使用 SEGGER RTT 后端（Cortex-M / RISC-V 通用，纯共享内存机制不依赖外设）。
+  - 与 `USERCONFIG_MSHELL_ON_SERIAL` 解耦——串口双输出在项目层 `TRACE_MCU_WRITE_STRING` 回调中自行组合。
+- **modus.mk 补全 arch 子目录**: `MODUS_INCLUDES` 新增 `src/arch/cortex-m/` 和 `src/arch/riscv/`，消除外部引用 `mdebug_cm.h` 等头文件时的路径缺失。
+- **global_define.h**: `disable_irq` 为 0 时 static_assert 警告。
 
 ## [0.5.0.2] - 2026-07-02
 

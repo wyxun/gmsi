@@ -83,6 +83,9 @@ MODUS_SRCS_DEBUG = \
     $(MODUS_ROOT)/src/mdebug/util_debug.c \
     $(MODUS_ROOT)/src/mdebug/segger_rtt/SEGGER_RTT.c
 
+MODUS_SRCS_ARCH += \
+    $(MODUS_ROOT)/src/arch/debug_transport.c
+
 # 架构调试模块 (mshell 命令 + fault handler)，依赖 MSHELL_ENABLE
 MODUS_SRCS_ARCH_DEBUG = \
     $(MODUS_ROOT)/src/arch/riscv/mdebug_riscv.c \
@@ -135,7 +138,9 @@ MODUS_INCLUDES = \
     -I$(MODUS_ROOT) \
     -I$(MODUS_ROOT)/src \
     -I$(MODUS_ROOT)/src/mdi \
-    -I$(MODUS_ROOT)/src/arch
+    -I$(MODUS_ROOT)/src/arch \
+    -I$(MODUS_ROOT)/src/arch/cortex-m \
+    -I$(MODUS_ROOT)/src/arch/riscv
 
 # ---------------------------------------------------------------------------
 # Compile flags generated from switches
