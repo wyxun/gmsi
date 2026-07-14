@@ -82,12 +82,16 @@ static void dump_exception_frame(const exception_frame_t *ptFrame,
     MLOG(E, "========================================\r\n");
 }
 
-/* Naked wrapper to capture the true exception LR before C prologue */
+/* Naked wrapper to capture the true exception SP and LR before C prologue */
 __attribute__((naked))
 void HardFault_Handler(void)
 {
     __asm__ volatile (
-        "mov r0, lr\n"
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "mov r1, lr\n"
         "b   fault_common\n"
     );
 }
@@ -96,7 +100,11 @@ __attribute__((naked))
 void MemManage_Handler(void)
 {
     __asm__ volatile (
-        "mov r0, lr\n"
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "mov r1, lr\n"
         "b   fault_common\n"
     );
 }
@@ -105,7 +113,11 @@ __attribute__((naked))
 void BusFault_Handler(void)
 {
     __asm__ volatile (
-        "mov r0, lr\n"
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "mov r1, lr\n"
         "b   fault_common\n"
     );
 }
@@ -114,26 +126,19 @@ __attribute__((naked))
 void UsageFault_Handler(void)
 {
     __asm__ volatile (
-        "mov r0, lr\n"
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "mov r1, lr\n"
         "b   fault_common\n"
     );
 }
 
-/* Common C handler: r0 = exception LR (EXC_RETURN) */
+/* Common C handler: ptFrame = exception frame, wExcLR = exception LR (EXC_RETURN) */
 __attribute__((used))
-void fault_common(uint32_t wExcLR)
+void fault_common(const exception_frame_t *ptFrame, uint32_t wExcLR)
 {
-    uint32_t wMsp, wPsp;
-    __asm__ volatile ("mrs %0, msp" : "=r" (wMsp));
-    __asm__ volatile ("mrs %0, psp" : "=r" (wPsp));
-    const exception_frame_t *ptFrame;
-
-    if ((wExcLR & 0x4u) != 0) {
-        ptFrame = (const exception_frame_t *)wPsp;
-    } else {
-        ptFrame = (const exception_frame_t *)wMsp;
-    }
-
     uint32_t wHfsr = SCB_HFSR;
     const char *pchType;
     if (wHfsr & 0x40000000) {
