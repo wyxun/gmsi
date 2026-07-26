@@ -139,6 +139,14 @@ static void mwaveform_Step(void)
     }
 
 
+    /* 0xFD is the descriptor-frame type byte. A data frame carrying 0xFD in
+     * the seq position is misframed as a descriptor by host parsers, which
+     * then skip a whole descriptor length and eat ~5 data frames every time
+     * seq wraps through 0xFD. Never emit the reserved value. */
+    if (s_tWave.chSeq == 0xFD) {
+        s_tWave.chSeq++;
+    }
+
     /* Index to the current writing buffer */
     uint8_t chW = s_tWave.wWCount % MWAVEFORM_FIFO_DEPTH;
 
@@ -195,11 +203,14 @@ static void mwaveform_Poll(void)
     uint32_t wWCount = s_tWave.wWCount;
     uint32_t wRCount = s_tWave.wRCount;
 
-    /* Continuous polling but throttled: 
-     * Send up to 8 packets per 1ms loop pass to avoid overwhelming the RTT tool/SWD link 
-     * while still maintaining high throughput. 
+    /* Continuous polling but throttled:
+     * Send up to FIFO-depth packets per loop pass. SEGGER_RTT_Write is
+     * non-blocking (NO_BLOCK_SKIP) and we break on the first congested
+     * write, so a full drain adds no extra main-loop latency; the limit
+     * only guards against pathological loops. 8/pass was too tight for a
+     * 1 kHz frame rate with a slow main loop.
      */
-    uint8_t chLimit = 8; 
+    uint8_t chLimit = MWAVEFORM_FIFO_DEPTH;
     while (wWCount != wRCount && chLimit--) {
         uint8_t chR = wRCount % MWAVEFORM_FIFO_DEPTH;
         
