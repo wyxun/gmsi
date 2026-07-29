@@ -5,6 +5,10 @@
 #include "trace.h"
 #include "util_debug.h"
 
+#ifndef TRACE_FMT_FLOAT_ENABLE
+#define TRACE_FMT_FLOAT_ENABLE 1
+#endif
+
 #define ABS(__N)    ((__N) < 0 ? -(__N) : (__N))
 #define _BV(__N)    ((uint32_t)1<<(__N))
 #define TOP         (0x0FFF)
@@ -77,9 +81,14 @@ void util_debug_Printf(const char *format, ...)
                     break;
                 }
                 case 'f':
+#if TRACE_FMT_FLOAT_ENABLE
                     TRACE.ToString.Float(
                         (float)va_arg(args, double)
                     );
+#else
+                    (void)va_arg(args, double);
+                    TRACE.ToString.String("<float-disabled>");
+#endif
                     break;
                 case '%':
                     TRACE.ToString.Buffer("%", 1);

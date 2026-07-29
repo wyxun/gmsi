@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+#ifndef TRACE_FMT_FLOAT_ENABLE
+#define TRACE_FMT_FLOAT_ENABLE 1
+#endif
+
 /*============================ PROTOTYPES ====================================*/
 
 /**
@@ -50,7 +54,9 @@ char *trace_fmt_int32(int32_t nValue, char *pchBuf);
  * @param chDecimals  number of decimal places (1-6)
  * @return pointer to pchBuf
  */
+#if TRACE_FMT_FLOAT_ENABLE
 char *trace_fmt_float(double dfValue, char *pchBuf, uint8_t chDecimals);
+#endif
 
 #endif /* __TRACE_FMT_H__ */
 /* EOF */

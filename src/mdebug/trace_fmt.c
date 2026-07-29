@@ -19,6 +19,10 @@
 
 #if !TRACE_USE_LIBC_PRINTF
 
+#ifndef TRACE_FMT_FLOAT_ENABLE
+#define TRACE_FMT_FLOAT_ENABLE 1
+#endif
+
 /*============================ IMPLEMENTATION ================================*/
 
 static const char s_chHexDigits[] = "0123456789ABCDEF";
@@ -91,6 +95,7 @@ char *trace_fmt_int32(int32_t nValue, char *pchBuf)
  * Float conversion (integer split method)                                    *
  *----------------------------------------------------------------------------*/
 
+#if TRACE_FMT_FLOAT_ENABLE
 char *trace_fmt_float(double dfValue, char *pchBuf, uint8_t chDecimals)
 {
     char *p = pchBuf;
@@ -137,6 +142,7 @@ char *trace_fmt_float(double dfValue, char *pchBuf, uint8_t chDecimals)
 
     return pchBuf;
 }
+#endif
 
 #endif /* !TRACE_USE_LIBC_PRINTF */
 /* EOF */

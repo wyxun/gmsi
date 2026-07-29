@@ -63,6 +63,10 @@
     } while(0)
 #endif
 
+#ifndef TRACE_FMT_FLOAT_ENABLE
+#define TRACE_FMT_FLOAT_ENABLE 1
+#endif
+
 /*============================ TYPES =========================================*/
 /*============================ LOCAL VARIABLES ===============================*/
 /*============================ PROTOTYPES ====================================*/
@@ -210,10 +214,13 @@ static void __trace_float_to_string(float fValue)
 {
 #if TRACE_USE_LIBC_PRINTF
     printf("%f", fValue);
-#else
+#elif TRACE_FMT_FLOAT_ENABLE
     char buf[24];
     trace_fmt_float((double)fValue, buf, 4);
     TRACE_MCU_WRITE_STRING(buf);
+#else
+    (void)fValue;
+    TRACE_MCU_WRITE_STRING("<float-disabled>");
 #endif
 }
 
@@ -221,10 +228,13 @@ static void __trace_double_to_string(double dfValue)
 {
 #if TRACE_USE_LIBC_PRINTF
     printf("%f", dfValue);
-#else
+#elif TRACE_FMT_FLOAT_ENABLE
     char buf[24];
     trace_fmt_float(dfValue, buf, 4);
     TRACE_MCU_WRITE_STRING(buf);
+#else
+    (void)dfValue;
+    TRACE_MCU_WRITE_STRING("<float-disabled>");
 #endif
 }
 
