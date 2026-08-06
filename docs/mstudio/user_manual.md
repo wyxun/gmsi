@@ -78,7 +78,7 @@ MStudio 采用可停靠（Dockable）的六面板布局，所有面板可在主�
 # 这是注释
 wave start = wave start
 wave stop  = wave stop
-wave speed = wave rate 4
+wave speed = wave stream 5000
 ```
 
 ### 操作流程

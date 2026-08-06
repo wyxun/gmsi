@@ -57,7 +57,7 @@ git checkout docking
 要使上位机正常显示波形，下位机必须满足以下配置：
 
 ### 3.1 固件依赖
-- **MODUS Utilities**: 必须包含 `mwaveform.c/h` 和 `mringbuf.c/h`。
+- **MODUS Utilities**: 必须包含 `mwaveform.c/h`、`mwaveform_protocol.c/h` 和 SEGGER RTT。
 - **SEGGER RTT**: 下位机必须支持多通道 RTT 输出。
 
 ### 3.2 调试器端口映射 (OpenOCD/JLink)

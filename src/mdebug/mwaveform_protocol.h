@@ -3,12 +3,24 @@
 
 #include <stdint.h>
 
-#define MWAVEFORM_PROTOCOL_MAX_CHANNELS 16
+#define MWAVEFORM_PROTOCOL_MAX_CHANNELS     16
+#define MWAVEFORM_PROTOCOL_VERSION          1u
+
+#define MWAVEFORM_FRAME_TYPE_DESC            0xFD
+#define MWAVEFORM_FRAME_TYPE_META            0xFE
+#define MWAVEFORM_FRAME_TYPE_BATCH           0xFC
+#define MWAVEFORM_FRAME_TYPE_SNAPSHOT        0xFA
 
 typedef struct {
     char    achName[8];
     float   fScale;
 } mwaveform_ch_desc_t;
+
+typedef struct {
+    uint32_t wSampleIndex;
+    uint8_t  abMask[(MWAVEFORM_PROTOCOL_MAX_CHANNELS + 7) / 8];
+    int16_t  ahwSamples[MWAVEFORM_PROTOCOL_MAX_CHANNELS];
+} mwaveform_batch_sample_t;
 
 typedef struct {
     /**
@@ -32,6 +44,30 @@ typedef struct {
      */
     uint16_t (*pack_desc)(uint8_t *pchBuffer, 
                           const mwaveform_ch_desc_t *atChannels, uint8_t chCount);
+
+    /**
+     * @brief Pack stream metadata frame
+     */
+    uint16_t (*pack_meta)(uint8_t *pchBuffer, uint8_t chCount,
+                          uint32_t periodNs, uint16_t batchDepth);
+
+    /**
+     * @brief Pack one batch of stream samples
+     */
+    uint16_t (*pack_batch)(uint8_t *pchBuffer,
+                           const mwaveform_batch_sample_t *atSamples,
+                           uint8_t chCount, uint16_t ringDepth,
+                           uint16_t startOffset, uint16_t sampleCount,
+                           uint32_t startSampleIndex, uint32_t periodNs);
+
+    /**
+     * @brief Pack one triggered snapshot batch
+     */
+    uint16_t (*pack_snapshot)(uint8_t *pchBuffer,
+                              const mwaveform_batch_sample_t *atSamples,
+                              uint8_t chCount, uint16_t ringDepth,
+                              uint16_t startOffset, uint16_t sampleCount,
+                              uint32_t periodNs, uint32_t snapshotId);
 
 } mwaveform_protocol_t;
 
