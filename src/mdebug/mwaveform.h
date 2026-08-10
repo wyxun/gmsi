@@ -115,6 +115,7 @@ typedef struct {
     int      (*SnapshotTrigger)(void);
     void     (*SnapshotStop)(void);
     int      (*SnapshotIsArmed)(void);
+    uint16_t (*GetSnapshotDepth)(void);
 
 } mwaveform_api_t;
 
@@ -149,6 +150,7 @@ typedef struct {
     int      (*SnapshotTrigger)(void);
     void     (*SnapshotStop)(void);
     int      (*SnapshotIsArmed)(void);
+    uint16_t (*GetSnapshotDepth)(void);
 } mwaveform_api_t;
 
 extern const mwaveform_api_t mwaveform;

@@ -239,10 +239,15 @@ snapshot 行为：
 
 - `SnapshotStart` 只是 arm，不发送。
 - 触发后发送当前环形缓冲中的最近 N 个样本。
+- Snapshot 使用独立采样节拍，不受 stream 分频影响。
+- Snapshot 使用已绑定/已推送通道记录生成 mask，不受 `Step()` 消费顺序影响。
+- Snapshot 保存每个样本自己的 mask、数值和样本序号。
+- 未写满时触发只发送已写入的有效样本。
 - 触发一次只发送一帧，不会持续重复发送。
 - 发送完成后仍保持 armed，环形缓冲继续更新。
 - 再触发一次会抓取新的一帧。
-- `SnapshotStop` 解除 armed，停止快照记录。
+- `SnapshotStop` 解除 armed，停止后续采集，不丢弃已触发但尚未发送的快照。
+- `wave snap status` 会显示实际 depth 和 valid 数。
 
 请求 32 个 20 kHz 样本时，理论时间窗为：
 
