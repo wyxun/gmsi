@@ -169,7 +169,7 @@ MODUS 提供一套完整的调试工具链，包含 **MLog**、**MShell**、**MW
 | [用户使用手册](./docs/mstudio/user_manual.md) | 界面功能与操作说明 |
 | [下位机集成指南](./docs/mstudio/mcu_integration.md) | 如何在 MCU 侧推送波形数据 |
 | [架构设计说明](./docs/mstudio/architecture_design.md) | 软件设计原理与二次开发 |
-| [源码仓库](https://github.com/wyxun/mstudio) | GitHub 开源地址 |
+| [源码仓库](https://github.com/wyxun/mstudio) | MStudio GitHub 开源地址 |
 
 ---
 
@@ -218,7 +218,7 @@ MLOGF(E, "Module %s error (code: %c)\n", "USART", 'A' + chID);
 - `MODUS_LOG_LEVEL_DEBUG` (4) - 简写 `D`
 
 #### 4. 设计详情
-更多关于 MLog 的零缓存设计与实现细节，请参考 [MLog 设计文档](docs/superpowers/LOG_design.md)。
+更多关于 MLog 的零缓存设计与实现细节，请参考 [MLog 使用指南](docs/mdebug/mlog.md)。
 
 ---
 
@@ -254,7 +254,7 @@ MODUS_SHELL_CMD(burn, cmd_burn, "Burn-in test");
 `g_chGLogMask` 默认由 `MLOG_MASK_DEFAULT`（全开，0x0F）初始化。
 可在 `userconfig.h` 中覆盖启动默认值，或通过 `log` 命令动态切换，无需重编译。
 
-详细配置、UART 后端替换及注意事项参考 [MShell 使用指南](docs/mshell.md)。
+详细配置、UART 后端替换及注意事项参考 [MShell 使用指南](docs/mdebug/mshell.md)。
 
 ---
 
@@ -264,24 +264,26 @@ MODUS 提供一套从 MCU 采集到 PC 实时显示的波形方案，特别适�
 等高频信号可视化场景。
 
 #### 核心优势
-- **极致性能**：底层采用 SPSC 无锁环形缓冲区，20kHz 采样下 CPU 占用极低。
-- **上位机支持**：配套 Python 可视化工具，基于 `pyqtgraph` 实现，支持 OpenGL 加速。
+- **极致性能**：底层采用 SPSC 无锁批量样本环，10kHz 连续流下 MCU 侧可做到 0 丢帧。
+- **上位机支持**：配套 MStudio 实时绘制，支持 stream、每变量刷新率和 snapshot。
 
 #### 快速使用
-1. **MCU 侧注册通道**：
+1. **MCU 侧注册通道或绑定变量**：
    ```c
-   uint8_t s_chIa = mwaveform_AddChannel("Motor_Ia", 1000.0f);
-   mwaveform_Start();
+   uint8_t s_chIa = mwaveform.AddChannel("Motor_Ia", 1000.0f);
+   uint8_t s_chId = mwaveform.AddVariable(
+       "Id", 1000.0f, (void *)&s_id, MWAVEFORM_VAR_FLOAT);
+   mwaveform.SetRate(0);
+   mwaveform.SetStreamRate(50000, 10000);
+   mwaveform.SetChannelRate(s_chId, 1000);
+   mwaveform.Start();
    ```
-2. **在中断中推送数据**：
+2. **在中断中更新变量并打拍**：
    ```c
-   mwaveform_Push(s_chIa, fCurrentIa);
-   mwaveform_Commit();
+   s_id = controller_id_output();
+   mwaveform.Step();
    ```
-3. **PC 侧启动查看器**：
-   ```bash
-   python tools/mwaveform/viewer.py
-   ```
+3. **PC 侧使用 MStudio 查看波形**。
 
 详细设计、协议格式及性能数据请参考 [MWaveform 完整文档](docs/mdebug/mwaveform.md)。
 

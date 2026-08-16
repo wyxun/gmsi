@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 状态 | 核心变更 |
 | :--- | :--- | :--- | :--- |
+| **v0.5.0.6** | 2026-08-07 | 稳定 | waveform V2.1：批量帧、快照帧、每变量刷新率、RTT 4096 与 10kHz 近无损连续流 |
 | **v0.5.0.5** | 2026-07-26 | 稳定 | 修复序号 0xFD 保留值引起的隔帧判定失误 |
 | **v0.5.0.4** | 2026-07-14 | 稳定 | Cortex-M 裸异常服务函数汇编改写，解决因局部变量压栈造成的 Hard Fault 现场寄存器解析偏移 |
 | **v0.5.0.3** | 2026-07-02 | 稳定 | debug_transport 抽象层，modus.mk arch 子目录 include path，全局 disable_irq 为 0 时 static_assert 警告 |
@@ -26,6 +27,24 @@
 ## [0.5.0.5] - 2026-07-26
 - **waveform 帧率异常问题修复**:
   - 修复序号 0xFD 保留值引起的隔帧判定失误
+
+## [0.5.0.6] - 2026-08-07
+- **waveform 任意 ISR 频率支持**:
+  - 新增 `AA 55 FE` 采样周期元数据帧，启动、改频和周期重同步时上报。
+  - 新增 `AA 55 FC` 批量帧，每样本保留通道掩码，支持混合采样率通道。
+  - 新增 `AA 55 FA` 快照帧，支持预触发环形缓冲与上位机触发抓取。
+  - 批量帧使用 CRC16，旧单点帧保持 XOR 兼容。
+  - 新增 `SetSamplePeriodNs` 与 `wave period` / `wave snap` 控制。
+- **waveform V2.1 每变量刷新率**:
+  - 新增 `AddVariable` 指针绑定与 `MWAVEFORM_VAR_FLOAT` / `MWAVEFORM_VAR_RAW`。
+  - 新增 `SetChannelRate` / `wave chrate`，每个通道可按 stream 整数分频独立刷新。
+  - 修复 batch 打包时未按环形缓冲当前偏移取数导致的 64 样本重复/跳变问题。
+- **RTT/OpenOCD 调优**:
+  - 当前工程 RTT 缓冲调整为 4096，OpenOCD 轮询保持 1ms。
+  - 10kHz 连续流 60 秒实测 MCU 侧 0 丢帧，host 侧 1 次 CRC 偶发错误。
+- **文档更新**:
+  - 重写 `docs/mdebug/mwaveform.md`，删除旧 FIFO/单点帧描述。
+  - 更新 MStudio 集成指南与 README 中的旧 API 示例。
 
 ## [0.5.0.4] - 2026-07-14
 
