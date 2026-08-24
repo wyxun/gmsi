@@ -52,6 +52,7 @@ typedef struct {
 
     int32_t  (*fnSetDuty)(void *pPriv, uint32_t wDuty);
     int32_t  (*fnEnable) (void *pPriv, bool bEnable);
+    int32_t  (*fnSetFreq)(void *pPriv, uint32_t wFreqHz);
 } mdi_pwm_t;
 
 /*============================================================================

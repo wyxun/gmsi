@@ -62,6 +62,12 @@ static inline int32_t mdi_pwm_Enable(mdi_pwm_t *ptDev, bool bEnable)
     return ptDev->fnEnable(ptDev->pPriv, bEnable);
 }
 
+static inline int32_t mdi_pwm_SetFreq(mdi_pwm_t *ptDev, uint32_t wFreqHz)
+{
+    if (NULL == ptDev || NULL == ptDev->fnSetFreq) { return -1; }
+    return ptDev->fnSetFreq(ptDev->pPriv, wFreqHz);
+}
+
 /* ---- Stream ---- */
 
 static inline int32_t mdi_stream_Write(mdi_stream_t *ptDev,
@@ -271,6 +277,14 @@ static inline int32_t mdi_flash_Lock(mdi_flash_t *ptDev)
 #define MDI_Enable(dev, en)  _Generic((dev),                                    \
     mdi_pwm_t*:     mdi_pwm_Enable                                              \
 )(dev, en)
+
+/*============================================================================
+ * MDI_SetFreq — PWM 频率设定 (固定参数)
+ *===========================================================================*/
+
+#define MDI_SetFreq(dev, freq)  _Generic((dev),                                 \
+    mdi_pwm_t*:     mdi_pwm_SetFreq                                             \
+)(dev, freq)
 
 /*============================================================================
  * MDI_IsBusy — 总线忙检测 (固定参数)
