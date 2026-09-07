@@ -816,10 +816,14 @@ static void cmd_snapshot(const char *args)
         mwaveform.SnapshotStop();
         MLOG(I, "Snapshot stopped.\r\n");
     } else if (strncmp(args, "status", 6) == 0) {
+#if MWAVEFORM_SNAPSHOT_ENABLE
         MLOGF(I, "Snapshot armed: %d depth: %u valid: %u\r\n",
               mwaveform.SnapshotIsArmed(),
               mwaveform.GetSnapshotDepth(),
               s_tWave.hwSnapshotValidCount);
+#else
+        MLOG(I, "Snapshot disabled (MWAVEFORM_SNAPSHOT_ENABLE=0)\r\n");
+#endif
     } else {
         MLOG(I, "Usage: wave snap <start [depth period_ns]|trigger|stop|status>\r\n");
     }

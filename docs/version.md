@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 状态 | 核心变更 |
 | :--- | :--- | :--- | :--- |
+| **v0.5.0.7** | 2026-09-07 | 稳定 | 修复 `MWAVEFORM_SNAPSHOT_ENABLE=0` 时 `cmd_snapshot` status 分支引用被守卫成员导致的编译失败 |
 | **v0.5.0.6** | 2026-08-07 | 稳定 | waveform V2.1：批量帧、快照帧、每变量刷新率、RTT 4096 与 10kHz 近无损连续流 |
 | **v0.5.0.5** | 2026-07-26 | 稳定 | 修复序号 0xFD 保留值引起的隔帧判定失误 |
 | **v0.5.0.4** | 2026-07-14 | 稳定 | Cortex-M 裸异常服务函数汇编改写，解决因局部变量压栈造成的 Hard Fault 现场寄存器解析偏移 |
@@ -27,6 +28,15 @@
 ## [0.5.0.5] - 2026-07-26
 - **waveform 帧率异常问题修复**:
   - 修复序号 0xFD 保留值引起的隔帧判定失误
+
+## [0.5.0.7] - 2026-09-07
+- **快照禁用态编译修复**:
+  - 修复 `MWAVEFORM_SNAPSHOT_ENABLE=0` 时 `mwaveform.c` 编译失败：
+    `cmd_snapshot` 的 `status` 分支无条件引用被 `#if MWAVEFORM_SNAPSHOT_ENABLE`
+    守卫的结构体成员 `s_tWave.hwSnapshotValidCount`，禁用快照构建时该成员
+    不存在。
+  - 修复：该分支加 `#if MWAVEFORM_SNAPSHOT_ENABLE` / `#else`，禁用态打印
+    `Snapshot disabled (MWAVEFORM_SNAPSHOT_ENABLE=0)`，不再引用缺失成员。
 
 ## [0.5.0.6] - 2026-08-07
 - **waveform 任意 ISR 频率支持**:
